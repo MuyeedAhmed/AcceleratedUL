@@ -36,18 +36,18 @@ def ocsvm(filename, parameters, parameter_iteration):
     
     
     
-    # '''Default F1 and time'''
-    # t0 = time.time()
-    # c = OneClassSVM().fit(X)
-    # l = c.predict(X)
-    # l = [0 if x == 1 else 1 for x in l]
+    '''Default F1 and time'''
+    t0 = time.time()
+    c = OneClassSVM().fit(X)
+    l = c.predict(X)
+    l = [0 if x == 1 else 1 for x in l]
     
-    # f1 = (metrics.f1_score(gt, l))
+    f1 = (metrics.f1_score(gt, l))
 
-    # t1 = time.time()
-    # print("F1: ", f1, " and Time: ", t1-t0)
+    t1 = time.time()
+    print("F1: ", f1, " and Time: ", t1-t0)
     # ''''''
-    
+    return
     batch_size = 100
     X_batches = [X[i:i+batch_size] for i in range(0, len(X), batch_size)]
     gt_batches = [gt[i:i+batch_size] for i in range(0, len(gt), batch_size)]
@@ -134,20 +134,19 @@ def worker(parameter, X, y, batch_index):
         writer.writerows(zip(y, l))
     
     
-        
     # lof = LocalOutlierFactor(n_neighbors=2).fit_predict(X)
     # lof = [0 if x == 1 else 1 for x in lof]
     
-    # iforest = IsolationForest().fit(X)
-    # ifl = iforest.predict(X)    
-    # ifl = [0 if x == 1 else 1 for x in ifl]
+    iforest = IsolationForest().fit(X)
+    ifl = iforest.predict(X)    
+    ifl = [0 if x == 1 else 1 for x in ifl]
     
     
-    f1 = (metrics.f1_score(y, l))
+    # f1 = (metrics.f1_score(y, l))
     # f1_lof = (metrics.f1_score(y, lof))
-    # f1_if = (metrics.f1_score(y, ifl))
+    f1_if = (metrics.f1_score(y, ifl))
 
-    saveStr = str(batch_index)+","+str(f1)+","+str(cost)+"\n"    
+    saveStr = str(batch_index)+","+str(f1_if)+","+str(cost)+"\n"    
     f = open("Output/Rank.csv", 'a')
     f.write(saveStr)
     f.close()
