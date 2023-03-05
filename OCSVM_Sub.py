@@ -64,7 +64,6 @@ class AUL:
             print("F1: ", f1, " and Time: ", t1-t0)
         else:
             t0 = time.time()
-            print(self.X.shape)
             c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
                                   shrinking=self.bestParams[6], cache_size=self.bestParams[7], max_iter=self.bestParams[8]).fit(self.X)
             l = c.predict(self.X)
