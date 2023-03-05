@@ -64,6 +64,7 @@ class AUL:
             print("F1: ", f1, " and Time: ", t1-t0)
         else:
             t0 = time.time()
+            print(self.X.shape)
             c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
                                   shrinking=self.bestParams[6], cache_size=self.bestParams[7], max_iter=self.bestParams[8]).fit(self.X)
             l = c.predict(self.X)
@@ -133,15 +134,15 @@ class AUL:
                 lof = LocalOutlierFactor(n_neighbors=2).fit_predict(X)
                 lof = [0 if x == 1 else 1 for x in lof]
                 
-                iforest = IsolationForest().fit(X)
-                ifl = iforest.predict(X)    
-                ifl = [0 if x == 1 else 1 for x in ifl]
+                # iforest = IsolationForest().fit(X)
+                # ifl = iforest.predict(X)    
+                # ifl = [0 if x == 1 else 1 for x in ifl]
                 
                 # f1 = (metrics.f1_score(y, l))
                 f1_lof = (metrics.f1_score(y, lof))
-                f1_if = (metrics.f1_score(y, ifl))
+                # f1_if = (metrics.f1_score(y, ifl))
                 
-                saveStr = str(batch_index)+","+str(f1_if)+","+str(cost)+"\n"    
+                saveStr = str(batch_index)+","+str(f1_lof)+","+str(cost)+"\n"    
                 f = open("Output/Rank.csv", 'a')
                 f.write(saveStr)
                 f.close()
@@ -171,7 +172,7 @@ class AUL:
     
     def run(self):
         self.readData()
-        self.checkDefault()
+        # self.checkDefault()
         
         t0 = time.time()
         self.subSample(100)
