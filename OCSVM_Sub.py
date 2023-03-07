@@ -52,8 +52,8 @@ class AUL:
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
         
-    def checkDefault(self):
-        if self.bestParams == []:
+    def runWithoutSubsampling(self, mode):
+        if mode == "default":
             self.readData()
             t0 = time.time()
             c = OneClassSVM().fit(self.X)
@@ -65,7 +65,12 @@ class AUL:
             t1 = time.time()
             print("Default--")
             print("F1: ", f1, " and Time: ", t1-t0)
-        else:
+        
+            
+        if mode == "optimized":
+            if self.bestParams == []:
+                print("Calculate the paramters first.")
+                return
             t0 = time.time()
             c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
                                   shrinking=self.bestParams[6], cache_size=self.bestParams[7], max_iter=self.bestParams[8]).fit(self.X)
@@ -212,7 +217,7 @@ class AUL:
         self.AUL_F1()
         print("Accelerated Time: ", t1-t0)
         
-        # self.checkDefault()
+        
     
     
 def algo_parameters(algo):
@@ -247,10 +252,11 @@ if __name__ == '__main__':
 
     algoRun = AUL(parameters, fname, algorithm)
     
-    # algoRun.checkDefault()
+    algoRun.runWithoutSubsampling("default")
     
     algoRun.run()
     
+    algoRun.runWithoutSubsampling("optimized")
     
         
         
