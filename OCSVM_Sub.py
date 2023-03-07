@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 import glob
 import pandas as pd
 import mat73
@@ -38,6 +39,15 @@ class AUL:
         self.y_batches = []
         self.bestParams = []
         self.models = []
+        
+        if os.path.isdir("Output/") == 0:    
+            os.mkdir("Output")
+            os.mkdir("Output/Temp")
+            
+    def destroy(self):
+        if os.path.isdir("Output"):
+            shutil.rmtree("Output")
+        
         
     def readData(self):    
         df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
@@ -258,7 +268,10 @@ if __name__ == '__main__':
     
     algoRun.run("B")
     
+    
     # algoRun.runWithoutSubsampling("optimized")
+    
+    algoRun.destroy()
     
         
         
