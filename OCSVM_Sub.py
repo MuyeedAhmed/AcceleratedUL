@@ -37,6 +37,7 @@ class AUL:
         self.X_batches = []
         self.y_batches = []
         self.bestParams = []
+        self.models = []
         
     def readData(self):    
         df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
@@ -46,12 +47,14 @@ class AUL:
         self.y=df["target"].to_numpy()
         self.X=df.drop("target", axis=1)
         
-    def subSample(self, batch_size):
+    def subSample(self, batch_count):
+        batch_size = int(len(self.X)/batch_count)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
         
     def checkDefault(self):
         if self.bestParams == []:
+            self.readData()
             t0 = time.time()
             c = OneClassSVM().fit(self.X)
             l = c.predict(self.X)
@@ -105,19 +108,21 @@ class AUL:
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
-        batch_size = 50
-        self.subSample(batch_size)
+        batch_count = 50
+        self.subSample(batch_count)
         threads = []
         batch_index = 0
-        while True:
-            if batch_index >= batch_size-1:
-                break
-            t = threading.Thread(target=self.worker, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, "C"))
-            threads.append(t)
-            t.start()
-            batch_index += 1
-        for t in threads:
-            t.join()
+        
+        for _ in range(5):
+            for _ in range(10):
+                if batch_index >= batch_count-1:
+                    break
+                t = threading.Thread(target=self.worker, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, "B"))
+                threads.append(t)
+                t.start()
+                batch_index += 1
+            for t in threads:
+                t.join()
     
     def worker(self, parameter, X, y, batch_index, mode):
         if self.algoName == "OCSVM":
@@ -138,7 +143,7 @@ class AUL:
                 # ifl = [0 if x == 1 else 1 for x in ifl]
                 
                 # f1 = (metrics.f1_score(y, l))
-                f1_lof = (metrics.f1_score(y, lof))
+                f1_lof = metrics.f1_score(y, lof)
                 # f1_if = (metrics.f1_score(y, ifl))
                 
                 saveStr = str(batch_index)+","+str(f1_lof)+","+str(cost)+"\n"    
@@ -149,12 +154,39 @@ class AUL:
             if mode == "C":
                 clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                                   shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-                
                 l = clustering.predict(X)
                 l = [0 if x == 1 else 1 for x in l]
+
                 with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
                     writer = csv.writer(f)
                     writer.writerows(zip(y, l))
+
+            if mode == "B":
+                ll = []
+                for c in self.models:
+                    ll.append(c.predict(X))
+                    
+                clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
+                                  shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
+                l = clustering.predict(X)
+                # l = [0 if x == 1 else 1 for x in l]
+
+                l = [x*5 for x in l]
+                
+                ll.append(l)
+                
+                self.models.append(clustering)
+                
+                ll = np.array(ll)
+                ll = ll.mean(axis=0)
+                
+                ll = [0 if x > 0 else 1 for x in ll]
+                
+                # print("Models: ", len(self.models), metrics.f1_score(lll, l))
+                
+                with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
+                    writer = csv.writer(f)
+                    writer.writerows(zip(y, ll))
                     
     
     def AUL_F1(self):
@@ -171,7 +203,6 @@ class AUL:
     
     def run(self):
         self.readData()
-        # self.checkDefault()
         
         t0 = time.time()
         self.subSample(100)
@@ -181,7 +212,7 @@ class AUL:
         self.AUL_F1()
         print("Accelerated Time: ", t1-t0)
         
-        self.checkDefault()
+        # self.checkDefault()
     
     
 def algo_parameters(algo):
@@ -215,8 +246,11 @@ if __name__ == '__main__':
     parameters = algo_parameters(algorithm)
 
     algoRun = AUL(parameters, fname, algorithm)
+    
+    # algoRun.checkDefault()
+    
     algoRun.run()
-    # run(fname, parameters, algorithm)
+    
     
         
         
