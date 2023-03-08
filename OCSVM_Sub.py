@@ -17,14 +17,19 @@ from random import sample
 import time
 from sklearn.utils import shuffle
 import csv
-
+from scipy.io import arff
 import threading
 from memory_profiler import profile
 
+
+
+import warnings 
+warnings.filterwarnings("ignore")
+
+
 datasetFolderDir = 'Dataset/'
 
-
-fname = 'coil2000'
+# fname = 'coil2000'
 
 # @profile
 
@@ -49,13 +54,26 @@ class AUL:
             shutil.rmtree("Output")
         
         
-    def readData(self):    
+    def readData(self):
         df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
     
         df = shuffle(df)
-        
-        self.y=df["target"].to_numpy()
-        self.X=df.drop("target", axis=1)
+        if "target" in df.columns:
+            self.y=df["target"].to_numpy()
+            self.X=df.drop("target", axis=1)
+        elif "outlier" in df.columns:
+            self.y=df["outlier"].to_numpy()
+            self.X=df.drop("outlier", axis=1)
+        else:
+            print("Ground Truth not found")
+            
+    def readData_arff(self):
+        data = arff.loadarff(datasetFolderDir+self.fileName+".arff")
+        df = pd.DataFrame(data[0])
+        df["outlier"] = df["outlier"].str.decode("utf-8")
+        df["outlier"] = pd.Series(np.where(df.outlier.values == "yes", 1, 0),df.index)
+        self.y=df["outlier"].to_numpy()
+        self.X=df.drop("outlier", axis=1)
         
     def subSample(self, batch_count):
         batch_size = int(len(self.X)/batch_count)
@@ -64,7 +82,7 @@ class AUL:
         
     def runWithoutSubsampling(self, mode):
         if mode == "default":
-            self.readData()
+            # self.readData()
             t0 = time.time()
             c = OneClassSVM().fit(self.X)
             l = c.predict(self.X)
@@ -219,7 +237,7 @@ class AUL:
         print("Accelerated F1: ",metrics.f1_score(yy, ll))
     
     def run(self, mode):
-        self.readData()
+        
         
         t0 = time.time()
         self.subSample(100)
@@ -255,23 +273,32 @@ def algo_parameters(algo):
         parameters.append(["cache_size", 200, cache_size])
         parameters.append(["max_iter", -1, max_iter])
         return parameters
-        
-        
+            
 if __name__ == '__main__':
     algorithm = "OCSVM"
-
-    parameters = algo_parameters(algorithm)
-
-    algoRun = AUL(parameters, fname, algorithm)
     
-    # algoRun.runWithoutSubsampling("default")
+    folderpath = datasetFolderDir
+    master_files = glob.glob(folderpath+"*.csv")
     
-    algoRun.run("B")
+    for i in range(len(master_files)):
+        master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
+    master_files.sort()
     
-    # algoRun.runWithoutSubsampling("optimized")
-    
-    algoRun.destroy()
+    for file in master_files:
+        print(file)
+        # try:
+        parameters = algo_parameters(algorithm)
+        algoRun = AUL(parameters, file, algorithm)
+        # algoRun.readData_arff()
+        algoRun.readData()
+        # algoRun.runWithoutSubsampling("default")
+        algoRun.run("B")
+        algoRun.runWithoutSubsampling("optimized")
+        algoRun.destroy()
+        # except:
+        #     print("Fail")
+        
     
         
         
