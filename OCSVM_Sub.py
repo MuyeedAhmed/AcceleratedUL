@@ -56,7 +56,9 @@ class AUL:
         
     def readData(self):
         df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
-    
+        if df.shape[0] > 100000:
+            return True
+        
         df = shuffle(df)
         if "target" in df.columns:
             self.y=df["target"].to_numpy()
@@ -66,7 +68,9 @@ class AUL:
             self.X=df.drop("outlier", axis=1)
         else:
             print("Ground Truth not found")
-            
+        
+        return False
+    
     def readData_arff(self):
         data = arff.loadarff(datasetFolderDir+self.fileName+".arff")
         df = pd.DataFrame(data[0])
@@ -293,7 +297,7 @@ if __name__ == '__main__':
     master_files = [x for x in master_files if x not in done_files]
     
     master_files.sort()
-    print(master_files)
+    # print(master_files)
     
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0: 
@@ -307,17 +311,19 @@ if __name__ == '__main__':
             parameters = algo_parameters(algorithm)
             algoRun = AUL(parameters, file, algorithm)
             # algoRun.readData_arff()
-            algoRun.readData()
+            tooLarge = algoRun.readData()
+            if tooLarge:
+                continue
             f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
             f1_ss, time_ss = algoRun.run("B")
             f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
             algoRun.destroy()
             
-            #WRITE TO FILE
+            # # WRITE TO FILE
             f=open("Stats/"+algorithm+".csv", "a")
             f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
             f.close()
-        
+            
         except:
             print("Fail")
         
