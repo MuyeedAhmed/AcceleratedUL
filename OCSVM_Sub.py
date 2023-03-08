@@ -286,7 +286,15 @@ if __name__ == '__main__':
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
+    if os.path.exists("Stats/"+algorithm+".csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+".csv")
+        done_files = done_files["Filename"].to_numpy()
+        # print(done_files)
+    master_files = [x for x in master_files if x not in done_files]
+    
     master_files.sort()
+    print(master_files)
+    
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0: 
         f=open("Stats/"+algorithm+".csv", "w")
