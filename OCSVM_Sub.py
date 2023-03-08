@@ -27,7 +27,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-datasetFolderDir = 'Dataset/'
+datasetFolderDir = 'Dataset/Small/'
 
 # fname = 'coil2000'
 
@@ -110,7 +110,7 @@ class AUL:
             t1 = time.time()
             print("Whole dataset with best parameters--")
             print("F1: ", f1, " and Time: ", t1-t0)
-            
+        return f1, t1-t0
     def determineParam(self):
         batch_index = 0
         for params in self.parameters:
@@ -234,7 +234,9 @@ class AUL:
     
         yy = df_csv_append[0].tolist()
         ll = df_csv_append[1].tolist()
-        print("Accelerated F1: ",metrics.f1_score(yy, ll))
+        f1 = metrics.f1_score(yy, ll)
+        print("Accelerated F1: ",f1)
+        return f1
     
     def run(self, mode):
         
@@ -244,9 +246,10 @@ class AUL:
         self.determineParam()
         self.rerun(mode)
         t1 = time.time()
-        self.AUL_F1()
-        print("Accelerated Time: ", t1-t0)
-        
+        f1_ss = self.AUL_F1()
+        time_ss = t1-t0
+        print("Accelerated Time: ", time_ss)
+        return f1_ss, time_ss
         
     
     
@@ -285,19 +288,29 @@ if __name__ == '__main__':
     
     master_files.sort()
     
+    if os.path.exists("Stats/"+algorithm+".csv") == 0: 
+        f=open("Stats/"+algorithm+".csv", "w")
+        f.write('Filename,F1_WD,Time_WD,F1_SS,Time_SS,F1_WO,Time_WO\n')
+        f.close()
+    
     for file in master_files:
         print(file)
-        # try:
-        parameters = algo_parameters(algorithm)
-        algoRun = AUL(parameters, file, algorithm)
-        # algoRun.readData_arff()
-        algoRun.readData()
-        # algoRun.runWithoutSubsampling("default")
-        algoRun.run("B")
-        algoRun.runWithoutSubsampling("optimized")
-        algoRun.destroy()
-        # except:
-        #     print("Fail")
+        try:
+            parameters = algo_parameters(algorithm)
+            algoRun = AUL(parameters, file, algorithm)
+            # algoRun.readData_arff()
+            algoRun.readData()
+            f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
+            f1_ss, time_ss = algoRun.run("B")
+            f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+            algoRun.destroy()
+            
+            #WRITE TO FILE
+            f=open("Stats/"+algorithm+".csv", "a ")
+            f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
+            f.close()
+        except:
+            print("Fail")
         
     
         
