@@ -27,7 +27,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-datasetFolderDir = 'Dataset/Small/'
+datasetFolderDir = '../Dataset/Small/'
 
 # fname = 'coil2000'
 
