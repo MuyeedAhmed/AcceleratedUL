@@ -306,9 +306,10 @@ if __name__ == '__main__':
             algoRun.destroy()
             
             #WRITE TO FILE
-            f=open("Stats/"+algorithm+".csv", "a ")
+            f=open("Stats/"+algorithm+".csv", "a")
             f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
             f.close()
+        
         except:
             print("Fail")
         
