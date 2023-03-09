@@ -136,6 +136,7 @@ class AUL:
             df = pd.read_csv("Output/Rank.csv")
     
             df["W"] = df.Compare/df.Time
+            # df["W"] = df.Compare
             
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
@@ -152,7 +153,7 @@ class AUL:
     
         l = clustering.predict(X)
         l = [0 if x == 1 else 1 for x in l]
-        lof = LocalOutlierFactor(n_neighbors=2).fit_predict(X)
+        lof = LocalOutlierFactor().fit_predict(X)
         lof = [0 if x == 1 else 1 for x in lof]
         
         # iforest = IsolationForest().fit(X)
