@@ -108,7 +108,6 @@ class AUL:
             if self.bestParams == []:
                 print("Calculate the paramters first.")
                 return
-            print(self.bestParams)
             t0 = time.time()
             if self.algoName == "OCSVM":
                 c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
