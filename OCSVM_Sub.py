@@ -8,6 +8,7 @@ from scipy.io import loadmat
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
+from sklearn.covariance import EllipticEnvelope
 import numpy as np
 from sklearn import metrics
 from copy import copy, deepcopy
@@ -86,15 +87,19 @@ class AUL:
         
     def runWithoutSubsampling(self, mode):
         if mode == "default":
-            # self.readData()
             t0 = time.time()
-            c = OneClassSVM().fit(self.X)
+            if self.algoName == "OCSVM":
+                c = OneClassSVM().fit(self.X)
+            elif self.algoName == "LOF":
+                c = LocalOutlierFactor(novelty=1).fit(self.X)
+            
             l = c.predict(self.X)
+            t1 = time.time()
+            
             l = [0 if x == 1 else 1 for x in l]
             
             f1 = (metrics.f1_score(self.y, l))
             
-            t1 = time.time()
             print("Default--")
             print("F1: ", f1, " and Time: ", t1-t0)
         
@@ -103,10 +108,17 @@ class AUL:
             if self.bestParams == []:
                 print("Calculate the paramters first.")
                 return
+            print(self.bestParams)
             t0 = time.time()
-            c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
+            if self.algoName == "OCSVM":
+                c = OneClassSVM(kernel=self.bestParams[0], degree=self.bestParams[1], gamma=self.bestParams[2], coef0=self.bestParams[3], tol=self.bestParams[4], nu=self.bestParams[5], 
                                   shrinking=self.bestParams[6], cache_size=self.bestParams[7], max_iter=self.bestParams[8]).fit(self.X)
+            elif self.algoName == "LOF":
+                c = LocalOutlierFactor(n_neighbors=self.bestParams[0], algorithm=self.bestParams[1], leaf_size=self.bestParams[2], metric=self.bestParams[3], p=self.bestParams[4],
+                                       n_jobs=self.bestParams[5], novelty=1).fit(self.X)
+                
             l = c.predict(self.X)
+
             l = [0 if x == 1 else 1 for x in l]
             
             f1 = (metrics.f1_score(self.y, l))
@@ -137,34 +149,70 @@ class AUL:
     
             df["W"] = df.Compare/df.Time
             # df["W"] = df.Compare
-            
+            # print(params)
+            # print(df)
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
         self.bestParams = [p[1] for p in self.parameters]
     
     def worker_determineParam(self, parameter, X, y, batch_index):        
-        t0 = time.time()
         if self.algoName == "OCSVM":
+            t0 = time.time()
             clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                           shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-        t1 = time.time()
-        cost = t1-t0
-    
-        l = clustering.predict(X)
-        l = [0 if x == 1 else 1 for x in l]
-        lof = LocalOutlierFactor().fit_predict(X)
-        lof = [0 if x == 1 else 1 for x in lof]
+            t1 = time.time()
+            cost = t1-t0
         
-        # iforest = IsolationForest().fit(X)
-        # ifl = iforest.predict(X)    
-        # ifl = [0 if x == 1 else 1 for x in ifl]
-        
-        # f1 = (metrics.f1_score(y, l))
-        f1_lof = metrics.f1_score(y, lof)
-        # f1_if = (metrics.f1_score(y, ifl))
-        
-        saveStr = str(batch_index)+","+str(f1_lof)+","+str(cost)+"\n"    
+            l = clustering.predict(X)
+            l = [0 if x == 1 else 1 for x in l]
+            lof = LocalOutlierFactor().fit_predict(X)
+            lof = [0 if x == 1 else 1 for x in lof]
+            f1_lof = metrics.f1_score(y, lof)
+            
+            # iforest = IsolationForest().fit(X)
+            # ifl = iforest.predict(X)    
+            # ifl = [0 if x == 1 else 1 for x in ifl]
+            # f1_if = (metrics.f1_score(y, ifl))
+            
+            # f1 = (metrics.f1_score(y, l))
+
+            f1_comp = f1_lof
+
+        elif self.algoName == "LOF":
+            t0 = time.time()
+            clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
+                                            n_jobs=parameter[5], novelty=1).fit(X)
+            l = clustering.predict(X)
+            t1 = time.time()
+            cost = t1-t0
+            l = [0 if x == 1 else 1 for x in l]
+            cont = np.mean(l)
+            if cont == 0 or cont > 0.5:
+                cont = 'auto'
+                
+            # iforest = IsolationForest(contamination=cont).fit(X)
+            # ifl = iforest.predict(X)    
+            # ifl = [0 if x == 1 else 1 for x in ifl]
+            # f1_if = metrics.f1_score(y, ifl)
+            
+            # ocsvm = OneClassSVM(nu=cont).fit(X)
+            # ossvml = ocsvm.predict(X)
+            # ossvml = [0 if x == 1 else 1 for x in ossvml]
+            # f1_ocsvm = metrics.f1_score(y, ossvml)
+            
+            ee = EllipticEnvelope().fit(X)
+            eel = ee.predict(X)
+            eel = [0 if x == 1 else 1 for x in eel]
+            f1_ee = metrics.f1_score(y, eel)
+            
+            # f1_comp = (f1_if+f1_ocsvm)/2
+            f1_comp = f1_ee
+            # f1 = (metrics.f1_score(y, l))
+            
+            
+            
+        saveStr = str(batch_index)+","+str(f1_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
@@ -195,6 +243,9 @@ class AUL:
             if self.algoName == "OCSVM":
                 clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                               shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
+            elif self.algoName == "LOF":
+                clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
+                                            n_jobs=parameter[5], novelty=1).fit(X)
             l = clustering.predict(X)
             l = [0 if x == 1 else 1 for x in l]
 
@@ -210,9 +261,11 @@ class AUL:
             if self.algoName == "OCSVM":
                 clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                               shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-
+            elif self.algoName == "LOF":
+                clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
+                                            n_jobs=parameter[5], novelty=1).fit(X)
             l = clustering.predict(X)
-
+            
             l = [x*5 for x in l]
             
             ll.append(l)
@@ -223,7 +276,6 @@ class AUL:
             ll = ll.mean(axis=0)
             
             ll = [0 if x > 0 else 1 for x in ll]
-            
             with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
                 writer = csv.writer(f)
                 writer.writerows(zip(y, ll))
@@ -236,7 +288,6 @@ class AUL:
             df = pd.read_csv(file, header=None)
             df_csv_append = pd.concat([df_csv_append, df])
             # df_csv_append = df_csv_append.append(df, ignore_index=True)
-    
         yy = df_csv_append[0].tolist()
         ll = df_csv_append[1].tolist()
         f1 = metrics.f1_score(yy, ll)
@@ -259,8 +310,8 @@ class AUL:
     
     
 def algo_parameters(algo):
+    parameters = []
     if algo == "OCSVM":
-        parameters = []
         kernel = ['linear', 'poly', 'rbf', 'sigmoid']
         degree = [3, 4, 5, 6] # Kernel poly only
         gamma = ['scale', 'auto'] # Kernel ‘rbf’, ‘poly’ and ‘sigmoid’
@@ -280,10 +331,29 @@ def algo_parameters(algo):
         parameters.append(["shrinking", True, shrinking])
         parameters.append(["cache_size", 200, cache_size])
         parameters.append(["max_iter", -1, max_iter])
-        return parameters
+    
+    if algo =="LOF":
+        n_neighbors=[2,5,10,20,50,100]
+        algorithm=['auto', 'ball_tree', 'kd_tree', 'brute']
+        leaf_size=[5,10,20,30,50,75,100] 
+        metric=["minkowski", "cityblock", "cosine", "euclidean", "nan_euclidean"]
+        p=[3,4]                           
+        # contamination=['auto', 0.05, 0.1, 0.2] 
+        n_jobs=[None, -1]
+        
+        parameters.append(["n_neighbors", 20, n_neighbors])
+        parameters.append(["algorithm", 'auto', algorithm])        
+        parameters.append(["leaf_size", 30, leaf_size])
+        parameters.append(["metric", 'minkowski', metric])   
+        parameters.append(["p", 2, p])
+        # parameters.append(["contamination", "auto", contamination])
+        parameters.append(["n_jobs", None, n_jobs])   
+    
+    return parameters
             
 if __name__ == '__main__':
-    algorithm = "OCSVM"
+    # algorithm = "OCSVM"
+    algorithm = "LOF"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -295,7 +365,7 @@ if __name__ == '__main__':
         done_files = pd.read_csv("Stats/"+algorithm+".csv")
         done_files = done_files["Filename"].to_numpy()
         # print(done_files)
-    master_files = [x for x in master_files if x not in done_files]
+        master_files = [x for x in master_files if x not in done_files]
     
     master_files.sort()
     # print(master_files)
@@ -317,10 +387,11 @@ if __name__ == '__main__':
                 continue
             f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
             f1_ss, time_ss = algoRun.run("B")
+            print("Best Parameters: ", algoRun.bestParams)
             f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
             algoRun.destroy()
             
-            # # WRITE TO FILE
+            # WRITE TO FILE
             f=open("Stats/"+algorithm+".csv", "a")
             f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
             f.close()
