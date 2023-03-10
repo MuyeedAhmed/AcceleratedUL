@@ -95,14 +95,11 @@ class AUL:
             
             l = c.predict(self.X)
             t1 = time.time()
-            
             l = [0 if x == 1 else 1 for x in l]
-            
             f1 = (metrics.f1_score(self.y, l))
             
             print("Default--")
             print("F1: ", f1, " and Time: ", t1-t0)
-        
             
         if mode == "optimized":
             if self.bestParams == []:
@@ -117,15 +114,14 @@ class AUL:
                                        n_jobs=self.bestParams[5], novelty=1).fit(self.X)
                 
             l = c.predict(self.X)
-
             l = [0 if x == 1 else 1 for x in l]
-            
             f1 = (metrics.f1_score(self.y, l))
             
             t1 = time.time()
             print("Whole dataset with best parameters--")
             print("F1: ", f1, " and Time: ", t1-t0)
         return f1, t1-t0
+    
     def determineParam(self):
         batch_index = 0
         for params in self.parameters:
@@ -160,63 +156,63 @@ class AUL:
             t0 = time.time()
             clustering = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                           shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
+            l = clustering.predict(X)
+            
             t1 = time.time()
             cost = t1-t0
         
-            l = clustering.predict(X)
             l = [0 if x == 1 else 1 for x in l]
-            lof = LocalOutlierFactor().fit_predict(X)
-            lof = [0 if x == 1 else 1 for x in lof]
-            f1_lof = metrics.f1_score(y, lof)
-            
-            # iforest = IsolationForest().fit(X)
-            # ifl = iforest.predict(X)    
-            # ifl = [0 if x == 1 else 1 for x in ifl]
-            # f1_if = (metrics.f1_score(y, ifl))
             
             # f1 = (metrics.f1_score(y, l))
-
-            f1_comp = f1_lof
+            f1_comp = self.getF1_Comp(X, l, "LOF")
 
         elif self.algoName == "LOF":
             t0 = time.time()
             clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
                                             n_jobs=parameter[5], novelty=1).fit(X)
             l = clustering.predict(X)
+            
             t1 = time.time()
             cost = t1-t0
+            
             l = [0 if x == 1 else 1 for x in l]
-            cont = np.mean(l)
-            if cont == 0 or cont > 0.5:
-                cont = 'auto'
-                
-            # iforest = IsolationForest(contamination=cont).fit(X)
-            # ifl = iforest.predict(X)    
-            # ifl = [0 if x == 1 else 1 for x in ifl]
-            # f1_if = metrics.f1_score(y, ifl)
             
-            # ocsvm = OneClassSVM(nu=cont).fit(X)
-            # ossvml = ocsvm.predict(X)
-            # ossvml = [0 if x == 1 else 1 for x in ossvml]
-            # f1_ocsvm = metrics.f1_score(y, ossvml)
-            
-            ee = EllipticEnvelope().fit(X)
-            eel = ee.predict(X)
-            eel = [0 if x == 1 else 1 for x in eel]
-            f1_ee = metrics.f1_score(y, eel)
-            
-            # f1_comp = (f1_if+f1_ocsvm)/2
-            f1_comp = f1_ee
-            # f1 = (metrics.f1_score(y, l))
-            
-            
+            f1_comp = self.getF1_Comp(X, l, "LOF")
             
         saveStr = str(batch_index)+","+str(f1_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
+    
+    def getF1_Comp(self, X, l, algo):
+        cont = np.mean(l)
+        if cont == 0 or cont > 0.5:
+            cont = 'auto'
             
-                
+        if algo == "LOF":
+            lof = LocalOutlierFactor().fit_predict(X)
+            lof = [0 if x == 1 else 1 for x in lof]
+            f1_lof = metrics.f1_score(l, lof)
+            return f1_lof
+        elif algo == "IF":
+            iforest = IsolationForest().fit(X)
+            ifl = iforest.predict(X)    
+            ifl = [0 if x == 1 else 1 for x in ifl]
+            f1_if = (metrics.f1_score(l, ifl))
+            return f1_if
+        elif algo == "OCSVM":
+            ocsvm = OneClassSVM(nu=cont).fit(X)
+            ossvml = ocsvm.predict(X)
+            ossvml = [0 if x == 1 else 1 for x in ossvml]
+            f1_ocsvm = metrics.f1_score(l, ossvml)
+            return f1_ocsvm
+        elif algo == "EE":
+            ee = EllipticEnvelope().fit(X)
+            eel = ee.predict(X)
+            eel = [0 if x == 1 else 1 for x in eel]
+            f1_ee = metrics.f1_score(l, eel)
+            return f1_ee
+            
     def rerun(self, mode):
         if self.bestParams == []:
             print("Determine best parameters before this step.")
