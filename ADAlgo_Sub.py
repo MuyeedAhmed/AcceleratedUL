@@ -209,7 +209,6 @@ class AUL:
             
     
     def rerun(self, mode):
-        print("rerun")
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
@@ -291,14 +290,31 @@ class AUL:
         return f1
     
     def run(self, mode):
-        t0 = time.time()
-        self.subSample(100)
-        self.determineParam()
-        self.rerun(mode)
-        t1 = time.time()
-        f1_ss = self.AUL_F1()
-        time_ss = t1-t0
-        # print("Accelerated Time: ", time_ss)
+        comparison_modes = ["F1", "F1T"]
+        comparison_mode_algos = ["LOF", "OCSVM", "IF", "EE"]
+        # str_cmodes = "Filename"
+        str_values = self.fileName
+        for cma in comparison_mode_algos:
+            for cm in comparison_modes:
+                if cma == self.algoName:
+                    str_values=str_values+",0,0"
+                    continue
+                print(cm, cma)
+                t0 = time.time()
+                self.subSample(100)
+                self.determineParam(cm, cma)
+                self.rerun(mode)
+                t1 = time.time()
+                f1_ss = self.AUL_F1()
+                time_ss = t1-t0 
+                # str_cmodes=str_cmodes+",F1_"+cm+cma+",Time_"+cm+cma
+                
+                str_values=str_values+","+str(f1_ss)+","+str(time_ss)
+        
+        f=open("Stats/"+self.algoName+"_SubsampleAlgoComp.csv", "w")
+        f.write(str_values+'\n')
+        f.close()
+        print(str_values)
         return f1_ss, time_ss
         
     
@@ -330,7 +346,8 @@ def algo_parameters(algo):
         n_neighbors=[2,5,10,20,50,100]
         algorithm=['auto', 'ball_tree', 'kd_tree', 'brute']
         leaf_size=[5,10,20,30,50,75,100] 
-        metric=["minkowski", "cityblock", "cosine", "euclidean", "nan_euclidean"]
+        # metric=["minkowski", "cityblock", "cosine", "euclidean", "nan_euclidean"]
+        metric=["minkowski", "cityblock", "euclidean"]
         p=[3,4]                           
         # contamination=['auto', 0.05, 0.1, 0.2] 
         n_jobs=[None, -1]
@@ -355,8 +372,8 @@ def algo_parameters(algo):
     return parameters
             
 if __name__ == '__main__':
-    # algorithm = "OCSVM"
-    algorithm = "EE"
+    algorithm = "OCSVM"
+    # algorithm = "LOF"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -364,11 +381,11 @@ if __name__ == '__main__':
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
-    if os.path.exists("Stats/"+algorithm+".csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+".csv")
-        done_files = done_files["Filename"].to_numpy()
-        # print(done_files)
-        master_files = [x for x in master_files if x not in done_files]
+    # if os.path.exists("Stats/"+algorithm+".csv"):
+    #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
+    #     done_files = done_files["Filename"].to_numpy()
+    #     # print(done_files)
+    #     master_files = [x for x in master_files if x not in done_files]
     
     master_files.sort()
     # print(master_files)
@@ -377,6 +394,11 @@ if __name__ == '__main__':
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
         f.write('Filename,F1_WD,Time_WD,F1_SS,Time_SS,F1_WO,Time_WO\n')
+        f.close()
+    
+    if os.path.exists("Stats/"+algorithm+"_SubsampleAlgoComp.csv") == 0:
+        f=open("Stats/"+algorithm+"_SubsampleAlgoComp.csv", "w")
+        f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
         f.close()
     
     for file in master_files:
@@ -388,19 +410,18 @@ if __name__ == '__main__':
             tooLarge = algoRun.readData()
             if tooLarge:
                 continue
-            f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
+            # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
             f1_ss, time_ss = algoRun.run("B")
             print("Best Parameters: ", algoRun.bestParams)
-            f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+            # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
             algoRun.destroy()
             
             # # WRITE TO FILE
             # f=open("Stats/"+algorithm+".csv", "a")
             # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
             # f.close()
-            
+                
         except:
             print("Fail")
     
-        
         
