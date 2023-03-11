@@ -92,7 +92,9 @@ class AUL:
                 c = OneClassSVM().fit(self.X)
             elif self.algoName == "LOF":
                 c = LocalOutlierFactor(novelty=1).fit(self.X)
-            
+            elif self.algoName == "EE":
+                c = EllipticEnvelope().fit(self.X)
+                
             l = c.predict(self.X)
             t1 = time.time()
             l = [0 if x == 1 else 1 for x in l]
@@ -112,6 +114,8 @@ class AUL:
             elif self.algoName == "LOF":
                 c = LocalOutlierFactor(n_neighbors=self.bestParams[0], algorithm=self.bestParams[1], leaf_size=self.bestParams[2], metric=self.bestParams[3], p=self.bestParams[4],
                                        n_jobs=self.bestParams[5], novelty=1).fit(self.X)
+            elif self.algoName == "EE":
+                c = EllipticEnvelope(assume_centered=self.bestParams[0], support_fraction=self.bestParams[1], contamination=self.bestParams[2]).fit(self.X)
                 
             l = c.predict(self.X)
             l = [0 if x == 1 else 1 for x in l]
@@ -170,6 +174,18 @@ class AUL:
             t0 = time.time()
             clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
                                             n_jobs=parameter[5], novelty=1).fit(X)
+            l = clustering.predict(X)
+            
+            t1 = time.time()
+            cost = t1-t0
+            
+            l = [0 if x == 1 else 1 for x in l]
+            
+            f1_comp = self.getF1_Comp(X, l, "EE")
+        
+        elif self.algoName == "EE":
+            t0 = time.time()
+            c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(self.X)
             l = clustering.predict(X)
             
             t1 = time.time()
@@ -259,6 +275,9 @@ class AUL:
             elif self.algoName == "LOF":
                 clustering = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
                                             n_jobs=parameter[5], novelty=1).fit(X)
+            elif self.algoName == "EE":
+                clustering = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(self.X)
+            
             l = clustering.predict(X)
             
             l = [x*5 for x in l]
@@ -344,6 +363,15 @@ def algo_parameters(algo):
         # parameters.append(["contamination", "auto", contamination])
         parameters.append(["n_jobs", None, n_jobs])   
     
+    elif algo == "EE":
+        assume_centered = [True, False]
+        support_fraction = [None, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        contamination = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+        
+        parameters.append(["assume_centered", False, assume_centered])
+        parameters.append(["support_fraction", None, support_fraction])
+        parameters.append(["contamination", 0.1, contamination])
+    
     return parameters
             
 if __name__ == '__main__':
@@ -366,7 +394,7 @@ if __name__ == '__main__':
     # print(master_files)
     
     
-    if os.path.exists("Stats/"+algorithm+".csv") == 0: 
+    if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
         f.write('Filename,F1_WD,Time_WD,F1_SS,Time_SS,F1_WO,Time_WO\n')
         f.close()
