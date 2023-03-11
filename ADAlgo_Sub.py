@@ -311,7 +311,7 @@ class AUL:
                 
                 str_values=str_values+","+str(f1_ss)+","+str(time_ss)
         
-        f=open("Stats/"+self.algoName+"_SubsampleAlgoComp.csv", "w")
+        f=open("Stats/"+self.algoName+"_SubsampleAlgoComp.csv", "a")
         f.write(str_values+'\n')
         f.close()
         print(str_values)
