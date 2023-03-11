@@ -22,15 +22,11 @@ from scipy.io import arff
 import threading
 # from memory_profiler import profile
 
-
-
 import warnings 
 warnings.filterwarnings("ignore")
 
 
 datasetFolderDir = '../Dataset/Small/'
-
-# fname = 'coil2000'
 
 # @profile
 
@@ -126,8 +122,7 @@ class AUL:
             print("F1: ", f1, " and Time: ", t1-t0)
         return f1, t1-t0
     
-    def determineParam(self):
-        print("Deter")
+    def determineParam(self, comparison_mode, comparison_mode_algo):
         batch_index = 0
         for params in self.parameters:
             threads = []
@@ -138,64 +133,46 @@ class AUL:
             for p_v in params[2]:
                 params[1] = p_v
                 parameters_to_send = [p[1] for p in self.parameters]
-                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
+                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, comparison_mode_algo))
                 threads.append(t)
                 t.start()
                 batch_index += 1
             for t in threads:
                 t.join()
-            
             df = pd.read_csv("Output/Rank.csv")
-    
-            df["W"] = df.Compare/df.Time
-            # df["W"] = df.Compare
-            print(params)
-            print(df)
+            
+            if comparison_mode == "F1T":
+                df["W"] = df.Compare/df.Time
+            elif comparison_mode == "F1":
+                df["W"] = df.Compare
+            
+            # print(params)
+            # print(df)
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
         self.bestParams = [p[1] for p in self.parameters]
     
-    def worker_determineParam(self, parameter, X, y, batch_index):        
+    def worker_determineParam(self, parameter, X, y, batch_index, comparison_mode_algo):        
+        t0 = time.time()
         if self.algoName == "OCSVM":
-            t0 = time.time()
             c = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
                           shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-            l = c.predict(X)
-            
-            t1 = time.time()
-            cost = t1-t0
-        
-            l = [0 if x == 1 else 1 for x in l]
-            
-            # f1 = (metrics.f1_score(y, l))
-            f1_comp = self.getF1_Comp(X, l, "LOF")
-
         elif self.algoName == "LOF":
-            t0 = time.time()
             c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
                                             n_jobs=parameter[5], novelty=1).fit(X)
-            l = c.predict(X)
-            
-            t1 = time.time()
-            cost = t1-t0
-            
-            l = [0 if x == 1 else 1 for x in l]
-            
-            f1_comp = self.getF1_Comp(X, l, "EE")
-        
         elif self.algoName == "EE":
-            t0 = time.time()
             c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
-            l = c.predict(X)
-            
-            t1 = time.time()
-            cost = t1-t0
-            
-            l = [0 if x == 1 else 1 for x in l]
-            
-            f1_comp = self.getF1_Comp(X, l, "LOF")
-            
+        
+        l = c.predict(X)
+        
+        t1 = time.time()
+        cost = t1-t0
+    
+        l = [0 if x == 1 else 1 for x in l]
+        
+        f1_comp = self.getF1_Comp(X, l, comparison_mode_algo)
+
         saveStr = str(batch_index)+","+str(f1_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
@@ -230,6 +207,7 @@ class AUL:
             f1_ee = metrics.f1_score(l, eel)
             return f1_ee
             
+    
     def rerun(self, mode):
         print("rerun")
         if self.bestParams == []:
@@ -259,6 +237,8 @@ class AUL:
             elif self.algoName == "LOF":
                 c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
                                             n_jobs=parameter[5], novelty=1).fit(X)
+            elif self.algoName == "EE":
+                c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
             l = c.predict(X)
             l = [0 if x == 1 else 1 for x in l]
 
@@ -307,12 +287,10 @@ class AUL:
         yy = df_csv_append[0].tolist()
         ll = df_csv_append[1].tolist()
         f1 = metrics.f1_score(yy, ll)
-        print("Accelerated F1: ",f1)
+        # print("Accelerated F1: ",f1)
         return f1
     
     def run(self, mode):
-        
-        
         t0 = time.time()
         self.subSample(100)
         self.determineParam()
@@ -320,7 +298,7 @@ class AUL:
         t1 = time.time()
         f1_ss = self.AUL_F1()
         time_ss = t1-t0
-        print("Accelerated Time: ", time_ss)
+        # print("Accelerated Time: ", time_ss)
         return f1_ss, time_ss
         
     
@@ -423,7 +401,6 @@ if __name__ == '__main__':
             
         except:
             print("Fail")
-        break
     
         
         
