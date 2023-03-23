@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 23 05:55:46 2023
+
+@author: muyeedahmed
+"""
+
 import sys
 import os
 import shutil
@@ -20,6 +28,7 @@ from sklearn.utils import shuffle
 import csv
 from scipy.io import arff
 
+import matplotlib
 
 datasetFolderDir = '../Dataset/Data_Small/'
 
@@ -38,8 +47,8 @@ def algoRun(filename):
 
 def readData(fileName):
     df = pd.read_csv(datasetFolderDir+fileName+".csv")
-    if df.shape[0] > 100000:
-        return True
+    # if df.shape[0] > 100000:
+    #     return True
     
     df = shuffle(df)
     if "target" in df.columns:
@@ -54,10 +63,15 @@ def readData(fileName):
     return X, y
 
 def plot_iter():
-    df = pd.read_csv("StatsOCSVM_nIter.csv")
-    ax1 = df.plot.scatter(x='n_iter', y='rows', c='DarkBlue')
+    df = pd.read_csv("Stats/OCSVM_nIter.csv")
+    
+    ax1 = df.plot.scatter(x='n_iter', y='rows')
+    ax2 = df.plot.scatter(x='n_iter', y='col')
 
+    df2 = df[df["n_iter"] < 1000]
+    ax3 = df2.plot.scatter(x='n_iter', y='rows')
 
+    
 if __name__ == '__main__':
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
