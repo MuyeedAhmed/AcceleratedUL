@@ -11,37 +11,57 @@ import os
 import shutil
 import glob
 import pandas as pd
+import numpy as np
 # import mat73
-from scipy.io import loadmat
+# from scipy.io import loadmat
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
 from sklearn.covariance import EllipticEnvelope
-import numpy as np
-from sklearn import metrics
-from copy import copy, deepcopy
-from sklearn.metrics.cluster import adjusted_rand_score
-import bisect 
+# from sklearn.metrics.cluster import adjusted_rand_score
 from random import sample
 import time
 from sklearn.utils import shuffle
-import csv
-from scipy.io import arff
+import multiprocessing
 
-import matplotlib
 
-datasetFolderDir = '../Dataset/Data_Small/'
+# datasetFolderDir = '../Dataset/Data_Small/'
+datasetFolderDir = 'Temp/'
+
 
 def algoRun(filename):
     [X, y] = readData(filename)
+    
+    p = multiprocessing.Process(target=worker, args=(X,))
+    p.start()
+    p.join(timeout=30)
+    if p.is_alive():
+        p.terminate()
+    
+    step = "while_loop"
+    if os.path.exists("Log/while_loop.txt"):
+        with open('Log/while_loop.txt', 'rb') as f:
+            last_line = f.readlines()[-2].decode()
+        os.remove("Log/while_loop.txt")
+    else:
+        step="grd"
+        with open('Log/grd.txt', 'rb') as f:
+            last_line = f.readlines()[-2].decode()
+    os.remove("Log/grd.txt")
+    
+    iter_c = last_line.split("-")[0]
+    
+    f=open("Stats/OCSVM_Incomplete.csv", "a")
+    f.write(filename+","+step+","+str(iter_c)+","+str(X.shape[0])+","+str(X.shape[1])+"\n")
+    f.close()
+    print(iter_c)
 
+
+def worker(X):
     clf = OneClassSVM().fit(X)
 
-    iter_ = clf.n_iter_
-    f=open("Stats/OCSVM_nIter.csv", "a")
-    f.write(filename+","+str(iter_)+","+str(X.shape[0])+","+str(X.shape[1])+"\n")
-    f.close()
     
+
     
     
 
@@ -62,14 +82,6 @@ def readData(fileName):
  
     return X, y
 
-def plot_iter():
-    df = pd.read_csv("Stats/OCSVM_nIter.csv")
-    
-    ax1 = df.plot.scatter(x='n_iter', y='rows')
-    ax2 = df.plot.scatter(x='n_iter', y='col')
-
-    df2 = df[df["n_iter"] < 1000]
-    ax3 = df2.plot.scatter(x='n_iter', y='rows')
 
     
 if __name__ == '__main__':
@@ -82,11 +94,12 @@ if __name__ == '__main__':
     master_files.sort()
 
     
-    if os.path.exists("Stats/OCSVM_nIter.csv") == 0:
-        f=open("Stats/OCSVM_nIter.csv", "w")
-        f.write('Filename,n_iter,rows,col\n')
+    if os.path.exists("Stats/OCSVM_Incomplete.csv") == 0:
+        f=open("Stats/OCSVM_Incomplete.csv", "w")
+        f.write('Filename,Step,n_iter,rows,col\n')
         f.close()
     
+    algoRun("analcatdata_challenger")
     
     # for file in master_files:
     #     print(file)
@@ -94,6 +107,4 @@ if __name__ == '__main__':
     #         algoRun(file)
     #     except:
     #         print("Fail")
-            
-    plot_iter()    
             
