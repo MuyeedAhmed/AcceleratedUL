@@ -25,16 +25,17 @@ from sklearn.utils import shuffle
 import multiprocessing
 
 
-# datasetFolderDir = '../Dataset/Data_Small/'
-datasetFolderDir = 'Temp/'
+datasetFolderDir = '../Dataset/Data_Small/'
+# datasetFolderDir = 'Temp/'
 
 
 def algoRun(filename):
+    print(filename)
     [X, y] = readData(filename)
     
     p = multiprocessing.Process(target=worker, args=(X,))
     p.start()
-    p.join(timeout=30)
+    p.join(timeout=7200)
     if p.is_alive():
         p.terminate()
     
@@ -60,10 +61,6 @@ def algoRun(filename):
 def worker(X):
     clf = OneClassSVM().fit(X)
 
-    
-
-    
-    
 
 def readData(fileName):
     df = pd.read_csv(datasetFolderDir+fileName+".csv")
@@ -85,26 +82,30 @@ def readData(fileName):
 
     
 if __name__ == '__main__':
+    algorithm = "OCSVM"
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
     
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
-    master_files.sort()
-
+    if os.path.exists("Stats/"+algorithm+".csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+".csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
     
+    master_files.sort()
+        
     if os.path.exists("Stats/OCSVM_Incomplete.csv") == 0:
         f=open("Stats/OCSVM_Incomplete.csv", "w")
         f.write('Filename,Step,n_iter,rows,col\n')
         f.close()
     
-    algoRun("analcatdata_challenger")
+    # algoRun("analcatdata_challenger")
     
-    # for file in master_files:
-    #     print(file)
-    #     try:
-    #         algoRun(file)
-    #     except:
-    #         print("Fail")
+    for file in master_files:
+        try:
+            algoRun(file)
+        except:
+            print("Fail")
             
