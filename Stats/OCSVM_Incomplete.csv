@@ -1,1 +1,7 @@
 Filename,Step,n_iter,rows,col
+analcatdata_apnea1,while_loop,72468,684950,3
+analcatdata_apnea2,while_loop,72468,684950,3
+analcatdata_apnea3,while_loop,71986,685800,3
+analcatdata_challenger,grd,399500,892584,2
+analcatdata_chlamydia,while_loop,64274,702700,3
+analcatdata_neavote,while_loop,45476,739600,3
