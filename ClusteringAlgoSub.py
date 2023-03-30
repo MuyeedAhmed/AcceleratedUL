@@ -83,8 +83,6 @@ class AUL_Clustering:
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
         
     def runWithoutSubsampling(self, mode):
-        
-        
         if mode == "default":
             t0 = time.time()
             
@@ -145,8 +143,6 @@ class AUL_Clustering:
             elif comparison_mode == "ARI":
                 df["W"] = df.Compare
             
-            # print(params)
-            # print(df)
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
@@ -161,21 +157,22 @@ class AUL_Clustering:
                                    n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                    n_neighbors=parameter[5], assign_labels=parameter[6], 
                                    degree=parameter[7], n_jobs=parameter[8]).fit(X)
-        
         l = c.labels_
         
         t1 = time.time()
         cost = t1-t0
     
-        
         ari_comp = self.getARI_Comp(X, l, comparison_mode_algo)
-
+        print(batch_index, ari_comp)
         saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
     
     def getARI_Comp(self, X, l, algo):
+        # Check if all the labels are -1
+        if all(v == -1 for v in l):
+            return -1
         n = len(set(l))
         
         if algo == "KM":
@@ -190,12 +187,11 @@ class AUL_Clustering:
         return ari
             
     
-    def rerun(self, mode):
+    def rerun(self, mode, batch_count):
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
-        batch_count = 50
-        self.subSample(batch_count)
+        
         threads = []
         batch_index = 0
         
@@ -209,53 +205,65 @@ class AUL_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
-    
+            
+            # # Read batch outputs and merge
+            # df_csv_append = pd.DataFrame()
+            # csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+            # for file in csv_files:
+            #     df = pd.read_csv(file, header=None)
+            #     df_csv_append = pd.concat([df_csv_append, df])
+            #     # df_csv_append = df_csv_append.append(df, ignore_index=True)
+            # yy = df_csv_append[0].tolist()
+            # ll = df_csv_append[1].tolist()
+            # ari = adjusted_rand_score(yy, ll)
+            # # print("Accelerated F1: ",f1)
+            # return ari
+            
     def worker_rerun(self, parameter, X, y, batch_index, mode):
         if mode == "A":
-            if self.algoName == "OCSVM":
-                c = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
-                              shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-            elif self.algoName == "LOF":
-                c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
-                                            n_jobs=parameter[5], novelty=1).fit(X)
-            elif self.algoName == "EE":
-                c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
-            l = c.predict(X)
-            l = [0 if x == 1 else 1 for x in l]
+            if self.algoName == "AP":
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+            elif self.algoName == "SC":
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+            
+            
+            l = c.labels_
+            X["y"] = y
+            X["l"] = l
+            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
 
-            with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
-                writer = csv.writer(f)
-                writer.writerows(zip(y, l))
+        # if mode == "B":
+        #     ll = []
+        #     for c in self.models:
+        #         ll.append(c.predict(X))
 
-        if mode == "B":
-            ll = []
-            for c in self.models:
-                ll.append(c.predict(X))
-
-            if self.algoName == "OCSVM":
-                c = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
-                              shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-            elif self.algoName == "LOF":
-                c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
-                                            n_jobs=parameter[5], novelty=1).fit(X)
-            elif self.algoName == "EE":
-                c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
+        #     if self.algoName == "OCSVM":
+        #         c = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
+        #                       shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
+        #     elif self.algoName == "LOF":
+        #         c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
+        #                                     n_jobs=parameter[5], novelty=1).fit(X)
+        #     elif self.algoName == "EE":
+        #         c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
             
-            l = c.predict(X)
+        #     l = c.predict(X)
             
-            l = [x*5 for x in l]
+        #     l = [x*5 for x in l]
             
-            ll.append(l)
+        #     ll.append(l)
             
-            self.models.append(c)
+        #     self.models.append(c)
             
-            ll = np.array(ll)
-            ll = ll.mean(axis=0)
+        #     ll = np.array(ll)
+        #     ll = ll.mean(axis=0)
             
-            ll = [0 if x > 0 else 1 for x in ll]
-            with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
-                writer = csv.writer(f)
-                writer.writerows(zip(y, ll))
+        #     ll = [0 if x > 0 else 1 for x in ll]
+        #     with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
+        #         writer = csv.writer(f)
+        #         writer.writerows(zip(y, ll))
                     
     
     def AUL_F1(self):
@@ -272,9 +280,22 @@ class AUL_Clustering:
         return ari
     
     def run(self, mode):
+        t0 = time.time()
+        batch_count = 1000
+        self.subSample(batch_count)
+        self.determineParam("ARI", "KM")
+        batch_count = 1000
+        self.subSample(batch_count)
+        self.rerun(mode, batch_count)
+        t1 = time.time()
+        # ari_ss = self.AUL_F1()
+        time_ss = t1-t0 
+        return 0, 0
+        # return ari_ss, time_ss
+    
+    def DetermineOptimalComparisonAlgorithm(self, mode):
         comparison_modes = ["ARI", "ARI_T"]
-        comparison_mode_algos = ["LOF", "OCSVM", "IF", "EE"]
-        # str_cmodes = "Filename"
+        comparison_mode_algos = ["KM", "HAC", "DBS"]
         str_values = self.fileName
         for cma in comparison_mode_algos:
             for cm in comparison_modes:
@@ -289,8 +310,6 @@ class AUL_Clustering:
                 t1 = time.time()
                 f1_ss = self.AUL_F1()
                 time_ss = t1-t0 
-                # str_cmodes=str_cmodes+",F1_"+cm+cma+",Time_"+cm+cma
-                
                 str_values=str_values+","+str(f1_ss)+","+str(time_ss)
         
         f=open("Stats/"+self.algoName+"_SubsampleAlgoComp.csv", "a")
@@ -298,7 +317,6 @@ class AUL_Clustering:
         f.close()
         print(str_values)
         return f1_ss, time_ss
-        
     
     
 def algo_parameters(algo):
@@ -369,25 +387,25 @@ if __name__ == '__main__':
     
     for file in master_files:
         print(file)
-        try:
-            parameters = algo_parameters(algorithm)
-            algoRun = AUL_Clustering(parameters, file, algorithm)
-            # algoRun.readData_arff()
-            tooLarge = algoRun.readData()
-            if tooLarge:
-                continue
-            # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
-            f1_ss, time_ss = algoRun.run("B")
-            print("Best Parameters: ", algoRun.bestParams)
-            f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-            algoRun.destroy()
-            
-            # # WRITE TO FILE
-            # f=open("Stats/"+algorithm+".csv", "a")
-            # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
-            # f.close()
-                
-        except:
-            print("Fail")
+        # try:
+        parameters = algo_parameters(algorithm)
+        algoRun = AUL_Clustering(parameters, file, algorithm)
+        # # algoRun.readData_arff()
+        tooLarge = algoRun.readData()
+        if tooLarge:
+            continue
+        # # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
+        f1_ss, time_ss = algoRun.run("A")
+        print("Best Parameters: ", algoRun.bestParams)
+        # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+        # algoRun.destroy()
+        
+        # # WRITE TO FILE
+        # f=open("Stats/"+algorithm+".csv", "a")
+        # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
+        # f.close()
+        break
+        # except:
+        #     print("Fail")
     
         
