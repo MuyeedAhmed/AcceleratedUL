@@ -194,9 +194,13 @@ class AUL_Clustering:
         
         threads = []
         batch_index = 0
+
+        global_centers = []
+        global_centers_frequency = []
+        global_centers_count = 0
         
         for _ in range(5):
-            for _ in range(10):
+            for _ in range(5):
                 if batch_index >= batch_count-1:
                     break
                 t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, mode))
@@ -206,18 +210,79 @@ class AUL_Clustering:
             for t in threads:
                 t.join()
             
-            # # Read batch outputs and merge
-            # df_csv_append = pd.DataFrame()
-            # csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
-            # for file in csv_files:
-            #     df = pd.read_csv(file, header=None)
-            #     df_csv_append = pd.concat([df_csv_append, df])
-            #     # df_csv_append = df_csv_append.append(df, ignore_index=True)
-            # yy = df_csv_append[0].tolist()
-            # ll = df_csv_append[1].tolist()
-            # ari = adjusted_rand_score(yy, ll)
-            # # print("Accelerated F1: ",f1)
-            # return ari
+        # Read batch outputs and merge
+        df_csv_append = pd.DataFrame()
+        
+        csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+        
+        for file in csv_files:
+            df = pd.read_csv(file)
+            X_c = df.drop(["y", "l"], axis=1).to_numpy()
+            labels = df["l"].to_numpy()
+            unique_labels = set(df["l"])
+            if len(unique_labels) == 1:
+                df_csv_append = pd.concat([df_csv_append, df])
+                continue
+            if global_centers_count == 0:
+                global_centers_count = len(unique_labels)
+                for i in unique_labels:
+                    global_centers.append(X_c[labels == i].mean(axis=0))
+                    global_centers_frequency.append(len(X_c[labels == i]))
+                df_csv_append = pd.concat([df_csv_append, df])
+                # print("global_centers")
+                # print(global_centers)
+                # print("global_centers_frequency")
+                # print(global_centers_frequency)
+                
+                continue                        
+            
+            df["ll"] = -2
+        
+            for i in unique_labels:
+                c = X_c[labels == i].mean(axis=0)
+                distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
+                sorted_distance = sorted(distances)
+                ratio = sorted_distance[0]/sorted_distance[1]
+                if ratio > 0.8:
+                    new_i = distances.index(sorted_distance[0])
+                    
+                    number_of_local_points_in_cluster_i = len(X_c[labels == i])
+                    number_of_global_points_in_cluster_i = global_centers_frequency[new_i]
+                    # print("Counts", number_of_local_points_in_cluster_i, number_of_global_points_in_cluster_i)
+                    new_number_of_global_points_in_cluster_i = number_of_local_points_in_cluster_i+number_of_global_points_in_cluster_i
+                    # print("global_centers")
+                    
+                    # print(global_centers)
+                    
+                    # print("global_centers_prev")
+                    # print(global_centers[new_i])
+                    # print(c)
+                    global_centers[new_i] = (global_centers[new_i]*number_of_global_points_in_cluster_i + c*number_of_local_points_in_cluster_i)/new_number_of_global_points_in_cluster_i
+                    global_centers_frequency[new_i] = new_number_of_global_points_in_cluster_i
+                    # print("global_centers_new")
+                    # print(global_centers[new_i])
+                    # time.sleep(100)    
+                else:
+                    new_i = global_centers_count
+                    global_centers_count += 1
+                    global_centers.append(c)
+                    global_centers_frequency.append(len(X_c[labels == i]))
+                    print(global_centers_count, end=" ")
+                    
+                df.loc[df['l'] == i, 'll'] = new_i                    
+            
+            df = df.drop("l", axis=1)
+            df = df.rename(columns={'ll': 'l'})
+            df_csv_append = pd.concat([df_csv_append, df])
+        
+        
+        yy = df_csv_append["y"].tolist()
+        ll = df_csv_append["l"].tolist()
+        ari = adjusted_rand_score(yy, ll)
+       
+        print("rerun ari: ", ari)
+            
+
             
     def worker_rerun(self, parameter, X, y, batch_index, mode):
         if mode == "A":
@@ -398,7 +463,7 @@ if __name__ == '__main__':
         f1_ss, time_ss = algoRun.run("A")
         print("Best Parameters: ", algoRun.bestParams)
         # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-        # algoRun.destroy()
+        algoRun.destroy()
         
         # # WRITE TO FILE
         # f=open("Stats/"+algorithm+".csv", "a")
