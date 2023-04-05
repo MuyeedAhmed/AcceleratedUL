@@ -79,6 +79,7 @@ class AUL_Clustering:
         
     def subSample(self, batch_count):
         batch_size = int(len(self.X)/batch_count)
+        print(batch_size)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
         
@@ -199,8 +200,8 @@ class AUL_Clustering:
         global_centers_frequency = []
         global_centers_count = 0
         
-        for _ in range(5):
-            for _ in range(5):
+        for _ in range(50):
+            for _ in range(20):
                 if batch_index >= batch_count-1:
                     break
                 t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, mode))
@@ -356,6 +357,7 @@ class AUL_Clustering:
         # ari_ss = self.AUL_F1()
         time_ss = t1-t0 
         return 0, 0
+        print("Time: ", time_ss)
         # return ari_ss, time_ss
     
     def DetermineOptimalComparisonAlgorithm(self, mode):
@@ -450,27 +452,44 @@ if __name__ == '__main__':
     #     f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
     #     f.close()
     
-    for file in master_files:
-        print(file)
-        # try:
-        parameters = algo_parameters(algorithm)
-        algoRun = AUL_Clustering(parameters, file, algorithm)
-        # # algoRun.readData_arff()
-        tooLarge = algoRun.readData()
-        if tooLarge:
-            continue
-        # # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
-        f1_ss, time_ss = algoRun.run("A")
-        print("Best Parameters: ", algoRun.bestParams)
-        # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-        algoRun.destroy()
+    # for file in master_files:
+    #     print(file)
+    #     # try:
+    #     parameters = algo_parameters(algorithm)
+    #     algoRun = AUL_Clustering(parameters, file, algorithm)
+    #     # # algoRun.readData_arff()
+    #     tooLarge = algoRun.readData()
+    #     if tooLarge:
+    #         continue
+    #     # # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
+    #     f1_ss, time_ss = algoRun.run("A")
+    #     print("Best Parameters: ", algoRun.bestParams)
+    #     # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+    #     algoRun.destroy()
         
-        # # WRITE TO FILE
-        # f=open("Stats/"+algorithm+".csv", "a")
-        # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
-        # f.close()
-        break
-        # except:
-        #     print("Fail")
+    #     # # WRITE TO FILE
+    #     # f=open("Stats/"+algorithm+".csv", "a")
+    #     # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
+    #     # f.close()
+    #     break
+    #     # except:
+    #     #     print("Fail")
     
-        
+    file = "mnist"
+    parameters = algo_parameters(algorithm)
+    algoRun = AUL_Clustering(parameters, file, algorithm)
+    # # algoRun.readData_arff()
+    tooLarge = algoRun.readData()
+    
+    # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
+    # print("Default - ", f1_wd, time_wd)
+    f1_ss, time_ss = algoRun.run("A")
+    print("Best Parameters: ", algoRun.bestParams)
+    # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+    algoRun.destroy()
+    
+    # # WRITE TO FILE
+    # f=open("Stats/"+algorithm+".csv", "a")
+    # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
+    # f.close()
+    
