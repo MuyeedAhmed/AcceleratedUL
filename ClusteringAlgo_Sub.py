@@ -7,8 +7,6 @@ import numpy as np
 from sklearn.metrics.cluster import adjusted_rand_score
 import time
 from sklearn.utils import shuffle
-import csv
-from scipy.io import arff
 import threading
 # from memory_profiler import profile
 import warnings 
@@ -43,6 +41,12 @@ class AUL_Clustering:
         
         self.n_cluster = n_cluster
         
+        self.determine_param_mode = "ARI"
+        self.determine_param_clustering_algo = "KM"
+        self.rerun_mode = "A"
+        self.AD_algo_merge = "LOF"
+        
+        
         if os.path.isdir("Output/") == 0:    
             os.mkdir("Output")
             os.mkdir("Output/Temp")
@@ -61,22 +65,14 @@ class AUL_Clustering:
         if "target" in df.columns:
             self.y=df["target"].to_numpy()
             self.X=df.drop("target", axis=1)
-        elif "outlier" in df.columns:
-            self.y=df["outlier"].to_numpy()
-            self.X=df.drop("outlier", axis=1)
+        elif "class" in df.columns:
+            self.y=df["class"].to_numpy()
+            self.X=df.drop("class", axis=1)
         else:
-            print("Ground Truth not found")
+            print("Ground Truth not found. Please set the ground truth as \"class\" or \"target\" ")
         
         return False
     
-    def readData_arff(self):
-        data = arff.loadarff(datasetFolderDir+self.fileName+".arff")
-        df = pd.DataFrame(data[0])
-        df["outlier"] = df["outlier"].str.decode("utf-8")
-        df["outlier"] = pd.Series(np.where(df.outlier.values == "yes", 1, 0),df.index)
-        self.y=df["outlier"].to_numpy()
-        self.X=df.drop("outlier", axis=1)
-        
     def subSample(self, batch_count):
         batch_size = int(len(self.X)/batch_count)
         print(batch_size)
@@ -120,7 +116,7 @@ class AUL_Clustering:
             print("ARI: ", ari, " and Time: ", t1-t0)
         return ari, t1-t0
             
-    def determineParam(self, comparison_mode, comparison_mode_algo):
+    def determineParam(self):
         batch_index = 0
         for params in self.parameters:
             threads = []
@@ -131,7 +127,7 @@ class AUL_Clustering:
             for p_v in params[2]:
                 params[1] = p_v
                 parameters_to_send = [p[1] for p in self.parameters]
-                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, comparison_mode_algo))
+                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
                 threads.append(t)
                 t.start()
                 batch_index += 1
@@ -139,9 +135,9 @@ class AUL_Clustering:
                 t.join()
             df = pd.read_csv("Output/Rank.csv")
             
-            if comparison_mode == "ARI_T":
+            if self.determine_param_mode == "ARI_T":
                 df["W"] = df.Compare/df.Time
-            elif comparison_mode == "ARI":
+            elif self.determine_param_mode == "ARI":
                 df["W"] = df.Compare
             
             h_r = df["W"].idxmax()
@@ -149,7 +145,7 @@ class AUL_Clustering:
             
         self.bestParams = [p[1] for p in self.parameters]
     
-    def worker_determineParam(self, parameter, X, y, batch_index, comparison_mode_algo):        
+    def worker_determineParam(self, parameter, X, y, batch_index):        
         t0 = time.time()
         if self.algoName == "AP":
             c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
@@ -163,24 +159,24 @@ class AUL_Clustering:
         t1 = time.time()
         cost = t1-t0
     
-        ari_comp = self.getARI_Comp(X, l, comparison_mode_algo)
+        ari_comp = self.getARI_Comp(X, l)
         print(batch_index, ari_comp)
         saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
     
-    def getARI_Comp(self, X, l, algo):
+    def getARI_Comp(self, X, l):
         # Check if all the labels are -1
         if all(v == -1 for v in l):
             return -1
         n = len(set(l))
         
-        if algo == "KM":
+        if self.determine_param_clustering_algo == "KM":
             c = KMeans(n_clusters=n, n_init="auto").fit(X)
-        elif algo == "DBS":
+        elif self.determine_param_clustering_algo == "DBS":
             c = DBSCAN().fit(X)
-        elif algo == "HAC":
+        elif self.determine_param_clustering_algo == "HAC":
             c = AgglomerativeClustering(n_clusters = n).fit(X)
             
         a_l = c.labels_
@@ -188,21 +184,22 @@ class AUL_Clustering:
         return ari
             
     
-    def rerun(self, mode, batch_count):
+    def rerun(self, batch_count):
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
         
         threads = []
         batch_index = 0
-
-        
-        
-        for _ in range(50):
-            for _ in range(20):
+        done = False
+        while True:
+            if done:
+                break
+            for _ in range(10):
                 if batch_index == batch_count:
+                    done = True
                     break
-                t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, mode))
+                t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
                 threads.append(t)
                 t.start()
                 batch_index += 1
@@ -294,11 +291,12 @@ class AUL_Clustering:
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         df = pd.read_csv(csv_files[0])
         
+        df.to_csv("ClusteringOutput/"+self.fileName+".csv", index=False)
+        
         X_ = df.drop(["y", "l"], axis=1).to_numpy()
         labels = df["l"].to_numpy()
         unique_labels = set(df["l"])
         print(unique_labels)
-        
         
         yy = df["y"].tolist()
         ll = df["l"].tolist()
@@ -371,8 +369,8 @@ class AUL_Clustering:
             
 
             
-    def worker_rerun(self, parameter, X, y, batch_index, mode):
-        if mode == "A":
+    def worker_rerun(self, parameter, X, y, batch_index):
+        if self.rerun_mode == "A":
             if self.algoName == "AP":
                 c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
             elif self.algoName == "SC":
@@ -435,15 +433,15 @@ class AUL_Clustering:
         t0 = time.time()
         batch_count = 100
         self.subSample(batch_count)
-        self.determineParam("ARI", "KM")
+        self.determineParam()
         batch_count = 100
         self.subSample(batch_count)
-        self.rerun(mode, batch_count)
+        self.rerun(batch_count)
         t1 = time.time()
         # ari_ss = self.AUL_F1()
         time_ss = t1-t0 
-        return 0, 0
         print("Time: ", time_ss)
+        return 0, 0
         # return ari_ss, time_ss
     
     def DetermineOptimalComparisonAlgorithm(self, mode):
@@ -564,7 +562,6 @@ if __name__ == '__main__':
     file = "mnist"
     parameters = algo_parameters(algorithm)
     algoRun = AUL_Clustering(parameters, file, algorithm)
-    # # algoRun.readData_arff()
     tooLarge = algoRun.readData()
     
     # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
