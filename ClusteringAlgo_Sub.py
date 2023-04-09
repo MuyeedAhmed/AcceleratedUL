@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 
 
 # from sklearn.ensemble import IsolationForest
-# from sklearn.neighbors import LocalOutlierFactor
+from sklearn.neighbors import LocalOutlierFactor
 # from sklearn.svm import OneClassSVM
 # from sklearn.covariance import EllipticEnvelope
 from sklearn.cluster import AffinityPropagation
@@ -196,13 +196,11 @@ class AUL_Clustering:
         threads = []
         batch_index = 0
 
-        global_centers = []
-        global_centers_frequency = []
-        global_centers_count = 0
+        
         
         for _ in range(50):
             for _ in range(20):
-                if batch_index >= batch_count-1:
+                if batch_index == batch_count:
                     break
                 t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, mode))
                 threads.append(t)
@@ -210,8 +208,110 @@ class AUL_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
+        self.mergeClusteringOutputs_AD()
+        
+    def mergeClusteringOutputs_AD(self):
+        
+        csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+        csv_files.sort()
+
+        while len(csv_files) > 1:
+            for i in range(0, len(csv_files)-1, 2):
+                file1 = csv_files[i]
+                file2 = csv_files[i+1]
+                df1 = pd.read_csv(file1)
+                df2 = pd.read_csv(file2)
+                
+                os.remove(file1)
+                os.remove(file2)
+                
+                X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
+                labels1 = df1["l"].to_numpy()
+                unique_labels1 = set(df1["l"])
+                
+                X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
+                labels2 = df2["l"].to_numpy()
+                unique_labels2 = set(df2["l"])
+                
+                
+                if len(unique_labels1) == 1 and len(unique_labels2) == 1:
+                    df = pd.concat([df1, df2])
+                    df.to_csv(file2, index=False)
+                    continue
+                #     models=[]
+                #     for i in unique_labels1:
+                #         v_i = X_1[labels1 == i]
+                #         clf = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(v_i)
+                #         models.append(clf)
+                #     for j in unique_labels2:
+                #         v_j = X_2[labels2 == j]
+                #         mean_scores = []
+                #         for m in models:
+                #             lof_predict = m.predict(v_j)
+                #             mean_scores.append(np.mean(lof_predict))
+                #         print("lof_predict", mean_scores)
+                global_centers = []
+                global_centers_frequency = []
+
+                global_centers_count = len(unique_labels1)
+                for i in unique_labels1:
+                    global_centers.append(X_1[labels1 == i].mean(axis=0))
+                    global_centers_frequency.append(len(X_1[labels1 == i]))
+                
+                df2["ll"] = -2
+                
+                for i in unique_labels2:
+                    c = X_2[labels2 == i].mean(axis=0)
+                    
+                    distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
+                    
+                    nearest_cluster = distances.index(min(distances))
+                    
+                    # Check using AD
+                    X_train = X_1[labels1 == nearest_cluster]
+                    X_test = X_2[labels2 == i]
+                    
+                    clf = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+                    predict = clf.predict(X_test)
+                    if np.mean(predict) > 0:
+                        # TODO: Edit centers
+                        new_i2 = nearest_cluster
+                    else:
+                        new_i2 = global_centers_count
+                        global_centers_count += 1
+                        # TODO: Add the new cluster info to the global
+                    df2.loc[df2['l'] == i, 'll'] = new_i2
+                
+                df2 = df2.drop("l", axis=1)
+                df2 = df2.rename(columns={'ll': 'l'})
+                
+                df = pd.concat([df1, df2])
+                df.to_csv(file2, index=False)
             
+            csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+            csv_files.sort()
+            
+        csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+        df = pd.read_csv(csv_files[0])
+        
+        X_ = df.drop(["y", "l"], axis=1).to_numpy()
+        labels = df["l"].to_numpy()
+        unique_labels = set(df["l"])
+        print(unique_labels)
+        
+        
+        yy = df["y"].tolist()
+        ll = df["l"].tolist()
+        ari = adjusted_rand_score(yy, ll)
+       
+        print("rerun ari: ", ari)
+        
+        
+    def mergeClusteringOutputs_DistRatio(self):
         # Read batch outputs and merge
+        global_centers = []
+        global_centers_frequency = []
+        global_centers_count = 0
         df_csv_append = pd.DataFrame()
         
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
@@ -230,39 +330,26 @@ class AUL_Clustering:
                     global_centers.append(X_c[labels == i].mean(axis=0))
                     global_centers_frequency.append(len(X_c[labels == i]))
                 df_csv_append = pd.concat([df_csv_append, df])
-                # print("global_centers")
-                # print(global_centers)
-                # print("global_centers_frequency")
-                # print(global_centers_frequency)
-                
                 continue                        
             
             df["ll"] = -2
         
             for i in unique_labels:
                 c = X_c[labels == i].mean(axis=0)
+
                 distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
                 sorted_distance = sorted(distances)
                 ratio = sorted_distance[0]/sorted_distance[1]
-                if ratio > 0.8:
+                if ratio < 0.9:
+                    
                     new_i = distances.index(sorted_distance[0])
                     
                     number_of_local_points_in_cluster_i = len(X_c[labels == i])
                     number_of_global_points_in_cluster_i = global_centers_frequency[new_i]
-                    # print("Counts", number_of_local_points_in_cluster_i, number_of_global_points_in_cluster_i)
                     new_number_of_global_points_in_cluster_i = number_of_local_points_in_cluster_i+number_of_global_points_in_cluster_i
-                    # print("global_centers")
-                    
-                    # print(global_centers)
-                    
-                    # print("global_centers_prev")
-                    # print(global_centers[new_i])
-                    # print(c)
+
                     global_centers[new_i] = (global_centers[new_i]*number_of_global_points_in_cluster_i + c*number_of_local_points_in_cluster_i)/new_number_of_global_points_in_cluster_i
                     global_centers_frequency[new_i] = new_number_of_global_points_in_cluster_i
-                    # print("global_centers_new")
-                    # print(global_centers[new_i])
-                    # time.sleep(100)    
                 else:
                     new_i = global_centers_count
                     global_centers_count += 1
@@ -271,11 +358,10 @@ class AUL_Clustering:
                     print(global_centers_count, end=" ")
                     
                 df.loc[df['l'] == i, 'll'] = new_i                    
-            
+                # time.sleep(5)
             df = df.drop("l", axis=1)
             df = df.rename(columns={'ll': 'l'})
             df_csv_append = pd.concat([df_csv_append, df])
-        
         
         yy = df_csv_append["y"].tolist()
         ll = df_csv_append["l"].tolist()
@@ -347,10 +433,10 @@ class AUL_Clustering:
     
     def run(self, mode):
         t0 = time.time()
-        batch_count = 1000
+        batch_count = 100
         self.subSample(batch_count)
         self.determineParam("ARI", "KM")
-        batch_count = 1000
+        batch_count = 100
         self.subSample(batch_count)
         self.rerun(mode, batch_count)
         t1 = time.time()
