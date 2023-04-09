@@ -205,7 +205,8 @@ class AUL_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
-        self.mergeClusteringOutputs_AD()
+        # self.mergeClusteringOutputs_AD()
+        self.mergeClusteringOutputs_DistRatio()
         
     def mergeClusteringOutputs_AD(self):
         
@@ -338,7 +339,7 @@ class AUL_Clustering:
                 distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
                 sorted_distance = sorted(distances)
                 ratio = sorted_distance[0]/sorted_distance[1]
-                if ratio < 0.9:
+                if ratio < 0.75:
                     
                     new_i = distances.index(sorted_distance[0])
                     
@@ -353,10 +354,8 @@ class AUL_Clustering:
                     global_centers_count += 1
                     global_centers.append(c)
                     global_centers_frequency.append(len(X_c[labels == i]))
-                    print(global_centers_count, end=" ")
                     
                 df.loc[df['l'] == i, 'll'] = new_i                    
-                # time.sleep(5)
             df = df.drop("l", axis=1)
             df = df.rename(columns={'ll': 'l'})
             df_csv_append = pd.concat([df_csv_append, df])
@@ -364,11 +363,29 @@ class AUL_Clustering:
         yy = df_csv_append["y"].tolist()
         ll = df_csv_append["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
-       
+        print("Total clusters: ", global_centers_count)
         print("rerun ari: ", ari)
+        
+        # Cluster of clusters
+        df_csv_append["lll"] = -2
+        if global_centers_count > 100:
+            c = AffinityPropagation(damping=0.5).fit(global_centers)
+            l = c.labels_
             
-
-            
+            if len(set(l)) > 1:
+                for i in range(global_centers_count):
+                    df_csv_append.loc[df_csv_append['l'] == i, 'lll'] = l[i]
+                df_csv_append = df_csv_append.drop("l", axis=1)
+                df_csv_append = df_csv_append.rename(columns={'lll': 'l'})
+        
+            yy = df_csv_append["y"].tolist()
+            ll = df_csv_append["l"].tolist()
+            ari = adjusted_rand_score(yy, ll)
+            print("Total clusters: ", len(set(l)))
+            print("rerun ari: ", ari)
+        
+        df_csv_append.to_csv("ClusteringOutput/"+self.fileName+".csv", index=False)
+        
     def worker_rerun(self, parameter, X, y, batch_index):
         if self.rerun_mode == "A":
             if self.algoName == "AP":
