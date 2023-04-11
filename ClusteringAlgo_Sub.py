@@ -12,6 +12,7 @@ import threading
 import warnings 
 warnings.filterwarnings("ignore")
 
+import multiprocessing
 
 
 # from sklearn.ensemble import IsolationForest
@@ -25,7 +26,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
 # datasetFolderDir = '../Dataset/Small/'
-datasetFolderDir = 'Temp/'
+# datasetFolderDir = 'Temp/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
@@ -57,9 +59,13 @@ class AUL_Clustering:
         
         
     def readData(self):
-        df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
-        # if df.shape[0] > 100000:
-        #     return True
+        try:
+            df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
+        except:
+            print("File Doesn't Exist!")
+            return True
+        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
+            return True
         
         df = shuffle(df)
         if "target" in df.columns:
@@ -70,18 +76,44 @@ class AUL_Clustering:
             self.X=df.drop("class", axis=1)
         else:
             print("Ground Truth not found. Please set the ground truth as \"class\" or \"target\" ")
+            
+        # print(self.fileName, df.shape, (os.path.getsize(datasetFolderDir+self.fileName+".csv") >> 20))
         
         return False
     
     def subSample(self, batch_count):
         batch_size = int(len(self.X)/batch_count)
-        print(batch_size)
+        # print(batch_size)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
-        
+    
     def runWithoutSubsampling(self, mode):
+        df = pd.read_csv("ClusteringOutput/"+self.fileName+".csv")
+        
+        self.y=df["y"].to_numpy()
+        self.X=df.drop("y", axis=1)
+        
+        t0 = time.time()
+        p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
+        p.start()
+        p.join(timeout=7200)
+        t1 = time.time()
+        
+        if p.is_alive():
+            p.terminate()
+            print("Terminated")
+            return 0, 0, 7200
+        else:
+            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_WDL.csv")
+            ari = adjusted_rand_score(df["Default_labels"], df["l"])
+            ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
+            return ari, ari_wd, t1-t0
+    
+    def runWithoutSubsampling_w(self, mode):
+        l_ss = self.X["l"].to_numpy()
+        self.X = self.X.drop("l", axis=1)
         if mode == "default":
-            t0 = time.time()
+            # t0 = time.time()
             
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(self.X)
@@ -90,16 +122,20 @@ class AUL_Clustering:
             
                 
             l = c.labels_
-            t1 = time.time()
-            ari = adjusted_rand_score(self.y, l)
-            print("Default--")
-            print("ARI: ", ari, " and Time: ", t1-t0)
+            # t1 = time.time()
+            # ari = adjusted_rand_score(self.y, l)
+            # print("Default--")
+            # print("ARI: ", ari, " and Time: ", t1-t0)
+            self.X["y"] = self.y
+            self.X["l"] = l_ss
+            self.X["Default_labels"] = l
+            self.X.to_csv("ClusteringOutput/"+self.fileName+"_WDL.csv")
             
         if mode == "optimized":
             if self.bestParams == []:
                 print("Calculate the paramters first.")
                 return
-            t0 = time.time()
+            # t0 = time.time()
             
             if self.algoName == "AP":
                 c = AffinityPropagation(damping=self.bestParams[0], max_iter=self.bestParams[1], convergence_iter=self.bestParams[2]).fit(self.X)
@@ -110,12 +146,14 @@ class AUL_Clustering:
                                        degree=self.bestParams[7], n_jobs=self.bestParams[8]).fit(self.X)
             
             l = c.labels_
-            t1 = time.time()
-            ari = adjusted_rand_score(self.y, l)
-            print("Whole dataset with best parameters--")
-            print("ARI: ", ari, " and Time: ", t1-t0)
-        return ari, t1-t0
-            
+            # t1 = time.time()
+            # ari = adjusted_rand_score(self.y, l)
+            # print("Whole dataset with best parameters--")
+            # print("ARI: ", ari, " and Time: ", t1-t0)
+        
+        
+        # return ari, t1-t0
+    
     def determineParam(self):
         batch_index = 0
         for params in self.parameters:
@@ -160,7 +198,7 @@ class AUL_Clustering:
         cost = t1-t0
     
         ari_comp = self.getARI_Comp(X, l)
-        print(batch_index, ari_comp)
+        # print(batch_index, ari_comp)
         saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
@@ -205,8 +243,8 @@ class AUL_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
-        # self.mergeClusteringOutputs_AD()
-        self.mergeClusteringOutputs_DistRatio()
+        self.mergeClusteringOutputs_AD()
+        # self.mergeClusteringOutputs_DistRatio()
         
     def mergeClusteringOutputs_AD(self):
         
@@ -268,9 +306,12 @@ class AUL_Clustering:
                     # Check using AD
                     X_train = X_1[labels1 == nearest_cluster]
                     X_test = X_2[labels2 == i]
-                    
-                    clf = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
-                    predict = clf.predict(X_test)
+                    if len(X_train) == 1:
+                        new_i2 = global_centers_count
+                        global_centers_count += 1
+                        continue
+                    ad = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+                    predict = ad.predict(X_test)
                     if np.mean(predict) > 0:
                         # TODO: Edit centers
                         new_i2 = nearest_cluster
@@ -294,16 +335,16 @@ class AUL_Clustering:
         
         df.to_csv("ClusteringOutput/"+self.fileName+".csv", index=False)
         
-        X_ = df.drop(["y", "l"], axis=1).to_numpy()
-        labels = df["l"].to_numpy()
-        unique_labels = set(df["l"])
-        print(unique_labels)
+        # X_ = df.drop(["y", "l"], axis=1).to_numpy()
+        # labels = df["l"].to_numpy()
+        # unique_labels = set(df["l"])
+        # print(unique_labels)
         
-        yy = df["y"].tolist()
-        ll = df["l"].tolist()
-        ari = adjusted_rand_score(yy, ll)
+        # yy = df["y"].tolist()
+        # ll = df["l"].tolist()
+        # ari = adjusted_rand_score(yy, ll)
        
-        print("rerun ari: ", ari)
+        # print("rerun ari: ", ari)
         
         
     def mergeClusteringOutputs_DistRatio(self):
@@ -433,33 +474,32 @@ class AUL_Clustering:
         #         writer.writerows(zip(y, ll))
                     
     
-    def AUL_F1(self):
-        df_csv_append = pd.DataFrame()
-        csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
-        for file in csv_files:
-            df = pd.read_csv(file, header=None)
-            df_csv_append = pd.concat([df_csv_append, df])
-            # df_csv_append = df_csv_append.append(df, ignore_index=True)
-        yy = df_csv_append[0].tolist()
-        ll = df_csv_append[1].tolist()
+    def AUL_ARI(self):
+        df = pd.read_csv("ClusteringOutput/"+self.fileName+".csv")
+        
+        yy = df["y"].tolist()
+        ll = df["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
-        # print("Accelerated F1: ",f1)
+       
         return ari
     
-    def run(self, mode):
+    def run(self):
         t0 = time.time()
-        batch_count = 100
+        if self.X.shape[0] < 100000:    
+            batch_count = 100
+        else:
+            batch_count = int(self.X.shape[0]/100000)*100
         self.subSample(batch_count)
         self.determineParam()
-        batch_count = 100
+        # batch_count = 100
         self.subSample(batch_count)
         self.rerun(batch_count)
         t1 = time.time()
-        # ari_ss = self.AUL_F1()
+        ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
-        print("Time: ", time_ss)
-        return 0, 0
-        # return ari_ss, time_ss
+        # print("Time: ", time_ss)
+        # return 0, 0
+        return ari_ss, time_ss
     
     def DetermineOptimalComparisonAlgorithm(self, mode):
         comparison_modes = ["ARI", "ARI_T"]
@@ -533,63 +573,59 @@ if __name__ == '__main__':
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
-    # if os.path.exists("Stats/"+algorithm+".csv"):
-    #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
-    #     done_files = done_files["Filename"].to_numpy()
-    #     # print(done_files)
-    #     master_files = [x for x in master_files if x not in done_files]
+    if os.path.exists("Stats/"+algorithm+".csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+".csv")
+        done_files = done_files["Filename"].to_numpy()
+        # print(done_files)
+        master_files = [x for x in master_files if x not in done_files]
     
-    master_files.sort()
+    master_files.sort(reverse=True)
     # print(master_files)
     
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
-        f.write('Filename,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
+        f.write('Filename,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
         f.close()
     
     # if os.path.exists("Stats/"+algorithm+"_SubsampleAlgoComp.csv") == 0:
     #     f=open("Stats/"+algorithm+"_SubsampleAlgoComp.csv", "w")
     #     f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
     #     f.close()
-    
-    # for file in master_files:
-    #     print(file)
-    #     # try:
-    #     parameters = algo_parameters(algorithm)
-    #     algoRun = AUL_Clustering(parameters, file, algorithm)
-    #     # # algoRun.readData_arff()
-    #     tooLarge = algoRun.readData()
-    #     if tooLarge:
-    #         continue
-    #     # # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
-    #     f1_ss, time_ss = algoRun.run("A")
-    #     print("Best Parameters: ", algoRun.bestParams)
-    #     # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-    #     algoRun.destroy()
+    count = 0    
+    for file in master_files:
         
-    #     # # WRITE TO FILE
-    #     # f=open("Stats/"+algorithm+".csv", "a")
-    #     # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
-    #     # f.close()
-    #     break
-    #     # except:
-    #     #     print("Fail")
+        # try:
+        parameters = algo_parameters(algorithm)
+        
+        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+        skip = algoRun_ss.readData()
+        if skip:
+            continue
+        
+        print(file)
+        
+        ari_ss, time_ss = algoRun_ss.run()
+        print(ari_ss, time_ss)
+        # # print("Best Parameters: ", algoRun.bestParams)
+        algoRun_ss.destroy()
+        del algoRun_ss
+        
+        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+        algoRun_ws.destroy()
+        
+        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+        
+        # # WRITE TO FILE
+        f=open("Stats/"+algorithm+".csv", "a")
+        f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+        # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+        f.close()
+            
+        # except:
+        #     print("Fail")
     
-    file = "mnist"
-    parameters = algo_parameters(algorithm)
-    algoRun = AUL_Clustering(parameters, file, algorithm)
-    tooLarge = algoRun.readData()
     
-    # f1_wd, time_wd = algoRun.runWithoutSubsampling("default")
-    # print("Default - ", f1_wd, time_wd)
-    f1_ss, time_ss = algoRun.run("A")
-    print("Best Parameters: ", algoRun.bestParams)
-    # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-    algoRun.destroy()
     
-    # # WRITE TO FILE
-    # f=open("Stats/"+algorithm+".csv", "a")
-    # f.write(file+','+str(f1_wd)+','+str(time_wd)+','+str(f1_ss)+','+str(time_ss)+','+str(f1_wo)+','+str(time_wo) +'\n')
-    # f.close()
     
