@@ -491,9 +491,11 @@ class AUL_Clustering:
         else:
             batch_count = int(self.X.shape[0]/100000)*100
         self.subSample(batch_count)
+        print("Determine Parameters")
         self.determineParam()
         # batch_count = 100
         self.subSample(batch_count)
+        print("Rerun")
         self.rerun(batch_count)
         t1 = time.time()
         ari_ss = self.AUL_ARI()
