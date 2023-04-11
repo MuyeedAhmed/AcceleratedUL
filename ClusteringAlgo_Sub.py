@@ -309,6 +309,7 @@ class AUL_Clustering:
                     if len(X_train) == 1:
                         new_i2 = global_centers_count
                         global_centers_count += 1
+                        df2.loc[df2['l'] == i, 'll'] = new_i2
                         continue
                     ad = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
                     predict = ad.predict(X_test)
@@ -595,36 +596,36 @@ if __name__ == '__main__':
     count = 0    
     for file in master_files:
         
-        # try:
-        parameters = algo_parameters(algorithm)
-        
-        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-        skip = algoRun_ss.readData()
-        if skip:
-            continue
-        
-        print(file)
-        
-        ari_ss, time_ss = algoRun_ss.run()
-        print(ari_ss, time_ss)
-        # # print("Best Parameters: ", algoRun.bestParams)
-        algoRun_ss.destroy()
-        del algoRun_ss
-        
-        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-        algoRun_ws.destroy()
-        
-        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-        
-        # # WRITE TO FILE
-        f=open("Stats/"+algorithm+".csv", "a")
-        f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-        # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-        f.close()
+        try:
+            parameters = algo_parameters(algorithm)
             
-        # except:
-        #     print("Fail")
+            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+            skip = algoRun_ss.readData()
+            if skip:
+                continue
+            
+            print(file)
+            
+            ari_ss, time_ss = algoRun_ss.run()
+            print(ari_ss, time_ss)
+            # # print("Best Parameters: ", algoRun.bestParams)
+            algoRun_ss.destroy()
+            del algoRun_ss
+            
+            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            algoRun_ws.destroy()
+            
+            # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+            
+            # # WRITE TO FILE
+            f=open("Stats/"+algorithm+".csv", "a")
+            f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+            # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+            f.close()
+            
+        except:
+            print("Fail")
     
     
     
