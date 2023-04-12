@@ -25,7 +25,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-datasetFolderDir = 'jimmy/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = 'Temp/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -211,7 +211,7 @@ class AUL_Clustering:
         n = len(set(l))
         
         if self.determine_param_clustering_algo == "KM":
-            c = KMeans(n_clusters=n, n_init="auto").fit(X)
+            c = KMeans(n_clusters=n, n_init=5).fit(X)
         elif self.determine_param_clustering_algo == "DBS":
             c = DBSCAN().fit(X)
         elif self.determine_param_clustering_algo == "HAC":
@@ -598,37 +598,37 @@ if __name__ == '__main__':
     count = 0    
     for file in master_files:
         
-        try:
-            parameters = algo_parameters(algorithm)
-            
-            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-            skip, shape, size = algoRun_ss.readData()
-            if skip:
-                algoRun_ss.destroy()
-                continue
-            
-            print(file)
-            
-            ari_ss, time_ss = algoRun_ss.run()
-            print(ari_ss, time_ss)
-            # # print("Best Parameters: ", algoRun.bestParams)
+        # try:
+        parameters = algo_parameters(algorithm)
+        
+        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+        skip, shape, size = algoRun_ss.readData()
+        if skip:
             algoRun_ss.destroy()
-            del algoRun_ss
-            print("Start: Default without sampling")
-            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-            algoRun_ws.destroy()
+            continue
+        
+        print(file)
+        
+        ari_ss, time_ss = algoRun_ss.run()
+        print(ari_ss, time_ss)
+        # # print("Best Parameters: ", algoRun.bestParams)
+        algoRun_ss.destroy()
+        del algoRun_ss
+        print("Start: Default without sampling")
+        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+        algoRun_ws.destroy()
+        
+        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+        
+        # # WRITE TO FILE
+        f=open("Stats/"+algorithm+".csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+        # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+        f.close()
             
-            # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-            
-            # # WRITE TO FILE
-            f=open("Stats/"+algorithm+".csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-            # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-            f.close()
-            
-        except:
-            print("Fail")
+        # except:
+        #     print("Fail")
     
         # break
     
