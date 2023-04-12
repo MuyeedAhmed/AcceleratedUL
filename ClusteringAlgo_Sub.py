@@ -25,7 +25,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-datasetFolderDir = 'louise/hdd/ma234/Dataset/'
+datasetFolderDir = 'jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = 'Temp/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -63,9 +63,9 @@ class AUL_Clustering:
             df = pd.read_csv(datasetFolderDir+self.fileName+".csv")
         except:
             print("File Doesn't Exist!")
-            return True
+            return True, 0, 0
         if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-            return True
+            return True, 0, 0
         
         df = shuffle(df)
         if "target" in df.columns:
@@ -79,7 +79,7 @@ class AUL_Clustering:
             
         # print(self.fileName, df.shape, (os.path.getsize(datasetFolderDir+self.fileName+".csv") >> 20))
         
-        return False
+        return False, df.shape, os.path.getsize(datasetFolderDir+self.fileName+".csv")
     
     def subSample(self, batch_count):
         batch_size = int(len(self.X)/batch_count)
@@ -88,7 +88,7 @@ class AUL_Clustering:
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
     def runWithoutSubsampling(self, mode):
-        df = pd.read_csv("ClusteringOutput/"+self.fileName+".csv")
+        df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         
         self.y=df["y"].to_numpy()
         self.X=df.drop("y", axis=1)
@@ -104,7 +104,7 @@ class AUL_Clustering:
             print("Terminated")
             return 0, 0, 7200
         else:
-            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_WDL.csv")
+            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             ari = adjusted_rand_score(df["Default_labels"], df["l"])
             ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
             return ari, ari_wd, t1-t0
@@ -129,7 +129,7 @@ class AUL_Clustering:
             self.X["y"] = self.y
             self.X["l"] = l_ss
             self.X["Default_labels"] = l
-            self.X.to_csv("ClusteringOutput/"+self.fileName+"_WDL.csv")
+            self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             
         if mode == "optimized":
             if self.bestParams == []:
@@ -334,7 +334,7 @@ class AUL_Clustering:
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         df = pd.read_csv(csv_files[0])
         
-        df.to_csv("ClusteringOutput/"+self.fileName+".csv", index=False)
+        df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         
         # X_ = df.drop(["y", "l"], axis=1).to_numpy()
         # labels = df["l"].to_numpy()
@@ -426,7 +426,7 @@ class AUL_Clustering:
             print("Total clusters: ", len(set(l)))
             print("rerun ari: ", ari)
         
-        df_csv_append.to_csv("ClusteringOutput/"+self.fileName+".csv", index=False)
+        df_csv_append.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         
     def worker_rerun(self, parameter, X, y, batch_index):
         if self.rerun_mode == "A":
@@ -476,7 +476,7 @@ class AUL_Clustering:
                     
     
     def AUL_ARI(self):
-        df = pd.read_csv("ClusteringOutput/"+self.fileName+".csv")
+        df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         
         yy = df["y"].tolist()
         ll = df["l"].tolist()
@@ -543,7 +543,7 @@ def algo_parameters(algo):
         parameters.append(["convergence_iter", 15, convergence_iter])
     
     if algo =="SC":
-        eigen_solver = ["arpack", "lobpcg", "amg"]
+        eigen_solver = ["arpack", "lobpcg"]
         n_components = [None, 2, 3, 4, 5, 6, 10]
         n_init = [1, 5, 10, 15, 20, 30, 50, 100]
         gamma = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
@@ -568,7 +568,7 @@ def algo_parameters(algo):
     return parameters
             
 if __name__ == '__main__':
-    algorithm = "AP"
+    algorithm = "SC"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -588,7 +588,7 @@ if __name__ == '__main__':
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
-        f.write('Filename,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
+        f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
         f.close()
     
     # if os.path.exists("Stats/"+algorithm+"_SubsampleAlgoComp.csv") == 0:
@@ -602,8 +602,9 @@ if __name__ == '__main__':
             parameters = algo_parameters(algorithm)
             
             algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-            skip = algoRun_ss.readData()
+            skip, shape, size = algoRun_ss.readData()
             if skip:
+                algoRun_ss.destroy()
                 continue
             
             print(file)
@@ -613,7 +614,7 @@ if __name__ == '__main__':
             # # print("Best Parameters: ", algoRun.bestParams)
             algoRun_ss.destroy()
             del algoRun_ss
-            
+            print("Start: Default without sampling")
             algoRun_ws = AUL_Clustering(parameters, file, algorithm)
             ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
             algoRun_ws.destroy()
@@ -622,13 +623,13 @@ if __name__ == '__main__':
             
             # # WRITE TO FILE
             f=open("Stats/"+algorithm+".csv", "a")
-            f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
             # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
             f.close()
             
         except:
             print("Fail")
     
-    
+        # break
     
     
