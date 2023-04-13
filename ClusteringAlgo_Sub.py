@@ -106,7 +106,7 @@ class AUL_Clustering:
         else:
             if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
                 print("Error in completion")
-                return 0,0,0
+                return -1,-1,-1
             df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             ari = adjusted_rand_score(df["Default_labels"], df["l"])
             ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
@@ -447,35 +447,44 @@ class AUL_Clustering:
             X["l"] = l
             X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
 
-        # if mode == "B":
-        #     ll = []
-        #     for c in self.models:
-        #         ll.append(c.predict(X))
+        if self.rerun_mode == "B":
+            ll = []
+            for c in self.models:
+                ll.append(c.predict(X))
 
-        #     if self.algoName == "OCSVM":
-        #         c = OneClassSVM(kernel=parameter[0], degree=parameter[1], gamma=parameter[2], coef0=parameter[3], tol=parameter[4], nu=parameter[5], 
-        #                       shrinking=parameter[6], cache_size=parameter[7], max_iter=parameter[8]).fit(X)
-        #     elif self.algoName == "LOF":
-        #         c = LocalOutlierFactor(n_neighbors=parameter[0], algorithm=parameter[1], leaf_size=parameter[2], metric=parameter[3], p=parameter[4], 
-        #                                     n_jobs=parameter[5], novelty=1).fit(X)
-        #     elif self.algoName == "EE":
-        #         c = EllipticEnvelope(assume_centered=parameter[0], support_fraction=parameter[1], contamination=parameter[2]).fit(X)
+            if self.algoName == "AP":
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
             
-        #     l = c.predict(X)
+            elif self.algoName == "SC":
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+                
+            l = c.predict(X)
+            ll.append(l)
             
-        #     l = [x*5 for x in l]
+            if len(ll) == 1:
+                X["y"] = y
+                X["l"] = l
+                X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
+                return
+
+
+            c = X_c[labels == i].mean(axis=0)
             
-        #     ll.append(l)
+            # l = [x*5 for x in l]
             
-        #     self.models.append(c)
             
-        #     ll = np.array(ll)
-        #     ll = ll.mean(axis=0)
+            self.models.append(c)
             
-        #     ll = [0 if x > 0 else 1 for x in ll]
-        #     with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
-        #         writer = csv.writer(f)
-        #         writer.writerows(zip(y, ll))
+            ll = np.array(ll)
+            ll = ll.mean(axis=0)
+            
+            ll = [0 if x > 0 else 1 for x in ll]
+            # with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
+            #     writer = csv.writer(f)
+            #     writer.writerows(zip(y, ll))
                     
     
     def AUL_ARI(self):
