@@ -104,6 +104,9 @@ class AUL_Clustering:
             print("Terminated")
             return 0, 0, 7200
         else:
+            if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
+                print("Error in completion")
+                return 0,0,0
             df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             ari = adjusted_rand_score(df["Default_labels"], df["l"])
             ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
@@ -549,7 +552,7 @@ def algo_parameters(algo):
         gamma = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
         affinity = ["nearest_neighbors", "rbf"]
         n_neighbors = [5, 10, 20, 30, 50, 75, 100]
-        assign_labels = ["kmeans", "discretize", "cluster_qr"]
+        assign_labels = ["kmeans", "discretize"]
         degree = [2,3,4,5]
         n_jobs = [None, -1]
         
@@ -602,6 +605,7 @@ if __name__ == '__main__':
         parameters = algo_parameters(algorithm)
         
         algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+        
         skip, shape, size = algoRun_ss.readData()
         if skip:
             algoRun_ss.destroy()
@@ -632,4 +636,9 @@ if __name__ == '__main__':
     
         # break
     
-    
+
+"""
+Shuttil
+numpy.core._exceptions._ArrayMemoryError: Unable to allocate 25.1 GiB for an array with shape (58000, 58000) and data type float64
+
+"""
