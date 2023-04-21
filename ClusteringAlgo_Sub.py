@@ -65,8 +65,11 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
+        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
+        #     return True, 0, 0
+        if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
+        
         
         df = shuffle(df)
         if "target" in df.columns:
@@ -517,7 +520,9 @@ class AUL_Clustering:
     
     def run(self):
         t0 = time.time()
-        if self.X.shape[0] < 100000:    
+        if self.X.shape[0] < 10000:    
+            batch_count = 20
+        elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
             batch_count = 100
         else:
             batch_count = int(self.X.shape[0]/100000)*100
@@ -678,7 +683,7 @@ if __name__ == '__main__':
     #     f=open("Stats/"+algorithm+"_SubsampleAlgoComp.csv", "w")
     #     f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
     #     f.close()
-    count = 0    
+    count = 0
     for file in master_files:
         
         # try:
