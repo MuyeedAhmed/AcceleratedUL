@@ -26,9 +26,9 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
@@ -70,6 +70,8 @@ class AUL_Clustering:
         if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
         
+        if df.isnull().values.any():
+            return True, 0, 0
         
         df = shuffle(df)
         if "target" in df.columns:
@@ -187,7 +189,6 @@ class AUL_Clustering:
                 df["W"] = df.Compare/df.Time
             elif self.determine_param_mode == "ARI":
                 df["W"] = df.Compare
-            
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
@@ -206,9 +207,7 @@ class AUL_Clustering:
         
         t1 = time.time()
         cost = t1-t0
-    
         ari_comp = self.getARI_Comp(X, l)
-        # print(batch_index, ari_comp)
         saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
@@ -524,7 +523,7 @@ class AUL_Clustering:
     def run(self):
         t0 = time.time()
         if self.X.shape[0] < 10000:    
-            self.batch_count = 30
+            self.batch_count = 20
         elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
             self.batch_count = 100
         else:
