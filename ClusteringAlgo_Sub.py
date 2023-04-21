@@ -65,10 +65,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-        #     return True, 0, 0
-        if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
+        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
+        # if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
+        #     return True, 0, 0
         
         if df.isnull().values.any():
             return True, 0, 0
@@ -102,13 +102,13 @@ class AUL_Clustering:
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
-        p.join(timeout=7200)
+        p.join(timeout=14400)
         t1 = time.time()
         
         if p.is_alive():
             p.terminate()
             print("Terminated")
-            return 0, 0, 7200
+            return 0, 0, 14400
         else:
             if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
                 print("Error in completion")
@@ -670,7 +670,7 @@ if __name__ == '__main__':
         master_files = [x for x in master_files if x not in done_files]
     
     master_files.sort(reverse=True)
-    # print(master_files)
+    
     
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
