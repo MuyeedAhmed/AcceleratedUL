@@ -27,8 +27,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
