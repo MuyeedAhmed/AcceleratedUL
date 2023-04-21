@@ -11,7 +11,8 @@ import threading
 # from memory_profiler import profile
 import warnings 
 warnings.filterwarnings("ignore")
-
+import itertools
+from sklearn.metrics import f1_score
 import multiprocessing
 
 
@@ -25,9 +26,9 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = 'Temp/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
@@ -469,22 +470,40 @@ class AUL_Clustering:
                 X["l"] = l
                 X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
                 return
+            
+            f1Scores = []
+            for l_i in range(len(ll)):
+                unique_values = set(ll[l_i])
+                permutations = list(itertools.permutations(unique_values))
+                bestPerm = []
+                bestF1 = -1
+                for perm in permutations:
+                    replacements = {}
+                    for i in range(len(unique_values)):
+                        replacements[i] = perm[i]
+                    new_numbers = self.replace_numbers(ll[l_i], replacements)
+                    f1_s = f1_score(l, new_numbers, average='weighted')
+                    if f1_s > bestF1:
+                        bestF1 = f1_s
+                        bestPerm = new_numbers
+                f1Scores.append(bestF1)
+                ll[l_i] = bestPerm
+            
+            for i in range(len(ll[0])):
+                dict={}
+                for j in range(len(ll)):
+                    if ll[j][i] in dict:
+                        dict[ll[j][i]] += f1Scores[j]
+                    else:
+                        dict[ll[j][i]] = f1Scores[j]
+                
+                l[i] = max(dict, key=dict.get)
+                
+            X["y"] = y
+            X["l"] = l
+            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False) 
 
-
-            c = X_c[labels == i].mean(axis=0)
-            
-            # l = [x*5 for x in l]
-            
-            
             self.models.append(c)
-            
-            ll = np.array(ll)
-            ll = ll.mean(axis=0)
-            
-            ll = [0 if x > 0 else 1 for x in ll]
-            # with open("Output/Temp/"+str(batch_index)+".csv", 'w') as f:
-            #     writer = csv.writer(f)
-            #     writer.writerows(zip(y, ll))
                     
     
     def AUL_ARI(self):
@@ -515,6 +534,15 @@ class AUL_Clustering:
         # print("Time: ", time_ss)
         # return 0, 0
         return ari_ss, time_ss
+    
+    def replace_numbers(numbers, replacements):
+        new_numbers = []
+        for number in numbers:
+            if number in replacements:
+                new_numbers.append(replacements[number])
+            else:
+                new_numbers.append(number)
+        return new_numbers
     
     def DetermineOptimalComparisonAlgorithm(self, mode):
         comparison_modes = ["ARI", "ARI_T"]
@@ -580,7 +608,7 @@ def algo_parameters(algo):
     return parameters
             
 if __name__ == '__main__':
-    algorithm = "SC"
+    algorithm = "AP"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -597,6 +625,11 @@ if __name__ == '__main__':
     master_files.sort(reverse=True)
     # print(master_files)
     
+    
+    if os.path.exists("Stats/"+algorithm+"_ModesTest.csv") == 0:
+        f=open("Stats/"+algorithm+"_ModesTest.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,ARI_A,Time_A,ARI_B,Time_B\n')
+        f.close()
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
@@ -620,6 +653,8 @@ if __name__ == '__main__':
             algoRun_ss.destroy()
             continue
         
+        print("Start: Sampling with RerunMode 1")
+        
         print(file)
         
         ari_ss, time_ss = algoRun_ss.run()
@@ -627,18 +662,37 @@ if __name__ == '__main__':
         # # print("Best Parameters: ", algoRun.bestParams)
         algoRun_ss.destroy()
         del algoRun_ss
-        print("Start: Default without sampling")
-        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-        algoRun_ws.destroy()
+
+        print("Start: Sampling with RerunMode 2")        
         
-        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
+        algoRun_ss_b.rerun_mode = "B"
+        skip, shape, size = algoRun_ss_b.readData()
+        ari_ss_b, time_ss_b = algoRun_ss_b.run()
+        print(ari_ss_b, time_ss_b)
+        algoRun_ss_b.destroy()
+        del algoRun_ss_b
         
-        # # WRITE TO FILE
-        f=open("Stats/"+algorithm+".csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+        # # WRITE TO FILE Different Modes
+        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
         # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
         f.close()
+        
+        
+        
+        # print("Start: Default without sampling")
+        # algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+        # ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+        # algoRun_ws.destroy()
+        
+        # # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+        
+        # # # WRITE TO FILE
+        # f=open("Stats/"+algorithm+".csv", "a")
+        # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+        # # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+        # f.close()
             
         # except:
         #     print("Fail")
@@ -646,8 +700,8 @@ if __name__ == '__main__':
         # break
     
 
-"""
-Shuttil
-numpy.core._exceptions._ArrayMemoryError: Unable to allocate 25.1 GiB for an array with shape (58000, 58000) and data type float64
+# """
+# Shuttil
+# numpy.core._exceptions._ArrayMemoryError: Unable to allocate 25.1 GiB for an array with shape (58000, 58000) and data type float64
 
-"""
+# """
