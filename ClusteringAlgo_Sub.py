@@ -27,8 +27,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = 'Temp/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
@@ -43,7 +43,7 @@ class AUL_Clustering:
         self.models = []
         
         self.n_cluster = n_cluster
-        
+        self.batch_count = 100
         self.determine_param_mode = "ARI"
         self.determine_param_clustering_algo = "KM"
         self.rerun_mode = "A"
@@ -67,6 +67,11 @@ class AUL_Clustering:
             return True, 0, 0
         if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
+        # if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
+        #     return True, 0, 0
+        
+        if df.isnull().values.any():
+            return True, 0, 0
         
         df = shuffle(df)
         if "target" in df.columns:
@@ -82,8 +87,8 @@ class AUL_Clustering:
         
         return False, df.shape, os.path.getsize(datasetFolderDir+self.fileName+".csv")
     
-    def subSample(self, batch_count):
-        batch_size = int(len(self.X)/batch_count)
+    def subSample(self):
+        batch_size = int(len(self.X)/self.batch_count)
         # print(batch_size)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
@@ -97,13 +102,13 @@ class AUL_Clustering:
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
-        p.join(timeout=7200)
+        p.join(timeout=14400)
         t1 = time.time()
         
         if p.is_alive():
             p.terminate()
             print("Terminated")
-            return 0, 0, 7200
+            return 0, 0, 14400
         else:
             if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
                 print("Error in completion")
@@ -172,7 +177,10 @@ class AUL_Clustering:
                 t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
                 threads.append(t)
                 t.start()
-                batch_index += 1
+                if batch_index == self.batch_count:
+                    batch_index = 0
+                else:
+                    batch_index += 1
             for t in threads:
                 t.join()
             df = pd.read_csv("Output/Rank.csv")
@@ -181,7 +189,6 @@ class AUL_Clustering:
                 df["W"] = df.Compare/df.Time
             elif self.determine_param_mode == "ARI":
                 df["W"] = df.Compare
-            
             h_r = df["W"].idxmax()
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
@@ -200,9 +207,7 @@ class AUL_Clustering:
         
         t1 = time.time()
         cost = t1-t0
-    
         ari_comp = self.getARI_Comp(X, l)
-        # print(batch_index, ari_comp)
         saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
@@ -226,7 +231,7 @@ class AUL_Clustering:
         return ari
             
     
-    def rerun(self, batch_count):
+    def rerun(self):
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
@@ -238,7 +243,7 @@ class AUL_Clustering:
             if done:
                 break
             for _ in range(10):
-                if batch_index == batch_count:
+                if batch_index == self.batch_count:
                     done = True
                     break
                 t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
@@ -517,17 +522,19 @@ class AUL_Clustering:
     
     def run(self):
         t0 = time.time()
-        if self.X.shape[0] < 100000:    
-            batch_count = 100
+        if self.X.shape[0] < 10000:    
+            self.batch_count = 20
+        elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
+            self.batch_count = 100
         else:
-            batch_count = int(self.X.shape[0]/100000)*100
-        self.subSample(batch_count)
+            self.batch_count = int(self.X.shape[0]/100000)*100
+        self.subSample()
         print("Determine Parameters")
         self.determineParam()
-        # batch_count = 100
-        self.subSample(batch_count)
+        # self.batch_count = 100
+        self.subSample()
         print("Rerun")
-        self.rerun(batch_count)
+        self.rerun()
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
@@ -663,7 +670,7 @@ if __name__ == '__main__':
         master_files = [x for x in master_files if x not in done_files]
     
     master_files.sort(reverse=True)
-    # print(master_files)
+    
     
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
@@ -678,45 +685,51 @@ if __name__ == '__main__':
     #     f=open("Stats/"+algorithm+"_SubsampleAlgoComp.csv", "w")
     #     f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
     #     f.close()
-    count = 0    
+    count = 0
     for file in master_files:
-        
-        # try:
-        parameters = algo_parameters(algorithm)
-        
-        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-        
-        skip, shape, size = algoRun_ss.readData()
-        if skip:
-            algoRun_ss.destroy()
-            continue
-        
-        print("Start: Sampling with RerunMode 1")
-        
-        print(file)
-        
-        ari_ss, time_ss = algoRun_ss.run()
-        print(ari_ss, time_ss)
-        # # print("Best Parameters: ", algoRun.bestParams)
-        algoRun_ss.destroy()
-        del algoRun_ss
-
-       
-        print("Start: Default without sampling")
-        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-        algoRun_ws.destroy()
-        
-        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-        
-        # # WRITE TO FILE
-        f=open("Stats/"+algorithm+".csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-        # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-        f.close()
+        try:
+            parameters = algo_parameters(algorithm)
             
-        # except:
-        #     print("Fail")
+            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+            
+            skip, shape, size = algoRun_ss.readData()
+            if skip:
+                algoRun_ss.destroy()
+                continue
+            
+            print("Start: Sampling with RerunMode 1")
+            
+            print(file)
+            
+            ari_ss, time_ss = algoRun_ss.run()
+            print(ari_ss, time_ss)
+            # # print("Best Parameters: ", algoRun.bestParams)
+            algoRun_ss.destroy()
+            del algoRun_ss
+    
+           
+            print("Start: Default without sampling")
+            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            algoRun_ws.destroy()
+            
+            # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
+            
+            # # WRITE TO FILE
+            f=open("Stats/"+algorithm+".csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+            # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+            f.close()
+            
+        except:
+            try:
+                algoRun_ss.destroy()
+                del algoRun_ss
+                algoRun_ws.destroy()
+                del algoRun_ws
+            except:
+                print("")
+            print("Fail")
     
         # break
     
