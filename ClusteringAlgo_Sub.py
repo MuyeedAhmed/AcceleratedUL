@@ -43,7 +43,7 @@ class AUL_Clustering:
         self.models = []
         
         self.n_cluster = n_cluster
-        
+        self.batch_count = 100
         self.determine_param_mode = "ARI"
         self.determine_param_clustering_algo = "KM"
         self.rerun_mode = "A"
@@ -85,8 +85,8 @@ class AUL_Clustering:
         
         return False, df.shape, os.path.getsize(datasetFolderDir+self.fileName+".csv")
     
-    def subSample(self, batch_count):
-        batch_size = int(len(self.X)/batch_count)
+    def subSample(self):
+        batch_size = int(len(self.X)/self.batch_count)
         # print(batch_size)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
@@ -175,7 +175,10 @@ class AUL_Clustering:
                 t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
                 threads.append(t)
                 t.start()
-                batch_index += 1
+                if batch_index == self.batch_count:
+                    batch_index = 0
+                else:
+                    batch_index += 1
             for t in threads:
                 t.join()
             df = pd.read_csv("Output/Rank.csv")
@@ -229,7 +232,7 @@ class AUL_Clustering:
         return ari
             
     
-    def rerun(self, batch_count):
+    def rerun(self):
         if self.bestParams == []:
             print("Determine best parameters before this step.")
             return
@@ -241,7 +244,7 @@ class AUL_Clustering:
             if done:
                 break
             for _ in range(10):
-                if batch_index == batch_count:
+                if batch_index == self.batch_count:
                     done = True
                     break
                 t = threading.Thread(target=self.worker_rerun, args=(self.bestParams,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
@@ -521,18 +524,18 @@ class AUL_Clustering:
     def run(self):
         t0 = time.time()
         if self.X.shape[0] < 10000:    
-            batch_count = 20
+            self.batch_count = 30
         elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
-            batch_count = 100
+            self.batch_count = 100
         else:
-            batch_count = int(self.X.shape[0]/100000)*100
-        self.subSample(batch_count)
+            self.batch_count = int(self.X.shape[0]/100000)*100
+        self.subSample()
         print("Determine Parameters")
         self.determineParam()
-        # batch_count = 100
-        self.subSample(batch_count)
+        # self.batch_count = 100
+        self.subSample()
         print("Rerun")
-        self.rerun(batch_count)
+        self.rerun()
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
