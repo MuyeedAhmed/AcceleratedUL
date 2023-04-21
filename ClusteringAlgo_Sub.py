@@ -606,7 +606,47 @@ def algo_parameters(algo):
     
     
     return parameters
+ 
+def ReRunModeTest(algorithm, master_files):
+    if os.path.exists("Stats/"+algorithm+"_ModesTest.csv") == 0:
+        f=open("Stats/"+algorithm+"_ModesTest.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,ARI_A,Time_A,ARI_B,Time_B\n')
+        f.close()
+        
+        
+        for file in master_files:
+            # try:
+            parameters = algo_parameters(algorithm)
+        
+            algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
+            skip, shape, size = algoRun_ss_a.readData()
+            if skip:
+                algoRun_ss_a.destroy()
+                continue
+            print("Start: Sampling with RerunMode 1")
+            print(file)
             
+            ari_ss_a, time_ss_a = algoRun_ss_a.run()
+            print(ari_ss_a, time_ss_a)
+            
+            algoRun_ss_a.destroy()
+            del algoRun_ss_a
+
+            print("Start: Sampling with RerunMode 2")        
+            
+            algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
+            algoRun_ss_b.rerun_mode = "B"
+            skip, shape, size = algoRun_ss_b.readData()
+            ari_ss_b, time_ss_b = algoRun_ss_b.run()
+            print(ari_ss_b, time_ss_b)
+            algoRun_ss_b.destroy()
+            del algoRun_ss_b
+            
+            # # WRITE TO FILE Different Modes
+            f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
+            f.close()
+           
 if __name__ == '__main__':
     algorithm = "AP"
     
@@ -625,11 +665,9 @@ if __name__ == '__main__':
     master_files.sort(reverse=True)
     # print(master_files)
     
+    # # Test Rerun Modes
+    # ReRunModeTest(algorithm, master_files)
     
-    if os.path.exists("Stats/"+algorithm+"_ModesTest.csv") == 0:
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI_A,Time_A,ARI_B,Time_B\n')
-        f.close()
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
         f=open("Stats/"+algorithm+".csv", "w")
@@ -663,36 +701,19 @@ if __name__ == '__main__':
         algoRun_ss.destroy()
         del algoRun_ss
 
-        print("Start: Sampling with RerunMode 2")        
+       
+        print("Start: Default without sampling")
+        algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+        ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+        algoRun_ws.destroy()
         
-        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
-        algoRun_ss_b.rerun_mode = "B"
-        skip, shape, size = algoRun_ss_b.readData()
-        ari_ss_b, time_ss_b = algoRun_ss_b.run()
-        print(ari_ss_b, time_ss_b)
-        algoRun_ss_b.destroy()
-        del algoRun_ss_b
+        # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
         
-        # # WRITE TO FILE Different Modes
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
+        # # WRITE TO FILE
+        f=open("Stats/"+algorithm+".csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
         # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
         f.close()
-        
-        
-        
-        # print("Start: Default without sampling")
-        # algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-        # ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-        # algoRun_ws.destroy()
-        
-        # # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
-        
-        # # # WRITE TO FILE
-        # f=open("Stats/"+algorithm+".csv", "a")
-        # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-        # # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-        # f.close()
             
         # except:
         #     print("Fail")
