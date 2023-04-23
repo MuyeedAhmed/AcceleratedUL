@@ -20,11 +20,13 @@ import multiprocessing
 from sklearn.neighbors import LocalOutlierFactor
 # from sklearn.svm import OneClassSVM
 # from sklearn.covariance import EllipticEnvelope
+
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import SpectralClustering
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = '/louise/hdd/ma234/Dataset/'
@@ -130,8 +132,9 @@ class AUL_Clustering:
                 c = AffinityPropagation().fit(self.X)
             elif self.algoName == "SC":
                 c = SpectralClustering(n_clusters=self.n_cluster).fit(self.X)
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
             
-                
             l = c.labels_
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
@@ -155,7 +158,10 @@ class AUL_Clustering:
                                        n_init=self.bestParams[2], gamma=self.bestParams[3], affinity=self.bestParams[4], 
                                        n_neighbors=self.bestParams[5], assign_labels=self.bestParams[6], 
                                        degree=self.bestParams[7], n_jobs=self.bestParams[8]).fit(self.X)
-            
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=self.bestParams[0], tol=self.bestParams[1], 
+                                       reg_covar=self.bestParams[2], max_iter=self.bestParams[3], n_init=self.bestParams[4], 
+                                       init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
             l = c.labels_
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
@@ -205,6 +211,11 @@ class AUL_Clustering:
                                    n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                    n_neighbors=parameter[5], assign_labels=parameter[6], 
                                    degree=parameter[7], n_jobs=parameter[8]).fit(X)
+        elif self.algoName == "GMM":
+            c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                   reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                   init_params=parameter[5], warm_start=parameter[6]).fit(X)
+        
         l = c.labels_
         
         t1 = time.time()
@@ -468,7 +479,11 @@ class AUL_Clustering:
                                        n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                        n_neighbors=parameter[5], assign_labels=parameter[6], 
                                        degree=parameter[7], n_jobs=parameter[8]).fit(X)
-                
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
+            
             l = c.predict(X)
             ll.append(l)
             
@@ -531,7 +546,7 @@ class AUL_Clustering:
         else:
             self.batch_count = int(self.X.shape[0]/100000)*100
         self.subSample()
-        print("Determine Parameters")
+        print("Determine Parameters", endl=' - ')
         self.determineParam()
         # self.batch_count = 100
         self.subSample()
@@ -541,7 +556,6 @@ class AUL_Clustering:
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
         # print("Time: ", time_ss)
-        # return 0, 0
         return ari_ss, time_ss
     
     def replace_numbers(numbers, replacements):
@@ -612,7 +626,22 @@ def algo_parameters(algo):
         parameters.append(["assign_labels", "kmeans", assign_labels])
         parameters.append(["degree", 3, degree])
         parameters.append(["n_jobs", None, n_jobs])  
-    
+    if algo == "GMM":
+        covariance_type = ['full', 'tied', 'diag', 'spherical']
+        tol = [1e-2, 1e-3, 1e-4, 1e-5]
+        reg_covar = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+        max_iter = [50, 100, 150, 200]
+        n_init = [1,2,3,5]
+        init_params = ['kmeans', 'kmeans++', 'random']
+        warm_start = [False, True]
+        
+        parameters.append('covariance_type', 'full', covariance_type)
+        parameters.append('tol', 1e-3, tol)
+        parameters.append('reg_covar', 1e-6, reg_covar)
+        parameters.append('max_iter', 100, max_iter)
+        parameters.append('n_init', 1, n_init)
+        parameters.append('init_params', 'kmeans', init_params)
+        parameters.append('warm_start', False, warm_start)
     
     return parameters
  
