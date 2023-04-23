@@ -27,8 +27,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+# datasetFolderDir = '../Datasets/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+
 
 class AUL_Clustering:
     def __init__(self, parameters, fileName, algoName, n_cluster=2):
@@ -67,7 +69,7 @@ class AUL_Clustering:
             return True, 0, 0
         if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
-        # if df.shape[0] > 10000: #Skip if dataset contains less than 10,000 rows
+        # if df.shape[0] > 10000: #Skip if dataset contains more than 10,000 rows
         #     return True, 0, 0
         
         if df.isnull().values.any():
