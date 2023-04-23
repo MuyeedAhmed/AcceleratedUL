@@ -130,12 +130,14 @@ class AUL_Clustering:
             
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(self.X)
+                l = c.labels_
             elif self.algoName == "SC":
                 c = SpectralClustering(n_clusters=self.n_cluster).fit(self.X)
+                l = c.labels_
             elif self.algoName == "GMM":
                 c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
+                l = c.predict(self.X)
             
-            l = c.labels_
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
             # print("Default--")
@@ -153,16 +155,18 @@ class AUL_Clustering:
             
             if self.algoName == "AP":
                 c = AffinityPropagation(damping=self.bestParams[0], max_iter=self.bestParams[1], convergence_iter=self.bestParams[2]).fit(self.X)
+                l = c.labels_
             elif self.algoName == "SC":
                 c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=self.bestParams[0], n_components=self.bestParams[1], 
                                        n_init=self.bestParams[2], gamma=self.bestParams[3], affinity=self.bestParams[4], 
                                        n_neighbors=self.bestParams[5], assign_labels=self.bestParams[6], 
                                        degree=self.bestParams[7], n_jobs=self.bestParams[8]).fit(self.X)
+                l = c.labels_
             elif self.algoName == "GMM":
                 c = GaussianMixture(n_components=self.n_cluster, covariance_type=self.bestParams[0], tol=self.bestParams[1], 
                                        reg_covar=self.bestParams[2], max_iter=self.bestParams[3], n_init=self.bestParams[4], 
                                        init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
-            l = c.labels_
+                l = c.predict(self.X)
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
             # print("Whole dataset with best parameters--")
@@ -206,17 +210,19 @@ class AUL_Clustering:
         t0 = time.time()
         if self.algoName == "AP":
             c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+            l = c.labels_
         elif self.algoName == "SC":
             c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
                                    n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                    n_neighbors=parameter[5], assign_labels=parameter[6], 
                                    degree=parameter[7], n_jobs=parameter[8]).fit(X)
+            l = c.labels_
         elif self.algoName == "GMM":
             c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
                                    reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
                                    init_params=parameter[5], warm_start=parameter[6]).fit(X)
+            l = c.predict(X)
         
-        l = c.labels_
         
         t1 = time.time()
         cost = t1-t0
@@ -454,14 +460,20 @@ class AUL_Clustering:
         if self.rerun_mode == "A":
             if self.algoName == "AP":
                 c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+                l = c.labels_
             elif self.algoName == "SC":
                 c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
                                        n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                        n_neighbors=parameter[5], assign_labels=parameter[6], 
                                        degree=parameter[7], n_jobs=parameter[8]).fit(X)
+                l = c.labels_
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
             
+                l = c.predict(X)
             
-            l = c.labels_
             X["y"] = y
             X["l"] = l
             X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
@@ -546,7 +558,7 @@ class AUL_Clustering:
         else:
             self.batch_count = int(self.X.shape[0]/100000)*100
         self.subSample()
-        print("Determine Parameters", endl=' - ')
+        print("Determine Parameters", end=' - ')
         self.determineParam()
         # self.batch_count = 100
         self.subSample()
@@ -632,16 +644,16 @@ def algo_parameters(algo):
         reg_covar = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
         max_iter = [50, 100, 150, 200]
         n_init = [1,2,3,5]
-        init_params = ['kmeans', 'kmeans++', 'random']
+        init_params = ['kmeans', 'k-means++', 'random']
         warm_start = [False, True]
         
-        parameters.append('covariance_type', 'full', covariance_type)
-        parameters.append('tol', 1e-3, tol)
-        parameters.append('reg_covar', 1e-6, reg_covar)
-        parameters.append('max_iter', 100, max_iter)
-        parameters.append('n_init', 1, n_init)
-        parameters.append('init_params', 'kmeans', init_params)
-        parameters.append('warm_start', False, warm_start)
+        parameters.append(['covariance_type', 'full', covariance_type])
+        parameters.append(['tol', 1e-3, tol])
+        parameters.append(['reg_covar', 1e-6, reg_covar])
+        parameters.append(['max_iter', 100, max_iter])
+        parameters.append(['n_init', 1, n_init])
+        parameters.append(['init_params', 'kmeans', init_params])
+        parameters.append(['warm_start', False, warm_start])
     
     return parameters
  
@@ -686,7 +698,7 @@ def ReRunModeTest(algorithm, master_files):
             f.close()
            
 if __name__ == '__main__':
-    algorithm = "AP"
+    algorithm = "GMM"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -762,7 +774,6 @@ if __name__ == '__main__':
                 print("")
             print("Fail")
     
-        # break
     
 
 # """
