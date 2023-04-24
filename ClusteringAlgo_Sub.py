@@ -71,8 +71,10 @@ class AUL_Clustering:
             return True, 0, 0
         if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
-        # if df.shape[0] > 10000: #Skip if dataset contains more than 10,000 rows
+        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
         #     return True, 0, 0
+        if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
+            return True, 0, 0
         
         if df.isnull().values.any():
             return True, 0, 0
@@ -169,9 +171,6 @@ class AUL_Clustering:
                 l = c.predict(self.X)
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
-            # print("Whole dataset with best parameters--")
-            # print("ARI: ", ari, " and Time: ", t1-t0)
-        
         
         # return ari, t1-t0
     
@@ -189,7 +188,7 @@ class AUL_Clustering:
                 t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
                 threads.append(t)
                 t.start()
-                if batch_index == self.batch_count:
+                if batch_index == self.batch_count-1:
                     batch_index = 0
                 else:
                     batch_index += 1
@@ -552,7 +551,7 @@ class AUL_Clustering:
     def run(self):
         t0 = time.time()
         if self.X.shape[0] < 10000:    
-            self.batch_count = 20
+            self.batch_count = 30
         elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
             self.batch_count = 100
         else:
