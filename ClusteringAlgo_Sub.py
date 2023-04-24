@@ -69,11 +69,11 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-        #     return True, 0, 0
-        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
-        if df.shape[1] > 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        #     return True, 0, 0
+        if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
         
         if df.isnull().values.any():
