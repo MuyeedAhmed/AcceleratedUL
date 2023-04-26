@@ -29,9 +29,9 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -69,10 +69,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-            return True, 0, 0
-        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
         #     return True, 0, 0
+        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+            return True, 0, 0
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
         
@@ -116,14 +116,22 @@ class AUL_Clustering:
             print("Terminated")
             return 0, 0, 14400
         else:
-            if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
-                print("Error in completion")
-                return -1,-1,-1
-            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
-            ari = adjusted_rand_score(df["Default_labels"], df["l"])
-            ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
-            return ari, ari_wd, t1-t0
-    
+            if mode == "default":
+                if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv") == 0:
+                    print("Error in completion")
+                    return -1,-1,-1
+                df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
+                ari = adjusted_rand_score(df["Default_labels"], df["l"])
+                ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
+                return ari, ari_wd, t1-t0
+            else:
+                if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv") == 0:
+                    print("Error in completion")
+                    return -1,-1
+                df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
+                # ari = adjusted_rand_score(df["Optimized_labels"], df["l"])
+                ari_wd = adjusted_rand_score(df["y"], df["Optimized_labels"])
+                return ari_wd, t1-t0
     def runWithoutSubsampling_w(self, mode):
         l_ss = self.X["l"].to_numpy()
         self.X = self.X.drop("l", axis=1)
@@ -151,6 +159,7 @@ class AUL_Clustering:
             
         if mode == "optimized":
             if self.bestParams == []:
+                # self.determineParam()
                 print("Calculate the paramters first.")
                 return
             # t0 = time.time()
@@ -169,6 +178,12 @@ class AUL_Clustering:
                                        reg_covar=self.bestParams[2], max_iter=self.bestParams[3], n_init=self.bestParams[4], 
                                        init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
                 l = c.predict(self.X)
+            
+            self.X["y"] = self.y
+            self.X["l"] = l_ss
+            self.X["Optimized_labels"] = l
+            self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
+            
             # t1 = time.time()
             # ari = adjusted_rand_score(self.y, l)
         
@@ -204,7 +219,7 @@ class AUL_Clustering:
             params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             
         self.bestParams = [p[1] for p in self.parameters]
-    
+
     def worker_determineParam(self, parameter, X, y, batch_index):        
         t0 = time.time()
         if self.algoName == "AP":
@@ -753,14 +768,14 @@ if __name__ == '__main__':
             print("Start: Default without sampling")
             algoRun_ws = AUL_Clustering(parameters, file, algorithm)
             ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            _, _ = algoRun_ws.run()
+            ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
             algoRun_ws.destroy()
-            
-            # # f1_wo, time_wo = algoRun.runWithoutSubsampling("optimized")
             
             # # WRITE TO FILE
             f=open("Stats/"+algorithm+".csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-            # f.write(file+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
             f.close()
             
         except:
@@ -772,7 +787,6 @@ if __name__ == '__main__':
             except:
                 print("")
             print("Fail")
-    
     
 
 # """
