@@ -29,9 +29,9 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
