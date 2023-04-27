@@ -88,7 +88,9 @@ class AUL_Clustering:
             self.X=df.drop("class", axis=1)
         else:
             print("Ground Truth not found. Please set the ground truth as \"class\" or \"target\" ")
-            
+        
+        if len(set(self.y)) > 30:
+            return True, 0,0
         # print(self.fileName, df.shape, (os.path.getsize(datasetFolderDir+self.fileName+".csv") >> 20))
         
         return False, df.shape, os.path.getsize(datasetFolderDir+self.fileName+".csv")
@@ -678,41 +680,102 @@ def ReRunModeTest(algorithm, master_files):
         f.close()
         
         
-        for file in master_files:
-            # try:
-            parameters = algo_parameters(algorithm)
+    for file in master_files:
+        # try:
+        parameters = algo_parameters(algorithm)
+    
+        algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
+        skip, shape, size = algoRun_ss_a.readData()
+        if skip:
+            algoRun_ss_a.destroy()
+            continue
+        print("Start: Sampling with RerunMode 1")
+        print(file)
         
-            algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
-            skip, shape, size = algoRun_ss_a.readData()
+        ari_ss_a, time_ss_a = algoRun_ss_a.run()
+        print(ari_ss_a, time_ss_a)
+        
+        algoRun_ss_a.destroy()
+        del algoRun_ss_a
+
+        print("Start: Sampling with RerunMode 2")        
+        
+        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
+        algoRun_ss_b.rerun_mode = "B"
+        skip, shape, size = algoRun_ss_b.readData()
+        ari_ss_b, time_ss_b = algoRun_ss_b.run()
+        print(ari_ss_b, time_ss_b)
+        algoRun_ss_b.destroy()
+        del algoRun_ss_b
+        
+        # # WRITE TO FILE Different Modes
+        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
+        f.close()
+
+def BestSubsampleRun(algorithm, master_files):
+    if os.path.exists("Stats/"+algorithm+"_Best_Subsample_Run.csv") == 0:
+        f=open("Stats/"+algorithm+"_Best_Subsample_Run.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,Time,ARI_Mean,ARI_BestARI,Inertia_BestARI,ARI_BestInertia,Inertia_BestInertia\n')
+        f.close()
+    
+    for file in master_files:
+        try:
+            parameters = algo_parameters(algorithm)
+            
+            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+            
+            skip, shape, size = algoRun_ss.readData()
             if skip:
-                algoRun_ss_a.destroy()
+                algoRun_ss.destroy()
                 continue
-            print("Start: Sampling with RerunMode 1")
             print(file)
             
-            ari_ss_a, time_ss_a = algoRun_ss_a.run()
-            print(ari_ss_a, time_ss_a)
+            ari_, time_, inertia_ = [], [], []
+            for _ in range(10):
+                ari_ss, time_ss = algoRun_ss.run()
+                
+                
+                
+                ari_.append(ari_ss)
+                time_.append(time_ss)
+                
+                df = pd.read_csv("ClusteringOutput/"+file+"_"+algorithm+".csv")
+                X = df.drop(["l", "y"], axis=1).to_numpy()
+                y=df["l"].to_numpy()
+                
+                centroids = np.array([X[y == i].mean(axis=0) for i in np.unique(y)])
+                distances = np.array([np.sum((X - centroids[y[i]])**2) for i in range(len(X))])
+                inertia_.append(np.sum(distances))
+    
+            time_mean = np.mean(time_)
+            ari_mean = np.mean(ari_)
+            best_ari_idx = np.argmax(ari_)
+            best_inertia_idx = np.argmin(inertia_)
             
-            algoRun_ss_a.destroy()
-            del algoRun_ss_a
-
-            print("Start: Sampling with RerunMode 2")        
+            ARI_BestARI = ari_[best_ari_idx]
+            Inertia_BestARI = inertia_[best_ari_idx]
+            ARI_BestInertia = ari_[best_inertia_idx]
+            Inertia_BestInertia = inertia_[best_inertia_idx]
             
-            algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
-            algoRun_ss_b.rerun_mode = "B"
-            skip, shape, size = algoRun_ss_b.readData()
-            ari_ss_b, time_ss_b = algoRun_ss_b.run()
-            print(ari_ss_b, time_ss_b)
-            algoRun_ss_b.destroy()
-            del algoRun_ss_b
-            
-            # # WRITE TO FILE Different Modes
-            f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
+            algoRun_ss.destroy()
+            del algoRun_ss
+    
+            # # WRITE TO FILE
+            f=open("Stats/"+algorithm+"_Best_Subsample_Run.csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
             f.close()
-           
+            
+        except:
+            # try:
+            #     algoRun_ss.destroy()
+            # except:
+            #     print("")
+            print("Fail")
+        break
+        
 if __name__ == '__main__':
-    algorithm = "AP"
+    algorithm = "GMM"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -720,17 +783,18 @@ if __name__ == '__main__':
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
-    if os.path.exists("Stats/"+algorithm+".csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+".csv")
-        done_files = done_files["Filename"].to_numpy()
-        # print(done_files)
-        master_files = [x for x in master_files if x not in done_files]
-    
-    master_files.sort(reverse=True)
-    
+    # # Run Subsampling 10 times and calculate Inertia
+    # BestSubsampleRun(algorithm, master_files)
     
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
+    
+    if os.path.exists("Stats/"+algorithm+".csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+".csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
+    
+    master_files.sort(reverse=True)
     
     
     if os.path.exists("Stats/"+algorithm+".csv") == 0:
@@ -738,10 +802,6 @@ if __name__ == '__main__':
         f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
         f.close()
     
-    # if os.path.exists("Stats/"+algorithm+"_SubsampleAlgoComp.csv") == 0:
-    #     f=open("Stats/"+algorithm+"_SubsampleAlgoComp.csv", "w")
-    #     f.write('Filename,F1_F1LOF,Time_F1LOF,F1_F1TLOF,Time_F1TLOF,F1_F1OCSVM,Time_F1OCSVM,F1_F1TOCSVM,Time_F1TOCSVM,F1_F1IF,Time_F1IF,F1_F1TIF,Time_F1TIF,F1_F1EE,Time_F1EE,F1_F1TEE,Time_F1TEE\n')
-    #     f.close()
     count = 0
     for file in master_files:
         try:
@@ -754,13 +814,10 @@ if __name__ == '__main__':
                 algoRun_ss.destroy()
                 continue
             
-            print("Start: Sampling with RerunMode 1")
-            
-            print(file)
+            # print(file)
             
             ari_ss, time_ss = algoRun_ss.run()
-            print(ari_ss, time_ss)
-            # # print("Best Parameters: ", algoRun.bestParams)
+            bestParams = algoRun_ss.bestParams
             algoRun_ss.destroy()
             del algoRun_ss
     
@@ -768,7 +825,7 @@ if __name__ == '__main__':
             print("Start: Default without sampling")
             algoRun_ws = AUL_Clustering(parameters, file, algorithm)
             ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-            _, _ = algoRun_ws.run()
+            algoRun_ws.bestParams = bestParams
             ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
             algoRun_ws.destroy()
             
@@ -788,9 +845,3 @@ if __name__ == '__main__':
                 print("")
             print("Fail")
     
-
-# """
-# Shuttil
-# numpy.core._exceptions._ArrayMemoryError: Unable to allocate 25.1 GiB for an array with shape (58000, 58000) and data type float64
-
-# """
