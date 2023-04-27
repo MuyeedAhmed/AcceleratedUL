@@ -69,10 +69,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-        #     return True, 0, 0
-        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
+        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        #     return True, 0, 0
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
         
@@ -88,7 +88,9 @@ class AUL_Clustering:
             self.X=df.drop("class", axis=1)
         else:
             print("Ground Truth not found. Please set the ground truth as \"class\" or \"target\" ")
-            
+        
+        if len(set(self.y)) > 30:
+            return True, 0,0
         # print(self.fileName, df.shape, (os.path.getsize(datasetFolderDir+self.fileName+".csv") >> 20))
         
         return False, df.shape, os.path.getsize(datasetFolderDir+self.fileName+".csv")
@@ -678,38 +680,38 @@ def ReRunModeTest(algorithm, master_files):
         f.close()
         
         
-        for file in master_files:
-            # try:
-            parameters = algo_parameters(algorithm)
-        
-            algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
-            skip, shape, size = algoRun_ss_a.readData()
-            if skip:
-                algoRun_ss_a.destroy()
-                continue
-            print("Start: Sampling with RerunMode 1")
-            print(file)
-            
-            ari_ss_a, time_ss_a = algoRun_ss_a.run()
-            print(ari_ss_a, time_ss_a)
-            
+    for file in master_files:
+        # try:
+        parameters = algo_parameters(algorithm)
+    
+        algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
+        skip, shape, size = algoRun_ss_a.readData()
+        if skip:
             algoRun_ss_a.destroy()
-            del algoRun_ss_a
+            continue
+        print("Start: Sampling with RerunMode 1")
+        print(file)
+        
+        ari_ss_a, time_ss_a = algoRun_ss_a.run()
+        print(ari_ss_a, time_ss_a)
+        
+        algoRun_ss_a.destroy()
+        del algoRun_ss_a
 
-            print("Start: Sampling with RerunMode 2")        
-            
-            algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
-            algoRun_ss_b.rerun_mode = "B"
-            skip, shape, size = algoRun_ss_b.readData()
-            ari_ss_b, time_ss_b = algoRun_ss_b.run()
-            print(ari_ss_b, time_ss_b)
-            algoRun_ss_b.destroy()
-            del algoRun_ss_b
-            
-            # # WRITE TO FILE Different Modes
-            f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
-            f.close()
+        print("Start: Sampling with RerunMode 2")        
+        
+        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
+        algoRun_ss_b.rerun_mode = "B"
+        skip, shape, size = algoRun_ss_b.readData()
+        ari_ss_b, time_ss_b = algoRun_ss_b.run()
+        print(ari_ss_b, time_ss_b)
+        algoRun_ss_b.destroy()
+        del algoRun_ss_b
+        
+        # # WRITE TO FILE Different Modes
+        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
+        f.close()
 
 def BestSubsampleRun(algorithm, master_files):
     if os.path.exists("Stats/"+algorithm+"_Best_Subsample_Run.csv") == 0:
@@ -781,68 +783,65 @@ if __name__ == '__main__':
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
-    # if os.path.exists("Stats/"+algorithm+".csv"):
-    #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
-    #     done_files = done_files["Filename"].to_numpy()
-    #     master_files = [x for x in master_files if x not in done_files]
-    
-    master_files.sort(reverse=True)
-    
+    # # Run Subsampling 10 times and calculate Inertia
+    # BestSubsampleRun(algorithm, master_files)
     
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
     
-    # Run Subsampling 10 times and calculate Inertia
-    BestSubsampleRun(algorithm, master_files)
+    if os.path.exists("Stats/"+algorithm+".csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+".csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
     
-    # if os.path.exists("Stats/"+algorithm+".csv") == 0:
-    #     f=open("Stats/"+algorithm+".csv", "w")
-    #     f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
-    #     f.close()
+    master_files.sort(reverse=True)
     
-    # count = 0
-    # for file in master_files:
-    #     try:
-    #         parameters = algo_parameters(algorithm)
+    
+    if os.path.exists("Stats/"+algorithm+".csv") == 0:
+        f=open("Stats/"+algorithm+".csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
+        f.close()
+    
+    count = 0
+    for file in master_files:
+        try:
+            parameters = algo_parameters(algorithm)
             
-    #         algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
             
-    #         skip, shape, size = algoRun_ss.readData()
-    #         if skip:
-    #             algoRun_ss.destroy()
-    #             continue
+            skip, shape, size = algoRun_ss.readData()
+            if skip:
+                algoRun_ss.destroy()
+                continue
             
-    #         print("Start: Sampling with RerunMode 1")
+            # print(file)
             
-    #         print(file)
-            
-    #         ari_ss, time_ss = algoRun_ss.run()
-    #         print(ari_ss, time_ss)
-    #         # # print("Best Parameters: ", algoRun.bestParams)
-    #         algoRun_ss.destroy()
-    #         del algoRun_ss
+            ari_ss, time_ss = algoRun_ss.run()
+            bestParams = algoRun_ss.bestParams
+            algoRun_ss.destroy()
+            del algoRun_ss
     
            
-    #         print("Start: Default without sampling")
-    #         algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-    #         ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-    #         _, _ = algoRun_ws.run()
-    #         ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
-    #         algoRun_ws.destroy()
+            print("Start: Default without sampling")
+            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            algoRun_ws.bestParams = bestParams
+            ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
+            algoRun_ws.destroy()
             
-    #         # # WRITE TO FILE
-    #         f=open("Stats/"+algorithm+".csv", "a")
-    #         f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-    #         # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-    #         f.close()
+            # # WRITE TO FILE
+            f=open("Stats/"+algorithm+".csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+            f.close()
             
-    #     except:
-    #         try:
-    #             algoRun_ss.destroy()
-    #             del algoRun_ss
-    #             algoRun_ws.destroy()
-    #             del algoRun_ws
-    #         except:
-    #             print("")
-    #         print("Fail")
+        except:
+            try:
+                algoRun_ss.destroy()
+                del algoRun_ss
+                algoRun_ws.destroy()
+                del algoRun_ws
+            except:
+                print("")
+            print("Fail")
     
