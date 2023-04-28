@@ -29,9 +29,9 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -98,7 +98,6 @@ class AUL_Clustering:
     
     def subSample(self):
         batch_size = int(len(self.X)/self.batch_count)
-        # print(batch_size)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
@@ -139,8 +138,6 @@ class AUL_Clustering:
         l_ss = self.X["l"].to_numpy()
         self.X = self.X.drop("l", axis=1)
         if mode == "default":
-            # t0 = time.time()
-            
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(self.X)
                 l = c.labels_
@@ -150,11 +147,6 @@ class AUL_Clustering:
             elif self.algoName == "GMM":
                 c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
                 l = c.predict(self.X)
-            
-            # t1 = time.time()
-            # ari = adjusted_rand_score(self.y, l)
-            # print("Default--")
-            # print("ARI: ", ari, " and Time: ", t1-t0)
             self.X["y"] = self.y
             self.X["l"] = l_ss
             self.X["Default_labels"] = l
@@ -162,10 +154,8 @@ class AUL_Clustering:
             
         if mode == "optimized":
             if self.bestParams == []:
-                # self.determineParam()
                 print("Calculate the paramters first.")
                 return
-            # t0 = time.time()
             
             if self.algoName == "AP":
                 c = AffinityPropagation(damping=self.bestParams[0], max_iter=self.bestParams[1], convergence_iter=self.bestParams[2]).fit(self.X)
@@ -187,10 +177,6 @@ class AUL_Clustering:
             self.X["Optimized_labels"] = l
             self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
             
-            # t1 = time.time()
-            # ari = adjusted_rand_score(self.y, l)
-        
-        # return ari, t1-t0
     
     def determineParam(self):
         batch_index = 0
@@ -731,7 +717,7 @@ def BestSubsampleRun(algorithm, master_files):
                 algoRun_ss.destroy()
                 continue
             print(file)
-            
+            # algoRun_ss.rerun_mode = "B"
             ari_, time_, inertia_ = [], [], []
             for _ in range(10):
                 ari_ss, time_ss = algoRun_ss.run()
@@ -768,10 +754,6 @@ def BestSubsampleRun(algorithm, master_files):
             f.close()
             
         except:
-            # try:
-            #     algoRun_ss.destroy()
-            # except:
-            #     print("")
             print("Fail")
         
         
@@ -803,7 +785,6 @@ if __name__ == '__main__':
         f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
         f.close()
     
-    count = 0
     for file in master_files:
         try:
             parameters = algo_parameters(algorithm)
