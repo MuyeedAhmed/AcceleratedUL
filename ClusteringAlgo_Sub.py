@@ -29,9 +29,9 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 # datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -73,6 +73,7 @@ class AUL_Clustering:
             return True, 0, 0
         # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
         #     return True, 0, 0
+        
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
         
@@ -772,10 +773,10 @@ def BestSubsampleRun(algorithm, master_files):
             # except:
             #     print("")
             print("Fail")
-        break
+        
         
 if __name__ == '__main__':
-    algorithm = "GMM"
+    algorithm = "AP"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
