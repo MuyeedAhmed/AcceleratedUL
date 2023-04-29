@@ -16,10 +16,10 @@ from sklearn.metrics import f1_score
 import multiprocessing
 
 
-# from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 # from sklearn.svm import OneClassSVM
-# from sklearn.covariance import EllipticEnvelope
+from sklearn.covariance import EllipticEnvelope
 
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import SpectralClustering
@@ -89,7 +89,7 @@ class AUL_Clustering:
             self.X=df.drop("class", axis=1)
         else:
             print("Ground Truth not found. Please set the ground truth as \"class\" or \"target\" ")
-        
+        self.n_cluster = len(set(self.y))
         if len(set(self.y)) > 30:
             return True, 0,0
         # print(self.fileName, df.shape, (os.path.getsize(datasetFolderDir+self.fileName+".csv") >> 20))
@@ -106,7 +106,7 @@ class AUL_Clustering:
         
         self.y=df["y"].to_numpy()
         self.X=df.drop("y", axis=1)
-        
+        self.n_cluster = len(set(self.y))
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -276,6 +276,91 @@ class AUL_Clustering:
                 t.join()
         self.mergeClusteringOutputs_AD()
         # self.mergeClusteringOutputs_DistRatio()
+    
+    def worker_rerun(self, parameter, X, y, batch_index):
+        if self.rerun_mode == "A":
+            if self.algoName == "AP":
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+                l = c.labels_
+            elif self.algoName == "SC":
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+                l = c.labels_
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
+            
+                l = c.predict(X)
+            
+            X["y"] = y
+            X["l"] = l
+            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
+
+        if self.rerun_mode == "B":
+            ll = []
+            for c in self.models:
+                ll.append(c.predict(X))
+
+            if self.algoName == "AP":
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+            
+            elif self.algoName == "SC":
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+            elif self.algoName == "GMM":
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
+            
+            l = c.predict(X)
+            ll.append(l)
+            
+            if len(ll) == 1:
+                X["y"] = y
+                X["l"] = l
+                X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
+                return
+            
+            f1Scores = []
+            for l_i in range(len(ll)):
+                unique_values = set(ll[l_i])
+                permutations = list(itertools.permutations(unique_values))
+                bestPerm = []
+                bestF1 = -1
+                for perm in permutations:
+                    replacements = {}
+                    for i in range(len(unique_values)):
+                        replacements[i] = perm[i]
+                    new_numbers = self.replace_numbers(ll[l_i], replacements)
+                    f1_s = f1_score(l, new_numbers, average='weighted')
+                    if f1_s > bestF1:
+                        bestF1 = f1_s
+                        bestPerm = new_numbers
+                f1Scores.append(bestF1)
+                ll[l_i] = bestPerm
+            
+            for i in range(len(ll[0])):
+                dict={}
+                for j in range(len(ll)):
+                    if ll[j][i] in dict:
+                        dict[ll[j][i]] += f1Scores[j]
+                    else:
+                        dict[ll[j][i]] = f1Scores[j]
+                
+                l[i] = max(dict, key=dict.get)
+                
+            X["y"] = y
+            X["l"] = l
+            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False) 
+
+            self.models.append(c)
+            
+    
         
     def mergeClusteringOutputs_AD(self):
         
@@ -343,6 +428,7 @@ class AUL_Clustering:
                         df2.loc[df2['l'] == i, 'll'] = new_i2
                         continue
                     ad = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+                    # ad = IsolationForest(contamination=0.001).fit(X_train)
                     predict = ad.predict(X_test)
                     if np.mean(predict) > 0:
                         # TODO: Edit centers
@@ -458,90 +544,7 @@ class AUL_Clustering:
             print("rerun ari: ", ari)
         
         df_csv_append.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
-        
-    def worker_rerun(self, parameter, X, y, batch_index):
-        if self.rerun_mode == "A":
-            if self.algoName == "AP":
-                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
-                l = c.labels_
-            elif self.algoName == "SC":
-                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
-                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
-                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
-                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
-                l = c.labels_
-            elif self.algoName == "GMM":
-                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
-                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
-                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
-            
-                l = c.predict(X)
-            
-            X["y"] = y
-            X["l"] = l
-            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
-
-        if self.rerun_mode == "B":
-            ll = []
-            for c in self.models:
-                ll.append(c.predict(X))
-
-            if self.algoName == "AP":
-                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
-            
-            elif self.algoName == "SC":
-                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
-                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
-                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
-                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
-            elif self.algoName == "GMM":
-                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
-                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
-                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
-            
-            l = c.predict(X)
-            ll.append(l)
-            
-            if len(ll) == 1:
-                X["y"] = y
-                X["l"] = l
-                X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
-                return
-            
-            f1Scores = []
-            for l_i in range(len(ll)):
-                unique_values = set(ll[l_i])
-                permutations = list(itertools.permutations(unique_values))
-                bestPerm = []
-                bestF1 = -1
-                for perm in permutations:
-                    replacements = {}
-                    for i in range(len(unique_values)):
-                        replacements[i] = perm[i]
-                    new_numbers = self.replace_numbers(ll[l_i], replacements)
-                    f1_s = f1_score(l, new_numbers, average='weighted')
-                    if f1_s > bestF1:
-                        bestF1 = f1_s
-                        bestPerm = new_numbers
-                f1Scores.append(bestF1)
-                ll[l_i] = bestPerm
-            
-            for i in range(len(ll[0])):
-                dict={}
-                for j in range(len(ll)):
-                    if ll[j][i] in dict:
-                        dict[ll[j][i]] += f1Scores[j]
-                    else:
-                        dict[ll[j][i]] = f1Scores[j]
-                
-                l[i] = max(dict, key=dict.get)
-                
-            X["y"] = y
-            X["l"] = l
-            X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False) 
-
-            self.models.append(c)
-                    
+                        
     
     def AUL_ARI(self):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
@@ -717,7 +720,7 @@ def BestSubsampleRun(algorithm, master_files):
                 algoRun_ss.destroy()
                 continue
             print(file)
-            # algoRun_ss.rerun_mode = "B"
+            algoRun_ss.rerun_mode = "B"
             ari_, time_, inertia_ = [], [], []
             for _ in range(10):
                 ari_ss, time_ss = algoRun_ss.run()
@@ -747,7 +750,7 @@ def BestSubsampleRun(algorithm, master_files):
             
             algoRun_ss.destroy()
             del algoRun_ss
-    
+            
             # # WRITE TO FILE
             f=open("Stats/"+algorithm+"_Best_Subsample_Run.csv", "a")
             f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
@@ -758,7 +761,7 @@ def BestSubsampleRun(algorithm, master_files):
         
         
 if __name__ == '__main__':
-    algorithm = "AP"
+    algorithm = "GMM"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -796,7 +799,7 @@ if __name__ == '__main__':
                 algoRun_ss.destroy()
                 continue
             
-            # print(file)
+            print(file)
             
             ari_ss, time_ss = algoRun_ss.run()
             bestParams = algoRun_ss.bestParams
@@ -826,4 +829,4 @@ if __name__ == '__main__':
             except:
                 print("")
             print("Fail")
-    
+        
