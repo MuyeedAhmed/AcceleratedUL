@@ -18,7 +18,7 @@ import multiprocessing
 
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-# from sklearn.svm import OneClassSVM
+from sklearn.svm import OneClassSVM
 from sklearn.covariance import EllipticEnvelope
 
 from sklearn.cluster import AffinityPropagation
@@ -28,10 +28,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -51,6 +51,7 @@ class AUL_Clustering:
         self.determine_param_mode = "ARI"
         self.determine_param_clustering_algo = "KM"
         self.rerun_mode = "A"
+        self.mergeStyle = "Distance"
         self.AD_algo_merge = "LOF"
         
         
@@ -69,10 +70,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-            return True, 0, 0
-        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
         #     return True, 0, 0
+        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+            return True, 0, 0
         
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
@@ -247,7 +248,22 @@ class AUL_Clustering:
             c = DBSCAN().fit(X)
         elif self.determine_param_clustering_algo == "HAC":
             c = AgglomerativeClustering(n_clusters = n).fit(X)
-            
+        elif self.determine_param_clustering_algo == "INERTIA":
+            centroids = np.array([X[l == i].mean(axis=0) for i in np.unique(l)])
+            distances = np.array([np.sum((X - centroids[l[i]])**2) for i in range(len(X))])
+            return np.sum(distances) * -1 
+        else:
+            c = KMeans(n_clusters=n, n_init=5).fit(X)
+            a_l = c.labels_
+            ari1 = adjusted_rand_score(l, a_l)
+            c = DBSCAN().fit(X)
+            a_l = c.labels_
+            ari2 = adjusted_rand_score(l, a_l)
+            c = AgglomerativeClustering(n_clusters = n).fit(X)
+            a_l = c.labels_
+            ari3 = adjusted_rand_score(l, a_l)
+            return (ari1+ari2+ari3)/3
+
         a_l = c.labels_
         ari = adjusted_rand_score(l, a_l)
         return ari
@@ -274,9 +290,12 @@ class AUL_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
-        # self.mergeClusteringOutputs_AD()
-        # self.mergeClusteringOutputs_DistRatio()
-        self.constantKMerge()
+        if self.mergeStyle == "Distance":
+            self.constantKMerge()
+        elif self.mergeStyle == "DistanceRatio":
+            self.mergeClusteringOutputs_DistRatio()
+        elif self.mergeStyle == "AD":
+            self.mergeClusteringOutputs_AD()
         
         
     def worker_rerun(self, parameter, X, y, batch_index):
@@ -447,18 +466,6 @@ class AUL_Clustering:
                     df = pd.concat([df1, df2])
                     df.to_csv(file2, index=False)
                     continue
-                #     models=[]
-                #     for i in unique_labels1:
-                #         v_i = X_1[labels1 == i]
-                #         clf = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(v_i)
-                #         models.append(clf)
-                #     for j in unique_labels2:
-                #         v_j = X_2[labels2 == j]
-                #         mean_scores = []
-                #         for m in models:
-                #             lof_predict = m.predict(v_j)
-                #             mean_scores.append(np.mean(lof_predict))
-                #         print("lof_predict", mean_scores)
                 global_centers = []
                 global_centers_frequency = []
 
@@ -471,21 +478,27 @@ class AUL_Clustering:
                 
                 for i in unique_labels2:
                     c = X_2[labels2 == i].mean(axis=0)
-                    
                     distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
-                    
                     nearest_cluster = distances.index(min(distances))
                     
                     # Check using AD
                     X_train = X_1[labels1 == nearest_cluster]
                     X_test = X_2[labels2 == i]
+                    if len(X_train) == 0:
+                        continue
                     if len(X_train) == 1:
                         new_i2 = global_centers_count
                         global_centers_count += 1
                         df2.loc[df2['l'] == i, 'll'] = new_i2
                         continue
-                    ad = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
-                    # ad = IsolationForest(contamination=0.001).fit(X_train)
+                    if self.AD_algo_merge == "LOF":
+                        ad = LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+                    elif self.AD_algo_merge == "IF":
+                        ad = IsolationForest().fit(X_train)
+                    elif self.AD_algo_merge == "EE":
+                        ad = EllipticEnvelope().fit(X_train)
+                    elif self.AD_algo_merge == "OCSVM":
+                        ad = OneClassSVM(nu=0.1).fit(X_train)
                     predict = ad.predict(X_test)
                     if np.mean(predict) > 0:
                         # TODO: Edit centers
@@ -579,8 +592,8 @@ class AUL_Clustering:
         yy = df_csv_append["y"].tolist()
         ll = df_csv_append["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
-        print("Total clusters: ", global_centers_count)
-        print("rerun ari: ", ari)
+        # print("Total clusters: ", global_centers_count)
+        # print("rerun ari: ", ari)
         
         # Cluster of clusters
         df_csv_append["lll"] = -2
@@ -597,8 +610,8 @@ class AUL_Clustering:
             yy = df_csv_append["y"].tolist()
             ll = df_csv_append["l"].tolist()
             ari = adjusted_rand_score(yy, ll)
-            print("Total clusters: ", len(set(l)))
-            print("rerun ari: ", ari)
+            # print("Total clusters: ", len(set(l)))
+            # print("rerun ari: ", ari)
         
         df_csv_append.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
                         
@@ -761,61 +774,114 @@ def ReRunModeTest(algorithm, master_files):
         f.close()
 
 def BestSubsampleRun(algorithm, master_files):
-    if os.path.exists("Stats/"+algorithm+"_Best_Subsample_Run.csv") == 0:
-        f=open("Stats/"+algorithm+"_Best_Subsample_Run.csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,Time,ARI_Mean,ARI_BestARI,Inertia_BestARI,ARI_BestInertia,Inertia_BestInertia\n')
+    DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+    RerunModes = ["A", "B"]
+    MergeModes = ["Distance", "DistanceRatio", "AD"]
+    MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
+    
+    if os.path.exists("Stats/"+algorithm+"_Ablation.csv") == 0:
+        f=open("Stats/"+algorithm+"_Ablation.csv", "w")
+        # f.write('Filename,Shape_R,Shape_C,Size,Time,ARI_Mean,ARI_BestARI,Inertia_BestARI,ARI_BestInertia,Inertia_BestInertia\n')
+        f.write('Filename,Shape_R,Shape_C,Size')
+        for dpc in DeterParamComp:
+            for rm in RerunModes:
+                for mm in MergeModes:
+                    if mm == "AD":
+                        for maa in MergeADAlgo:
+                            f.write(",Time_"+dpc+"_"+rm+"_"+mm+maa+",ARI_"+dpc+"_"+rm+"_"+mm+maa)
+                    else:
+                        f.write(",Time_"+dpc+"_"+rm+"_"+mm+",ARI_"+dpc+"_"+rm+"_"+mm)
+        f.write("\n")
         f.close()
     
     for file in master_files:
-        try:
-            parameters = algo_parameters(algorithm)
-            
-            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-            
-            skip, shape, size = algoRun_ss.readData()
-            if skip:
-                algoRun_ss.destroy()
-                continue
-            print(file)
-            algoRun_ss.rerun_mode = "B"
-            ari_, time_, inertia_ = [], [], []
-            for _ in range(10):
-                ari_ss, time_ss = algoRun_ss.run()
-                
-                
-                
-                ari_.append(ari_ss)
-                time_.append(time_ss)
-                
-                df = pd.read_csv("ClusteringOutput/"+file+"_"+algorithm+".csv")
-                X = df.drop(["l", "y"], axis=1).to_numpy()
-                y=df["l"].to_numpy()
-                
-                centroids = np.array([X[y == i].mean(axis=0) for i in np.unique(y)])
-                distances = np.array([np.sum((X - centroids[y[i]])**2) for i in range(len(X))])
-                inertia_.append(np.sum(distances))
-    
-            time_mean = np.mean(time_)
-            ari_mean = np.mean(ari_)
-            best_ari_idx = np.argmax(ari_)
-            best_inertia_idx = np.argmin(inertia_)
-            
-            ARI_BestARI = ari_[best_ari_idx]
-            Inertia_BestARI = inertia_[best_ari_idx]
-            ARI_BestInertia = ari_[best_inertia_idx]
-            Inertia_BestInertia = inertia_[best_inertia_idx]
-            
-            algoRun_ss.destroy()
-            del algoRun_ss
-            
-            # # WRITE TO FILE
-            f=open("Stats/"+algorithm+"_Best_Subsample_Run.csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
-            f.close()
-            
-        except:
-            print("Fail")
+        # try:
+        parameters = algo_parameters(algorithm)
         
+        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+        
+        skip, shape, size = algoRun_ss.readData()
+        if skip:
+            algoRun_ss.destroy()
+            continue
+        print(file)
+        f=open("Stats/"+algorithm+"_Ablation.csv", "a")
+        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size))
+        
+        for dpc in DeterParamComp:
+            for rm in RerunModes:
+                for mm in MergeModes:
+                    if mm != "Distance":
+                        algoRun_ss.n_cluster = 2
+                    if mm == "AD":
+                        for maa in MergeADAlgo:
+                            algoRun_ss.determine_param_clustering_algo = dpc
+                            algoRun_ss.rerun_mode = rm
+                            algoRun_ss.mergeStyle = mm
+                            algoRun_ss.AD_algo_merge = maa
+                            ari_, time_ = [], []
+                            for _ in range(2):
+                                ari_ss, time_ss = algoRun_ss.run()
+                                ari_.append(ari_ss)
+                                time_.append(time_ss)
+                                
+                            f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
+                        
+                    else:
+                        algoRun_ss.determine_param_clustering_algo = dpc
+                        algoRun_ss.rerun_mode = rm
+                        algoRun_ss.mergeStyle = mm
+                        ari_, time_ = [], []
+                        for _ in range(2):
+                            ari_ss, time_ss = algoRun_ss.run()
+                            ari_.append(ari_ss)
+                            time_.append(time_ss)
+                            
+                        f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
+        
+        f.write("\n")
+        f.close()
+            
+            # algoRun_ss.rerun_mode = "B"
+            # ari_, time_, inertia_ = [], [], []
+            # for _ in range(10):
+            #     ari_ss, time_ss = algoRun_ss.run()
+                
+                
+                
+            #     ari_.append(ari_ss)
+            #     time_.append(time_ss)
+                
+            #     df = pd.read_csv("ClusteringOutput/"+file+"_"+algorithm+".csv")
+            #     X = df.drop(["l", "y"], axis=1).to_numpy()
+            #     y=df["l"].to_numpy()
+                
+            #     centroids = np.array([X[y == i].mean(axis=0) for i in np.unique(y)])
+            #     distances = np.array([np.sum((X - centroids[y[i]])**2) for i in range(len(X))])
+            #     inertia_.append(np.sum(distances))
+    
+            # time_mean = np.mean(time_)
+            # ari_mean = np.mean(ari_)
+            # best_ari_idx = np.argmax(ari_)
+            # best_inertia_idx = np.argmin(inertia_)
+            
+            # ARI_BestARI = ari_[best_ari_idx]
+            # Inertia_BestARI = inertia_[best_ari_idx]
+            # ARI_BestInertia = ari_[best_inertia_idx]
+            # Inertia_BestInertia = inertia_[best_inertia_idx]
+            
+            # algoRun_ss.destroy()
+            # del algoRun_ss
+            
+            # # # WRITE TO FILE
+            # f=open("Stats/"+algorithm+"_Ablation.csv", "a")
+            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
+            # # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
+            # f.close()
+            
+        # except:
+        #     print("Fail")
+        break
         
 if __name__ == '__main__':
     algorithm = "GMM"
@@ -827,63 +893,63 @@ if __name__ == '__main__':
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     
     # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files)
+    BestSubsampleRun(algorithm, master_files)
     
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
     
-    if os.path.exists("Stats/"+algorithm+".csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+".csv")
-        done_files = done_files["Filename"].to_numpy()
-        master_files = [x for x in master_files if x not in done_files]
+    # if os.path.exists("Stats/"+algorithm+".csv"):
+    #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
+    #     done_files = done_files["Filename"].to_numpy()
+    #     master_files = [x for x in master_files if x not in done_files]
     
-    master_files.sort(reverse=True)
+    # master_files.sort(reverse=True)
     
     
-    if os.path.exists("Stats/"+algorithm+".csv") == 0:
-        f=open("Stats/"+algorithm+".csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
-        f.close()
+    # if os.path.exists("Stats/"+algorithm+".csv") == 0:
+    #     f=open("Stats/"+algorithm+".csv", "w")
+    #     f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
+    #     f.close()
     
-    for file in master_files:
-        try:
-            parameters = algo_parameters(algorithm)
+    # for file in master_files:
+    #     try:
+    #         parameters = algo_parameters(algorithm)
             
-            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+    #         algoRun_ss = AUL_Clustering(parameters, file, algorithm)
             
-            skip, shape, size = algoRun_ss.readData()
-            if skip:
-                algoRun_ss.destroy()
-                continue
+    #         skip, shape, size = algoRun_ss.readData()
+    #         if skip:
+    #             algoRun_ss.destroy()
+    #             continue
             
-            print(file)
+    #         print(file)
             
-            ari_ss, time_ss = algoRun_ss.run()
-            bestParams = algoRun_ss.bestParams
-            algoRun_ss.destroy()
-            del algoRun_ss
+    #         ari_ss, time_ss = algoRun_ss.run()
+    #         bestParams = algoRun_ss.bestParams
+    #         algoRun_ss.destroy()
+    #         del algoRun_ss
     
            
-            print("Start: Default without sampling")
-            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-            algoRun_ws.bestParams = bestParams
-            ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
-            algoRun_ws.destroy()
+    #         print("Start: Default without sampling")
+    #         algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+    #         ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+    #         algoRun_ws.bestParams = bestParams
+    #         ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
+    #         algoRun_ws.destroy()
             
-            # # WRITE TO FILE
-            f=open("Stats/"+algorithm+".csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-            f.close()
+    #         # # WRITE TO FILE
+    #         f=open("Stats/"+algorithm+".csv", "a")
+    #         f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+    #         # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+    #         f.close()
             
-        except:
-            try:
-                algoRun_ss.destroy()
-                del algoRun_ss
-                algoRun_ws.destroy()
-                del algoRun_ws
-            except:
-                print("")
-            print("Fail")
+    #     except:
+    #         try:
+    #             algoRun_ss.destroy()
+    #             del algoRun_ss
+    #             algoRun_ws.destroy()
+    #             del algoRun_ws
+    #         except:
+    #             print("")
+    #         print("Fail")
         
