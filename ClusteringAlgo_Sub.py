@@ -618,7 +618,7 @@ class AUL_Clustering:
     
     def AUL_ARI(self):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
-        
+        os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
