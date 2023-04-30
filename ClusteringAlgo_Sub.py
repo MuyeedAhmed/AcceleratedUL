@@ -28,8 +28,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -720,7 +720,7 @@ def algo_parameters(algo):
         reg_covar = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
         max_iter = [50, 100, 150, 200]
         n_init = [1,2,3,5]
-        init_params = ['kmeans', 'random']
+        init_params = ['kmeans', 'k-means++', 'random']
         warm_start = [False, True]
         
         parameters.append(['covariance_type', 'full', covariance_type])
@@ -884,7 +884,7 @@ def BestSubsampleRun(algorithm, master_files):
         # break
         
 if __name__ == '__main__':
-    algorithm = "GMM"
+    algorithm = "AP"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
