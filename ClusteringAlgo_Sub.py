@@ -28,10 +28,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -618,7 +618,7 @@ class AUL_Clustering:
     
     def AUL_ARI(self):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
-        
+        # os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
@@ -820,7 +820,7 @@ def BestSubsampleRun(algorithm, master_files):
                                 algoRun_ss.mergeStyle = mm
                                 algoRun_ss.AD_algo_merge = maa
                                 ari_, time_ = [], []
-                                for _ in range(2):
+                                for _ in range(5):
                                     ari_ss, time_ss = algoRun_ss.run()
                                     ari_.append(ari_ss)
                                     time_.append(time_ss)
@@ -832,7 +832,7 @@ def BestSubsampleRun(algorithm, master_files):
                             algoRun_ss.rerun_mode = rm
                             algoRun_ss.mergeStyle = mm
                             ari_, time_ = [], []
-                            for _ in range(2):
+                            for _ in range(5):
                                 ari_ss, time_ss = algoRun_ss.run()
                                 ari_.append(ari_ss)
                                 time_.append(time_ss)
@@ -881,7 +881,7 @@ def BestSubsampleRun(algorithm, master_files):
             
         except:
             print("Fail")
-        break
+        # break
         
 if __name__ == '__main__':
     algorithm = "AP"
