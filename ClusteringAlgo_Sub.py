@@ -884,7 +884,7 @@ def BestSubsampleRun(algorithm, master_files):
         break
         
 if __name__ == '__main__':
-    algorithm = "GMM"
+    algorithm = "AP"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
