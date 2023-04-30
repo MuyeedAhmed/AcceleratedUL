@@ -795,30 +795,42 @@ def BestSubsampleRun(algorithm, master_files):
         f.close()
     
     for file in master_files:
-        # try:
-        parameters = algo_parameters(algorithm)
-        
-        algoRun_ss = AUL_Clustering(parameters, file, algorithm)
-        
-        skip, shape, size = algoRun_ss.readData()
-        if skip:
-            algoRun_ss.destroy()
-            continue
-        print(file)
-        f=open("Stats/"+algorithm+"_Ablation.csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size))
-        
-        for dpc in DeterParamComp:
-            for rm in RerunModes:
-                for mm in MergeModes:
-                    if mm != "Distance":
-                        algoRun_ss.n_cluster = 2
-                    if mm == "AD":
-                        for maa in MergeADAlgo:
+        try:
+            parameters = algo_parameters(algorithm)
+            
+            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+            
+            skip, shape, size = algoRun_ss.readData()
+            if skip:
+                algoRun_ss.destroy()
+                continue
+            print(file)
+            f=open("Stats/"+algorithm+"_Ablation.csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size))
+            
+            for dpc in DeterParamComp:
+                for rm in RerunModes:
+                    for mm in MergeModes:
+                        if mm != "Distance":
+                            algoRun_ss.n_cluster = 2
+                        if mm == "AD":
+                            for maa in MergeADAlgo:
+                                algoRun_ss.determine_param_clustering_algo = dpc
+                                algoRun_ss.rerun_mode = rm
+                                algoRun_ss.mergeStyle = mm
+                                algoRun_ss.AD_algo_merge = maa
+                                ari_, time_ = [], []
+                                for _ in range(2):
+                                    ari_ss, time_ss = algoRun_ss.run()
+                                    ari_.append(ari_ss)
+                                    time_.append(time_ss)
+                                    
+                                f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
+                            
+                        else:
                             algoRun_ss.determine_param_clustering_algo = dpc
                             algoRun_ss.rerun_mode = rm
                             algoRun_ss.mergeStyle = mm
-                            algoRun_ss.AD_algo_merge = maa
                             ari_, time_ = [], []
                             for _ in range(2):
                                 ari_ss, time_ss = algoRun_ss.run()
@@ -826,21 +838,9 @@ def BestSubsampleRun(algorithm, master_files):
                                 time_.append(time_ss)
                                 
                             f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
-                        
-                    else:
-                        algoRun_ss.determine_param_clustering_algo = dpc
-                        algoRun_ss.rerun_mode = rm
-                        algoRun_ss.mergeStyle = mm
-                        ari_, time_ = [], []
-                        for _ in range(2):
-                            ari_ss, time_ss = algoRun_ss.run()
-                            ari_.append(ari_ss)
-                            time_.append(time_ss)
-                            
-                        f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
-        
-        f.write("\n")
-        f.close()
+            
+            f.write("\n")
+            f.close()
             
             # algoRun_ss.rerun_mode = "B"
             # ari_, time_, inertia_ = [], [], []
@@ -879,12 +879,12 @@ def BestSubsampleRun(algorithm, master_files):
             # # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
             # f.close()
             
-        # except:
-        #     print("Fail")
-        break
+        except:
+            print("Fail")
+        # break
         
 if __name__ == '__main__':
-    algorithm = "AP"
+    algorithm = "GMM"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
