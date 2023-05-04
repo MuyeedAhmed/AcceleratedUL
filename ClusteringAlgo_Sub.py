@@ -774,23 +774,20 @@ def ReRunModeTest(algorithm, master_files):
         f.close()
 
 def BestSubsampleRun(algorithm, master_files):
-    DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+    # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+    DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
     RerunModes = ["A", "B"]
-    MergeModes = ["Distance", "DistanceRatio", "AD"]
-    MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
+    MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
+    # MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation.csv") == 0:
-        f=open("Stats/"+algorithm+"_Ablation.csv", "w")
-        # f.write('Filename,Shape_R,Shape_C,Size,Time,ARI_Mean,ARI_BestARI,Inertia_BestARI,ARI_BestInertia,Inertia_BestInertia\n')
+    
+    if os.path.exists("Stats/"+algorithm+"_Ablation_Small.csv") == 0:
+        f=open("Stats/"+algorithm+"_Ablation_Small.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Size')
         for dpc in DeterParamComp:
             for rm in RerunModes:
                 for mm in MergeModes:
-                    if mm == "AD":
-                        for maa in MergeADAlgo:
-                            f.write(",Time_"+dpc+"_"+rm+"_"+mm+maa+",ARI_"+dpc+"_"+rm+"_"+mm+maa)
-                    else:
-                        f.write(",Time_"+dpc+"_"+rm+"_"+mm+",ARI_"+dpc+"_"+rm+"_"+mm)
+                    f.write(",Time_"+dpc+"_"+rm+"_"+mm+",ARI_"+dpc+"_"+rm+"_"+mm)
         f.write("\n")
         f.close()
     
@@ -805,40 +802,30 @@ def BestSubsampleRun(algorithm, master_files):
                 algoRun_ss.destroy()
                 continue
             print(file)
-            f=open("Stats/"+algorithm+"_Ablation.csv", "a")
+            f=open("Stats/"+algorithm+"_Ablation_Small.csv", "a")
             f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size))
             
             for dpc in DeterParamComp:
                 for rm in RerunModes:
                     for mm in MergeModes:
+                        algoRun_ss.determine_param_clustering_algo = dpc
+                        algoRun_ss.rerun_mode = rm
+                        algoRun_ss.mergeStyle = mm
                         if mm != "Distance":
                             algoRun_ss.n_cluster = 2
-                        if mm == "AD":
-                            for maa in MergeADAlgo:
-                                algoRun_ss.determine_param_clustering_algo = dpc
-                                algoRun_ss.rerun_mode = rm
-                                algoRun_ss.mergeStyle = mm
-                                algoRun_ss.AD_algo_merge = maa
-                                ari_, time_ = [], []
-                                for _ in range(5):
-                                    ari_ss, time_ss = algoRun_ss.run()
-                                    ari_.append(ari_ss)
-                                    time_.append(time_ss)
-                                    
-                                f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
+                        if mm == "ADLOF":
+                            algoRun_ss.mergeStyle = "AD"
+                            algoRun_ss.AD_algo_merge = "LOF"
+                        
+                        ari_, time_ = [], []
+                        
+                        for _ in range(5):
+                            ari_ss, time_ss = algoRun_ss.run()
+                            ari_.append(ari_ss)
+                            time_.append(time_ss)
                             
-                        else:
-                            algoRun_ss.determine_param_clustering_algo = dpc
-                            algoRun_ss.rerun_mode = rm
-                            algoRun_ss.mergeStyle = mm
-                            ari_, time_ = [], []
-                            for _ in range(5):
-                                ari_ss, time_ss = algoRun_ss.run()
-                                ari_.append(ari_ss)
-                                time_.append(time_ss)
-                                
-                            f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
-            
+                        f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
+        
             f.write("\n")
             f.close()
             
