@@ -720,7 +720,7 @@ def algo_parameters(algo):
         reg_covar = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
         max_iter = [50, 100, 150, 200]
         n_init = [1,2,3,5]
-        init_params = ['kmeans', 'k-means++', 'random']
+        init_params = ['kmeans', 'random']
         warm_start = [False, True]
         
         parameters.append(['covariance_type', 'full', covariance_type])
