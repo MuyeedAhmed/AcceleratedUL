@@ -28,8 +28,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -883,7 +883,7 @@ def BestSubsampleRun(algorithm, master_files):
         # break
         
 if __name__ == '__main__':
-    algorithm = "GMM"
+    algorithm = "AP"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
