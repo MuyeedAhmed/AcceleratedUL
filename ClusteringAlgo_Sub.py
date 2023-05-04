@@ -70,10 +70,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-            return True, 0, 0
-        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
         #     return True, 0, 0
+        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+            return True, 0, 0
         
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
@@ -618,7 +618,7 @@ class AUL_Clustering:
     
     def AUL_ARI(self):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
-        # os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
+        os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         ari = adjusted_rand_score(yy, ll)
@@ -779,6 +779,12 @@ def BestSubsampleRun(algorithm, master_files):
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
     
+    if os.path.exists("Stats/"+algorithm+"_Ablation_Small.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_Small.csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
+        
+        
     # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
     DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
     RerunModes = ["A", "B"]
@@ -883,7 +889,8 @@ if __name__ == '__main__':
     
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
-    
+    master_files.sort()
+
     # # Run Subsampling 10 times and calculate Inertia
     BestSubsampleRun(algorithm, master_files)
     
