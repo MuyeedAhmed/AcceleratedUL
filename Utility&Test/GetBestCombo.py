@@ -19,10 +19,15 @@ Time_Default = df["Time_WD"]
 
 print(f"Default:\n\tTime:{np.mean(Time_Default.to_numpy())}\n\tARI:{np.mean(ARI_Default.to_numpy())}")
 
-DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+# DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+# # DeterParamComp = ["KM"]
+# RerunModes = ["A", "B"]
+# # MergeModes = ["Distance", "DistanceRatio"]
+# MergeModes = ["Distance", "DistanceRatio", "ADLOF", "ADIF", "ADEE", "ADOCSVM"]
+
+DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
 RerunModes = ["A", "B"]
-MergeModes = ["Distance", "DistanceRatio", "ADLOF", "ADIF", "ADEE", "ADOCSVM"]
-# MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
+MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
 
 stats = pd.DataFrame(columns=['DeterParamComp', 'RerunModes', 'MergeModes', 'Time', 'ARI'])
 
@@ -34,31 +39,14 @@ Time = []
 ARI = []
 
 
-
+ari_all_data = []
 
 for dpc in DeterParamComp:
     for rm in RerunModes:
         for mm in MergeModes:
-            # if mm == "AD":
-                # for maa in MergeADAlgo:
-                #     columnNameT = "Time_"+dpc+"_"+rm+"_"+mm+maa
-                #     columnNameA = "ARI_"+dpc+"_"+rm+"_"+mm+maa
-                #     t = np.mean(df[columnNameT].to_numpy())
-                #     a = np.mean(df[columnNameA].to_numpy())
-                #     Time.append(t)
-                #     ARI.append(a)
-
-                #     stats.loc[-1] = [dpc, rm, mm, maa, t, a]
-                #     stats.index = stats.index + 1  
-                #     if t > maxTime:
-                #         maxTime = t
-                #         maxTimeColumn = columnNameT
-                #     if a > maxARI:
-                #         maxARI = a
-                #         maxARIColumn = columnNameA
-            # else:
             columnNameT = "Time_"+dpc+"_"+rm+"_"+mm
             columnNameA = "ARI_"+dpc+"_"+rm+"_"+mm
+            ari_all_data.append(df[columnNameA].to_numpy())
             t = np.mean(df[columnNameT].to_numpy())
             a = np.mean(df[columnNameA].to_numpy())
             Time.append(t)
@@ -75,6 +63,7 @@ for dpc in DeterParamComp:
 
 #DeterParamComp
 groups = stats.groupby('DeterParamComp')
+print(group.ARI)
 fig, ax = plt.subplots()
 ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
 for name, group in groups:
@@ -114,6 +103,11 @@ plt.ylabel("Time")
 
 print(maxARI)
 print(maxARIColumn)
+
+fig, ax = plt.subplots()
+ax.boxplot(ari_all_data, positions=Time, widths=0.5)
+plt.xticks([])
+
 # SS = df["ARI_SS"]
 
 # Optimized = df["ARI_WO"]
