@@ -7,10 +7,12 @@ import numpy as np
 # df1 = pd.read_csv("Stats/AP.csv")
 # df2 = pd.read_csv("Stats/AP_Ablation.csv")
 
-df1 = pd.read_csv("Stats/GMM.csv")
-df2 = pd.read_csv("Stats/GMM_Ablation.csv")
+df1 = pd.read_csv("Stats/AP.csv")
+ablation_old = pd.read_csv("Stats/AP_Ablation.csv")
+ablation_small = pd.read_csv("Stats/AP_Ablation_Small.csv")
 
-
+df2 = pd.concat([ablation_old, ablation_small], axis=0).reset_index(drop=True)
+df2 = df2.dropna(axis='columns')
 
 df = df1.merge(df2, on='Filename', how='inner')
 
@@ -20,9 +22,7 @@ Time_Default = df["Time_WD"]
 print(f"Default:\n\tTime:{np.mean(Time_Default.to_numpy())}\n\tARI:{np.mean(ARI_Default.to_numpy())}")
 
 # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
-# # DeterParamComp = ["KM"]
 # RerunModes = ["A", "B"]
-# # MergeModes = ["Distance", "DistanceRatio"]
 # MergeModes = ["Distance", "DistanceRatio", "ADLOF", "ADIF", "ADEE", "ADOCSVM"]
 
 DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
@@ -63,7 +63,7 @@ for dpc in DeterParamComp:
 
 #DeterParamComp
 groups = stats.groupby('DeterParamComp')
-print(group.ARI)
+
 fig, ax = plt.subplots()
 ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
 for name, group in groups:
