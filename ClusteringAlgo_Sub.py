@@ -28,8 +28,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -184,13 +184,13 @@ class AUL_Clustering:
         for params in self.parameters:
             threads = []
             f = open("Output/Rank.csv", 'w')
-            f.write("Batch,Compare,Time\n")
+            f.write("Batch,ParameterIndex,Compare,Time\n")
             f.close()
             start_index = batch_index
-            for p_v in params[2]:
-                params[1] = p_v
+            for p_v_i in range(len(params[2])):
+                params[1] = params[2][p_v_i]
                 parameters_to_send = [p[1] for p in self.parameters]
-                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index))
+                t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, p_v_i))
                 threads.append(t)
                 t.start()
                 if batch_index == self.batch_count-1:
@@ -206,11 +206,13 @@ class AUL_Clustering:
             elif self.determine_param_mode == "ARI":
                 df["W"] = df.Compare
             h_r = df["W"].idxmax()
-            params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
+            
+            # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
+            params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
             
         self.bestParams = [p[1] for p in self.parameters]
 
-    def worker_determineParam(self, parameter, X, y, batch_index):        
+    def worker_determineParam(self, parameter, X, y, batch_index, parameter_index):        
         t0 = time.time()
         if self.algoName == "AP":
             c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
@@ -231,7 +233,7 @@ class AUL_Clustering:
         t1 = time.time()
         cost = t1-t0
         ari_comp = self.getARI_Comp(X, l)
-        saveStr = str(batch_index)+","+str(ari_comp)+","+str(cost)+"\n"    
+        saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
@@ -628,17 +630,17 @@ class AUL_Clustering:
     def run(self):
         t0 = time.time()
         if self.X.shape[0] < 10000:    
-            self.batch_count = 30
+            self.batch_count = 20
         elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
             self.batch_count = 100
         else:
             self.batch_count = int(self.X.shape[0]/100000)*100
         self.subSample()
-        print("Determine Parameters", end=' - ')
+        # print("Determine Parameters", end=' - ')
         self.determineParam()
         # self.batch_count = 100
         self.subSample()
-        print("Rerun")
+        # print("Rerun")
         self.rerun()
         t1 = time.time()
         ari_ss = self.AUL_ARI()
@@ -699,7 +701,8 @@ def algo_parameters(algo):
         n_init = [1, 5, 10, 15, 20, 30, 50, 100]
         gamma = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
         affinity = ["nearest_neighbors", "rbf"]
-        n_neighbors = [5, 10, 20, 30, 50, 75, 100]
+        # n_neighbors = [5, 10, 20, 30, 50, 75, 100]
+        n_neighbors = [2, 3, 5, 10, 20, 30]
         assign_labels = ["kmeans", "discretize"]
         degree = [2,3,4,5]
         n_jobs = [None, -1]
@@ -787,7 +790,10 @@ def BestSubsampleRun(algorithm, master_files):
         
     # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
     DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
-    RerunModes = ["A", "B"]
+    if algorithm == "SC":
+        RerunModes = ["A"]
+    else:    
+        RerunModes = ["A", "B"]
     MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
     # MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
     
@@ -813,9 +819,8 @@ def BestSubsampleRun(algorithm, master_files):
                 algoRun_ss.destroy()
                 continue
             print(file)
-            f=open("Stats/"+algorithm+"_Ablation_Small.csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size))
-            
+            counter = 0
+            savestr = ""
             for dpc in DeterParamComp:
                 for rm in RerunModes:
                     for mm in MergeModes:
@@ -835,11 +840,16 @@ def BestSubsampleRun(algorithm, master_files):
                             
                             ari_.append(ari_ss)
                             time_.append(time_ss)
-                            
-                        f.write(","+str(np.mean(time_))+","+str(np.mean(ari_)))
-        
+                        savestr += ","+str(np.mean(time_))+","+str(np.mean(ari_))    
+                        
+                        print(counter, end=",")
+                        counter+=1
+                        
+            f=open("Stats/"+algorithm+"_Ablation_Small.csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+savestr)
             f.write("\n")
             f.close()
+            print()
             del algoRun_ss
             # algoRun_ss.rerun_mode = "B"
             # ari_, time_, inertia_ = [], [], []
@@ -883,7 +893,7 @@ def BestSubsampleRun(algorithm, master_files):
         # break
         
 if __name__ == '__main__':
-    algorithm = "GMM"
+    algorithm = "SC"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
