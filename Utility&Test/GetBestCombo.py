@@ -4,17 +4,20 @@ from scipy.stats import ttest_ind
 from matplotlib import pyplot as plt
 import numpy as np
 
-# df1 = pd.read_csv("Stats/AP.csv")
-# df2 = pd.read_csv("Stats/AP_Ablation.csv")
+df1 = pd.read_csv("Stats/GMM.csv")
+ablation_old = pd.read_csv("Stats/GMM_Ablation.csv")
+ablation_small = pd.read_csv("Stats/GMM_Ablation_Small.csv")
 
-df1 = pd.read_csv("Stats/AP.csv")
-ablation_old = pd.read_csv("Stats/AP_Ablation.csv")
-ablation_small = pd.read_csv("Stats/AP_Ablation_Small.csv")
+# df1 = pd.read_csv("Stats/AP.csv")
+# ablation_old = pd.read_csv("Stats/AP_Ablation.csv")
+# ablation_small = pd.read_csv("Stats/AP_Ablation_Small.csv")
 
 df2 = pd.concat([ablation_old, ablation_small], axis=0).reset_index(drop=True)
 df2 = df2.dropna(axis='columns')
 
 df = df1.merge(df2, on='Filename', how='inner')
+
+df = df[df["Shape_R_x"] > 000]
 
 ARI_Default = df["ARI_WD"]
 Time_Default = df["Time_WD"]
@@ -25,9 +28,14 @@ print(f"Default:\n\tTime:{np.mean(Time_Default.to_numpy())}\n\tARI:{np.mean(ARI_
 # RerunModes = ["A", "B"]
 # MergeModes = ["Distance", "DistanceRatio", "ADLOF", "ADIF", "ADEE", "ADOCSVM"]
 
-DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
-RerunModes = ["A", "B"]
-MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
+# DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
+# RerunModes = ["A", "B"]
+# MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
+
+DeterParamComp = ["KM"]
+RerunModes = ["A"]
+MergeModes = ["Distance"]
+
 
 stats = pd.DataFrame(columns=['DeterParamComp', 'RerunModes', 'MergeModes', 'Time', 'ARI'])
 
@@ -39,6 +47,12 @@ Time = []
 ARI = []
 
 
+# print(f"Default:\n\tTime:{np.mean(Time_Default.to_numpy())}\n\tARI:{np.mean(ARI_Default.to_numpy())}")
+
+
+b = df["ARI_WO"].to_numpy()
+b.sort()
+plt.plot(b, '.')
 ari_all_data = []
 
 for dpc in DeterParamComp:
@@ -46,7 +60,12 @@ for dpc in DeterParamComp:
         for mm in MergeModes:
             columnNameT = "Time_"+dpc+"_"+rm+"_"+mm
             columnNameA = "ARI_"+dpc+"_"+rm+"_"+mm
+            
             ari_all_data.append(df[columnNameA].to_numpy())
+            a = df[columnNameA].to_numpy()
+            a.sort()
+            plt.plot(a, '.')
+            # plt.plot(df[columnNameA].to_numpy(), ".")
             t = np.mean(df[columnNameT].to_numpy())
             a = np.mean(df[columnNameA].to_numpy())
             Time.append(t)
@@ -61,54 +80,54 @@ for dpc in DeterParamComp:
                 maxARI = a
                 maxARIColumn = columnNameA
 
-#DeterParamComp
-groups = stats.groupby('DeterParamComp')
+# #DeterParamComp
+# groups = stats.groupby('DeterParamComp')
 
-fig, ax = plt.subplots()
-ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
-for name, group in groups:
-    ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
-ax.legend()
-plt.xlabel("ARI")
-plt.ylabel("Time")
-plt.show()
-
-
-#RerunModes
-groups = stats.groupby('RerunModes')
-fig, ax = plt.subplots()
-ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
-for name, group in groups:
-    ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
-ax.legend()
-plt.xlabel("ARI")
-plt.ylabel("Time")
-plt.show()
-
-#MergeModes
-groups = stats.groupby('MergeModes')
-fig, ax = plt.subplots()
-ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
-for name, group in groups:
-    ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
-ax.legend()
-plt.xlabel("ARI")
-plt.ylabel("Time")
-plt.show()
+# fig, ax = plt.subplots()
+# ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
+# for name, group in groups:
+#     ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
+# ax.legend()
+# plt.xlabel("ARI")
+# plt.ylabel("Time")
+# plt.show()
 
 
-plt.scatter(ARI, Time)
-plt.xlabel("ARI")
-plt.ylabel("Time")
+# #RerunModes
+# groups = stats.groupby('RerunModes')
+# fig, ax = plt.subplots()
+# ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
+# for name, group in groups:
+#     ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
+# ax.legend()
+# plt.xlabel("ARI")
+# plt.ylabel("Time")
+# plt.show()
+
+# #MergeModes
+# groups = stats.groupby('MergeModes')
+# fig, ax = plt.subplots()
+# ax.margins(0.05) # Optional, just adds 5% padding to the autoscaling
+# for name, group in groups:
+#     ax.plot(group.ARI, group.Time, marker='o', linestyle='', ms=5, label=name)
+# ax.legend()
+# plt.xlabel("ARI")
+# plt.ylabel("Time")
+# plt.show()
+
+# print(ari_all_data)
+# plt.plot(ari_all_data)
+# plt.xlabel("ARI")
+# # plt.ylabel("Time")
 
 print(maxARI)
 print(maxARIColumn)
 
-fig, ax = plt.subplots()
-ax.boxplot(ari_all_data, positions=Time, widths=0.5)
-plt.xticks([])
+# # fig, ax = plt.subplots()
+# # ax.boxplot(ari_all_data, positions=Time, widths=0.1, vert=False)
+# # plt.yticks([])
 
-# SS = df["ARI_SS"]
+# # SS = df["ARI_SS"]
 
 # Optimized = df["ARI_WO"]
 
