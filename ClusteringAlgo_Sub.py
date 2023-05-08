@@ -28,8 +28,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -886,10 +886,10 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
-    runDefault(algorithm, master_files)
+    # runDefault(algorithm, master_files)
     
     # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files)
+    BestSubsampleRun(algorithm, master_files)
     
     # if os.path.exists("Stats/"+algorithm+".csv"):
     #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
