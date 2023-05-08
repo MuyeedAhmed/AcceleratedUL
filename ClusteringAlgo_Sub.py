@@ -103,11 +103,12 @@ class AUL_Clustering:
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
     def runWithoutSubsampling(self, mode):
-        df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
+        if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv"):
+            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")        
+            self.y = df["y"].to_numpy()
+            self.X = df.drop("y", axis=1)
+            ss_predict = df["l"].to_numpy()
         
-        self.y=df["y"].to_numpy()
-        self.X=df.drop("y", axis=1)
-        self.n_cluster = len(set(self.y))
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -124,7 +125,10 @@ class AUL_Clustering:
                     print("Error in completion")
                     return -1,-1,-1
                 df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
-                ari = adjusted_rand_score(df["Default_labels"], df["l"])
+                if "l" in df:
+                    ari = adjusted_rand_score(df["Default_labels"], df["l"])
+                else:
+                    ari = -2
                 ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
                 return ari, ari_wd, t1-t0
             else:
@@ -132,12 +136,16 @@ class AUL_Clustering:
                     print("Error in completion")
                     return -1,-1
                 df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
-                # ari = adjusted_rand_score(df["Optimized_labels"], df["l"])
-                ari_wd = adjusted_rand_score(df["y"], df["Optimized_labels"])
-                return ari_wd, t1-t0
+                if "l" in df:
+                    ari = adjusted_rand_score(df["Optimized_labels"], df["l"])
+                else:
+                    ari = -2
+                ari_wo = adjusted_rand_score(df["y"], df["Optimized_labels"])
+                return ari, ari_wo, t1-t0
     def runWithoutSubsampling_w(self, mode):
-        l_ss = self.X["l"].to_numpy()
-        self.X = self.X.drop("l", axis=1)
+        if "l" in self.X:
+            l_ss = self.X["l"].to_numpy()
+            self.X = self.X.drop("l", axis=1)
         if mode == "default":
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(self.X)
@@ -148,8 +156,13 @@ class AUL_Clustering:
             elif self.algoName == "GMM":
                 c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
                 l = c.predict(self.X)
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_clusters=self.n_cluster).fit(self.X)
+                l = c.labels_
+                
             self.X["y"] = self.y
-            self.X["l"] = l_ss
+            if "l" in self.X:
+                self.X["l"] = l_ss
             self.X["Default_labels"] = l
             self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             
@@ -172,9 +185,12 @@ class AUL_Clustering:
                                        reg_covar=self.bestParams[2], max_iter=self.bestParams[3], n_init=self.bestParams[4], 
                                        init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
                 l = c.predict(self.X)
-            
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
+                l = c.labels_
             self.X["y"] = self.y
-            self.X["l"] = l_ss
+            if "l" in self.X:
+                self.X["l"] = l_ss
             self.X["Optimized_labels"] = l
             self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
             
@@ -209,7 +225,9 @@ class AUL_Clustering:
             
             # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
-            
+            if df["Time"].iloc[h_r] > 5:
+                print("Subsampling timeout")
+                raise Exception('')
         self.bestParams = [p[1] for p in self.parameters]
 
     def worker_determineParam(self, parameter, X, y, batch_index, parameter_index):        
@@ -228,7 +246,9 @@ class AUL_Clustering:
                                    reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
                                    init_params=parameter[5], warm_start=parameter[6]).fit(X)
             l = c.predict(X)
-        
+        elif self.algoName == "HAC":
+            c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+            l = c.labels_
         
         t1 = time.time()
         cost = t1-t0
@@ -317,7 +337,10 @@ class AUL_Clustering:
                                        init_params=parameter[5], warm_start=parameter[6]).fit(X)
             
                 l = c.predict(X)
-            
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+                l = c.labels_
+                
             X["y"] = y
             X["l"] = l
             X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
@@ -734,47 +757,13 @@ def algo_parameters(algo):
         parameters.append(['init_params', 'kmeans', init_params])
         parameters.append(['warm_start', False, warm_start])
     
+    if algo == "HAC":
+        metric = ["euclidean", "l1", "l2", "manhattan", "cosine"]
+        linkage = ["ward", "complete", "average", "single"]
+        
+        parameters.append(["metric", "euclidean", metric])
+        parameters.append(["linkage", "ward", linkage])
     return parameters
- 
-def ReRunModeTest(algorithm, master_files):
-    if os.path.exists("Stats/"+algorithm+"_ModesTest.csv") == 0:
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI_A,Time_A,ARI_B,Time_B\n')
-        f.close()
-        
-        
-    for file in master_files:
-        # try:
-        parameters = algo_parameters(algorithm)
-    
-        algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
-        skip, shape, size = algoRun_ss_a.readData()
-        if skip:
-            algoRun_ss_a.destroy()
-            continue
-        print("Start: Sampling with RerunMode 1")
-        print(file)
-        
-        ari_ss_a, time_ss_a = algoRun_ss_a.run()
-        print(ari_ss_a, time_ss_a)
-        
-        algoRun_ss_a.destroy()
-        del algoRun_ss_a
-
-        print("Start: Sampling with RerunMode 2")        
-        
-        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
-        algoRun_ss_b.rerun_mode = "B"
-        skip, shape, size = algoRun_ss_b.readData()
-        ari_ss_b, time_ss_b = algoRun_ss_b.run()
-        print(ari_ss_b, time_ss_b)
-        algoRun_ss_b.destroy()
-        del algoRun_ss_b
-        
-        # # WRITE TO FILE Different Modes
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
-        f.close()
 
 def BestSubsampleRun(algorithm, master_files):
     if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
@@ -851,49 +840,43 @@ def BestSubsampleRun(algorithm, master_files):
             f.close()
             print()
             del algoRun_ss
-            # algoRun_ss.rerun_mode = "B"
-            # ari_, time_, inertia_ = [], [], []
-            # for _ in range(10):
-            #     ari_ss, time_ss = algoRun_ss.run()
-                
-                
-                
-            #     ari_.append(ari_ss)
-            #     time_.append(time_ss)
-                
-            #     df = pd.read_csv("ClusteringOutput/"+file+"_"+algorithm+".csv")
-            #     X = df.drop(["l", "y"], axis=1).to_numpy()
-            #     y=df["l"].to_numpy()
-                
-            #     centroids = np.array([X[y == i].mean(axis=0) for i in np.unique(y)])
-            #     distances = np.array([np.sum((X - centroids[y[i]])**2) for i in range(len(X))])
-            #     inertia_.append(np.sum(distances))
-    
-            # time_mean = np.mean(time_)
-            # ari_mean = np.mean(ari_)
-            # best_ari_idx = np.argmax(ari_)
-            # best_inertia_idx = np.argmin(inertia_)
-            
-            # ARI_BestARI = ari_[best_ari_idx]
-            # Inertia_BestARI = inertia_[best_ari_idx]
-            # ARI_BestInertia = ari_[best_inertia_idx]
-            # Inertia_BestInertia = inertia_[best_inertia_idx]
-            
-            # algoRun_ss.destroy()
-            # del algoRun_ss
-            
-            # # # WRITE TO FILE
-            # f=open("Stats/"+algorithm+"_Ablation.csv", "a")
-            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
-            # # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
-            # f.close()
             
         except:
             print("Fail")
-        # break
+
+def runDefault(algorithm, master_files):
+    if os.path.exists("Stats/"+algorithm+"_Default.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Default.csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
+    if os.path.exists("Stats/"+algorithm+"_Default.csv") == 0:
+        f=open("Stats/"+algorithm+"_Default.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,ARI_WD,Time_WD\n')
+        f.close()
+     
+    for file in master_files:
+        try:
+            parameters = algo_parameters(algorithm)
+            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+            skip, shape, size = algoRun_ws.readData()
+            if skip:
+                algoRun_ws.destroy()
+                del algoRun_ws
+                continue
+            print(file)
+            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            algoRun_ws.destroy()
+            del algoRun_ws
+            
+            f=open("Stats/"+algorithm+"_Default.csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd)+','+str(time_wd) +'\n')
+            f.close()
         
+        except:
+            print("Fail")
+            
 if __name__ == '__main__':
-    algorithm = "SC"
+    algorithm = "HAC"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -902,11 +885,11 @@ if __name__ == '__main__':
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     master_files.sort()
 
-    # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files)
+    # # Run only defaults
+    runDefault(algorithm, master_files)
     
-    # # Test Rerun Modes
-    # ReRunModeTest(algorithm, master_files)
+    # # Run Subsampling 10 times and calculate Inertia
+    BestSubsampleRun(algorithm, master_files)
     
     if os.path.exists("Stats/"+algorithm+".csv"):
         done_files = pd.read_csv("Stats/"+algorithm+".csv")
