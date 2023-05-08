@@ -764,46 +764,6 @@ def algo_parameters(algo):
         parameters.append(["metric", "euclidean", metric])
         parameters.append(["linkage", "ward", linkage])
     return parameters
- 
-def ReRunModeTest(algorithm, master_files):
-    if os.path.exists("Stats/"+algorithm+"_ModesTest.csv") == 0:
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI_A,Time_A,ARI_B,Time_B\n')
-        f.close()
-        
-        
-    for file in master_files:
-        # try:
-        parameters = algo_parameters(algorithm)
-    
-        algoRun_ss_a = AUL_Clustering(parameters, file, algorithm)
-        skip, shape, size = algoRun_ss_a.readData()
-        if skip:
-            algoRun_ss_a.destroy()
-            continue
-        print("Start: Sampling with RerunMode 1")
-        print(file)
-        
-        ari_ss_a, time_ss_a = algoRun_ss_a.run()
-        print(ari_ss_a, time_ss_a)
-        
-        algoRun_ss_a.destroy()
-        del algoRun_ss_a
-
-        print("Start: Sampling with RerunMode 2")        
-        
-        algoRun_ss_b = AUL_Clustering(parameters, file, algorithm)
-        algoRun_ss_b.rerun_mode = "B"
-        skip, shape, size = algoRun_ss_b.readData()
-        ari_ss_b, time_ss_b = algoRun_ss_b.run()
-        print(ari_ss_b, time_ss_b)
-        algoRun_ss_b.destroy()
-        del algoRun_ss_b
-        
-        # # WRITE TO FILE Different Modes
-        f=open("Stats/"+algorithm+"_ModesTest.csv", "a")
-        f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_ss_a)+','+str(time_ss_a)+','+str(ari_ss_b)+','+str(time_ss_b)+'\n')
-        f.close()
 
 def BestSubsampleRun(algorithm, master_files):
     if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
@@ -880,42 +840,6 @@ def BestSubsampleRun(algorithm, master_files):
             f.close()
             print()
             del algoRun_ss
-            # algoRun_ss.rerun_mode = "B"
-            # ari_, time_, inertia_ = [], [], []
-            # for _ in range(10):
-            #     ari_ss, time_ss = algoRun_ss.run()
-                
-                
-                
-            #     ari_.append(ari_ss)
-            #     time_.append(time_ss)
-                
-            #     df = pd.read_csv("ClusteringOutput/"+file+"_"+algorithm+".csv")
-            #     X = df.drop(["l", "y"], axis=1).to_numpy()
-            #     y=df["l"].to_numpy()
-                
-            #     centroids = np.array([X[y == i].mean(axis=0) for i in np.unique(y)])
-            #     distances = np.array([np.sum((X - centroids[y[i]])**2) for i in range(len(X))])
-            #     inertia_.append(np.sum(distances))
-    
-            # time_mean = np.mean(time_)
-            # ari_mean = np.mean(ari_)
-            # best_ari_idx = np.argmax(ari_)
-            # best_inertia_idx = np.argmin(inertia_)
-            
-            # ARI_BestARI = ari_[best_ari_idx]
-            # Inertia_BestARI = inertia_[best_ari_idx]
-            # ARI_BestInertia = ari_[best_inertia_idx]
-            # Inertia_BestInertia = inertia_[best_inertia_idx]
-            
-            # algoRun_ss.destroy()
-            # del algoRun_ss
-            
-            # # # WRITE TO FILE
-            # f=open("Stats/"+algorithm+"_Ablation.csv", "a")
-            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
-            # # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(time_mean)+','+str(ari_mean)+','+str(ARI_BestARI)+','+str(Inertia_BestARI)+','+str(ARI_BestInertia)+','+str(Inertia_BestInertia)+'\n')
-            # f.close()
             
         except:
             print("Fail")
@@ -952,7 +876,7 @@ def runDefault(algorithm, master_files):
             print("Fail")
             
 if __name__ == '__main__':
-    algorithm = "SC"
+    algorithm = "HAC"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -966,9 +890,6 @@ if __name__ == '__main__':
     
     # # Run Subsampling 10 times and calculate Inertia
     BestSubsampleRun(algorithm, master_files)
-        
-    # # Test Rerun Modes
-    # ReRunModeTest(algorithm, master_files)
     
     # if os.path.exists("Stats/"+algorithm+".csv"):
     #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
