@@ -28,8 +28,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -103,11 +103,12 @@ class AUL_Clustering:
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
     def runWithoutSubsampling(self, mode):
-        df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
+        if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv"):
+            df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")        
+            self.y = df["y"].to_numpy()
+            self.X = df.drop("y", axis=1)
+            ss_predict = df["l"].to_numpy()
         
-        self.y=df["y"].to_numpy()
-        self.X=df.drop("y", axis=1)
-        self.n_cluster = len(set(self.y))
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -124,7 +125,10 @@ class AUL_Clustering:
                     print("Error in completion")
                     return -1,-1,-1
                 df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
-                ari = adjusted_rand_score(df["Default_labels"], df["l"])
+                if "l" in df:
+                    ari = adjusted_rand_score(df["Default_labels"], df["l"])
+                else:
+                    ari = -2
                 ari_wd = adjusted_rand_score(df["y"], df["Default_labels"])
                 return ari, ari_wd, t1-t0
             else:
@@ -132,12 +136,16 @@ class AUL_Clustering:
                     print("Error in completion")
                     return -1,-1
                 df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
-                # ari = adjusted_rand_score(df["Optimized_labels"], df["l"])
-                ari_wd = adjusted_rand_score(df["y"], df["Optimized_labels"])
-                return ari_wd, t1-t0
+                if "l" in df:
+                    ari = adjusted_rand_score(df["Optimized_labels"], df["l"])
+                else:
+                    ari = -2
+                ari_wo = adjusted_rand_score(df["y"], df["Optimized_labels"])
+                return ari, ari_wo, t1-t0
     def runWithoutSubsampling_w(self, mode):
-        l_ss = self.X["l"].to_numpy()
-        self.X = self.X.drop("l", axis=1)
+        if "l" in self.X:
+            l_ss = self.X["l"].to_numpy()
+            self.X = self.X.drop("l", axis=1)
         if mode == "default":
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(self.X)
@@ -148,8 +156,13 @@ class AUL_Clustering:
             elif self.algoName == "GMM":
                 c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
                 l = c.predict(self.X)
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_components=self.n_cluster).fit(self.X)
+                l = c.labels_
+                
             self.X["y"] = self.y
-            self.X["l"] = l_ss
+            if "l" in self.X:
+                self.X["l"] = l_ss
             self.X["Default_labels"] = l
             self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WDL.csv")
             
@@ -172,9 +185,12 @@ class AUL_Clustering:
                                        reg_covar=self.bestParams[2], max_iter=self.bestParams[3], n_init=self.bestParams[4], 
                                        init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
                 l = c.predict(self.X)
-            
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_components=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
+                l = c.labels_
             self.X["y"] = self.y
-            self.X["l"] = l_ss
+            if "l" in self.X:
+                self.X["l"] = l_ss
             self.X["Optimized_labels"] = l
             self.X.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+"_WOL.csv")
             
@@ -230,7 +246,9 @@ class AUL_Clustering:
                                    reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
                                    init_params=parameter[5], warm_start=parameter[6]).fit(X)
             l = c.predict(X)
-        
+        elif self.algoName == "HAC":
+            c = AgglomerativeClustering(n_components=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+            l = c.labels_
         
         t1 = time.time()
         cost = t1-t0
@@ -319,7 +337,10 @@ class AUL_Clustering:
                                        init_params=parameter[5], warm_start=parameter[6]).fit(X)
             
                 l = c.predict(X)
-            
+            elif self.algoName == "HAC":
+                c = AgglomerativeClustering(n_components=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+                l = c.labels_
+                
             X["y"] = y
             X["l"] = l
             X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
@@ -736,6 +757,12 @@ def algo_parameters(algo):
         parameters.append(['init_params', 'kmeans', init_params])
         parameters.append(['warm_start', False, warm_start])
     
+    if algo == "HAC":
+        metric = ["euclidean", "l1", "l2", "manhattan", "cosine"]
+        linkage = ["ward", "complete", "average", "single"]
+        
+        parameters.append(["metric", "euclidean", metric])
+        parameters.append(["linkage", "ward", linkage])
     return parameters
  
 def ReRunModeTest(algorithm, master_files):
@@ -892,7 +919,38 @@ def BestSubsampleRun(algorithm, master_files):
             
         except:
             print("Fail")
+
+def runDefault(algorithm, master_files):
+    if os.path.exists("Stats/"+algorithm+"_Default.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Default.csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
+    if os.path.exists("Stats/"+algorithm+"_Default.csv") == 0:
+        f=open("Stats/"+algorithm+"_Default.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Size,ARI_WD,Time_WD\n')
+        f.close()
+     
+    for file in master_files:
+        try:
+            parameters = algo_parameters(algorithm)
+            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+            skip, shape, size = algoRun_ws.readData()
+            if skip:
+                algoRun_ws.destroy()
+                del algoRun_ws
+                continue
+            print(file)
+            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            algoRun_ws.destroy()
+            del algoRun_ws
+            
+            f=open("Stats/"+algorithm+".csv", "a")
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd)+','+str(time_wd) +'\n')
+            f.close()
         
+        except:
+            print("Fail")
+            
 if __name__ == '__main__':
     algorithm = "SC"
     
@@ -903,9 +961,12 @@ if __name__ == '__main__':
         master_files[i] = master_files[i].split("/")[-1].split(".")[0]
     master_files.sort()
 
+    # # Run only defaults
+    # runDefault(algorithm, master_files)
+    
     # # Run Subsampling 10 times and calculate Inertia
     BestSubsampleRun(algorithm, master_files)
-    
+        
     # # Test Rerun Modes
     # ReRunModeTest(algorithm, master_files)
     
