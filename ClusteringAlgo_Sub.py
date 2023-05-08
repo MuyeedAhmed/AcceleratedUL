@@ -157,7 +157,7 @@ class AUL_Clustering:
                 c = GaussianMixture(n_components=self.n_cluster).fit(self.X)
                 l = c.predict(self.X)
             elif self.algoName == "HAC":
-                c = AgglomerativeClustering(n_components=self.n_cluster).fit(self.X)
+                c = AgglomerativeClustering(n_clusters=self.n_cluster).fit(self.X)
                 l = c.labels_
                 
             self.X["y"] = self.y
@@ -186,7 +186,7 @@ class AUL_Clustering:
                                        init_params=self.bestParams[5], warm_start=self.bestParams[6]).fit(self.X)
                 l = c.predict(self.X)
             elif self.algoName == "HAC":
-                c = AgglomerativeClustering(n_components=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
+                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
                 l = c.labels_
             self.X["y"] = self.y
             if "l" in self.X:
@@ -247,7 +247,7 @@ class AUL_Clustering:
                                    init_params=parameter[5], warm_start=parameter[6]).fit(X)
             l = c.predict(X)
         elif self.algoName == "HAC":
-            c = AgglomerativeClustering(n_components=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+            c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
             l = c.labels_
         
         t1 = time.time()
@@ -338,7 +338,7 @@ class AUL_Clustering:
             
                 l = c.predict(X)
             elif self.algoName == "HAC":
-                c = AgglomerativeClustering(n_components=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
                 l = c.labels_
                 
             X["y"] = y
