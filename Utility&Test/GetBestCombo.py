@@ -5,12 +5,12 @@ from matplotlib import pyplot as plt
 import numpy as np
 """GMM"""
 
-df1 = pd.read_csv("Stats/GMM.csv")
-ablation_old = pd.read_csv("Stats/GMM_Ablation.csv")
-ablation_small = pd.read_csv("Stats/GMM_Ablation_Small.csv")
-df2 = pd.concat([ablation_old, ablation_small], axis=0).reset_index(drop=True)
-df2 = df2.dropna(axis='columns')
-df = df1.merge(df2, on='Filename', how='inner')
+# df1 = pd.read_csv("Stats/GMM.csv")
+# ablation_old = pd.read_csv("Stats/GMM_Ablation.csv")
+# ablation_small = pd.read_csv("Stats/GMM_Ablation_Small.csv")
+# df2 = pd.concat([ablation_old, ablation_small], axis=0).reset_index(drop=True)
+# df2 = df2.dropna(axis='columns')
+# df = df1.merge(df2, on='Filename', how='inner')
 
 """AP"""
 
@@ -26,6 +26,12 @@ df = df1.merge(df2, on='Filename', how='inner')
 # ablation = pd.read_csv("Stats/HAC_Ablation.csv")
 # df = df1.merge(ablation, on='Filename', how='inner')
 
+"""DBSCAN"""
+df1 = pd.read_csv("Stats/DBSCAN_Default.csv")
+ablation = pd.read_csv("Stats/DBSCAN_Ablation_Small.csv")
+df = df1.merge(ablation, on='Filename', how='inner')
+
+
 
 
 df["Diff"] = df["ARI_WD"] - df["ARI_KM_A_Distance"]
@@ -38,7 +44,7 @@ print("Correlation (Default vs Column): ", df["Shape_C_x"].corr(df["ARI_WD"]))
 print("Correlation (Difference vs Row): ", df["Diff"].corr(df["ARI_WD"]))
 print("Correlation (Difference vs Column): ", df["Diff"].corr(df["ARI_WD"]))
 
-df = df[df["Shape_R_x"] > 5000]
+# df = df[df["Shape_R_x"] > 5000]
 
 ARI_Default = df["ARI_WD"]
 Time_Default = df["Time_WD"]
