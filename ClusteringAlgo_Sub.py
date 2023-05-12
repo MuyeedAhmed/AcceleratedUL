@@ -107,7 +107,6 @@ class AUL_Clustering:
         #min_samples
         batch_size = int(len(self.X)/self.batch_count)
         min_samples = np.linspace(2, int(np.sqrt(batch_size)), 10)
-        # self.parameters[1][2]
         #eps
         distance_values = []
         for _ in range(3):
@@ -116,15 +115,11 @@ class AUL_Clustering:
             distance_matrix_square = squareform(distance_matrix)
             upper_tri_indices = np.triu_indices(distance_matrix_square.shape[0], k=1)
             upper_tri_values = distance_matrix_square[upper_tri_indices]
-            distance_values += upper_tri_values
+            distance_values = np.concatenate((distance_values,upper_tri_values))
         
         p25 = np.percentile(distance_values, 25)
         p75 = np.percentile(distance_values, 75)
-        
-        eps = np.linspace((p25, p75), 10)
-        # self.parameters[0][2]
-        
-        
+        eps = np.linspace(p25, p75, 10)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
         
     def runWithoutSubsampling(self, mode):
@@ -133,7 +128,8 @@ class AUL_Clustering:
             self.y = df["y"].to_numpy()
             self.X = df.drop("y", axis=1)
             ss_predict = df["l"].to_numpy()
-        
+        else:
+            self.readData()
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -187,6 +183,7 @@ class AUL_Clustering:
                 c = AgglomerativeClustering(n_clusters=self.n_cluster).fit(self.X)
                 l = c.labels_
             elif self.algoName == "DBSCAN":
+                
                 c = DBSCAN().fit(self.X)
                 l = c.labels_
                 
@@ -219,7 +216,7 @@ class AUL_Clustering:
                 c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
                 l = c.labels_
             elif self.algoName == "DBSCAN":
-                c = DBSCAN(eps=self.bestParams[0][0], min_samples=self.bestParams[0][1], algorithm=self.bestParams[1]).fit(self.X)
+                c = DBSCAN(eps=self.bestParams[0][0], min_samples=int(self.bestParams[0][1]), algorithm=self.bestParams[1]).fit(self.X)
                 l = c.labels_
             
             self.X["y"] = self.y
@@ -284,7 +281,7 @@ class AUL_Clustering:
             c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
             l = c.labels_
         elif self.algoName == "DBSCAN":
-            c = DBSCAN(eps=parameter[0][0], min_samples=parameter[0][1], algorithm=parameter[1]).fit(X)
+            c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
             l = c.labels_
         t1 = time.time()
         cost = t1-t0
@@ -377,7 +374,7 @@ class AUL_Clustering:
                 c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
                 l = c.labels_
             elif self.algoName == "DBSCAN":
-                c = DBSCAN(eps=parameter[0][0], min_samples=parameter[0][1], algorithm=parameter[1]).fit(X)
+                c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
                 l = c.labels_    
             X["y"] = y
             X["l"] = l
@@ -698,10 +695,9 @@ class AUL_Clustering:
         else:
             self.batch_count = int(self.X.shape[0]/100000)*100
         
+        self.subSample()
         if self.algoName == "DBSCAN":
             self.set_DBSCAN_param()
-
-        self.subSample()
         # print("Determine Parameters", end=' - ')
         self.determineParam()
         # self.batch_count = 100
@@ -979,7 +975,7 @@ if __name__ == '__main__':
             algoRun_ws = AUL_Clustering(parameters, file, algorithm)
             ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
             algoRun_ws.bestParams = bestParams
-            ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
+            ari_optVSss, ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
             algoRun_ws.destroy()
             
             # # WRITE TO FILE
@@ -997,4 +993,3 @@ if __name__ == '__main__':
             except:
                 print("")
             print("Fail")
-        
