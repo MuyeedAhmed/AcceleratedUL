@@ -3,6 +3,7 @@ import shutil
 import glob
 import pandas as pd
 import numpy as np
+import random
 # from sklearn import metrics
 from sklearn.metrics.cluster import adjusted_rand_score
 import time
@@ -14,7 +15,7 @@ warnings.filterwarnings("ignore")
 import itertools
 from sklearn.metrics import f1_score
 import multiprocessing
-
+from scipy.spatial.distance import pdist, squareform
 
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -28,8 +29,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
-datasetFolderDir = '/louise/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
 # datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
@@ -58,7 +59,7 @@ class AUL_Clustering:
         if os.path.isdir("Output/") == 0:    
             os.mkdir("Output")
             os.mkdir("Output/Temp")
-            
+                    
     def destroy(self):
         if os.path.isdir("Output"):
             shutil.rmtree("Output")
@@ -102,13 +103,33 @@ class AUL_Clustering:
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
+    def set_DBSCAN_param(self):
+        #min_samples
+        batch_size = int(len(self.X)/self.batch_count)
+        min_samples = np.linspace(2, int(np.sqrt(batch_size)), 10)
+        #eps
+        distance_values = []
+        for _ in range(3):
+            X = self.X_batches[random.randint(0, self.batch_count-1)]
+            distance_matrix = pdist(X.values)
+            distance_matrix_square = squareform(distance_matrix)
+            upper_tri_indices = np.triu_indices(distance_matrix_square.shape[0], k=1)
+            upper_tri_values = distance_matrix_square[upper_tri_indices]
+            distance_values = np.concatenate((distance_values,upper_tri_values))
+        
+        p25 = np.percentile(distance_values, 25)
+        p75 = np.percentile(distance_values, 75)
+        eps = np.linspace(p25, p75, 10)
+        self.parameters[0][2] = list(itertools.product(eps, min_samples))
+        
     def runWithoutSubsampling(self, mode):
         if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv"):
             df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")        
             self.y = df["y"].to_numpy()
             self.X = df.drop("y", axis=1)
             ss_predict = df["l"].to_numpy()
-        
+        else:
+            self.readData()
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -142,6 +163,8 @@ class AUL_Clustering:
                     ari = -2
                 ari_wo = adjusted_rand_score(df["y"], df["Optimized_labels"])
                 return ari, ari_wo, t1-t0
+    
+    
     def runWithoutSubsampling_w(self, mode):
         if "l" in self.X:
             l_ss = self.X["l"].to_numpy()
@@ -158,6 +181,10 @@ class AUL_Clustering:
                 l = c.predict(self.X)
             elif self.algoName == "HAC":
                 c = AgglomerativeClustering(n_clusters=self.n_cluster).fit(self.X)
+                l = c.labels_
+            elif self.algoName == "DBSCAN":
+                
+                c = DBSCAN().fit(self.X)
                 l = c.labels_
                 
             self.X["y"] = self.y
@@ -188,6 +215,10 @@ class AUL_Clustering:
             elif self.algoName == "HAC":
                 c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=self.bestParams[0], linkage=self.bestParams[1]).fit(self.X)
                 l = c.labels_
+            elif self.algoName == "DBSCAN":
+                c = DBSCAN(eps=self.bestParams[0][0], min_samples=int(self.bestParams[0][1]), algorithm=self.bestParams[1]).fit(self.X)
+                l = c.labels_
+            
             self.X["y"] = self.y
             if "l" in self.X:
                 self.X["l"] = l_ss
@@ -249,7 +280,9 @@ class AUL_Clustering:
         elif self.algoName == "HAC":
             c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
             l = c.labels_
-        
+        elif self.algoName == "DBSCAN":
+            c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
+            l = c.labels_
         t1 = time.time()
         cost = t1-t0
         ari_comp = self.getARI_Comp(X, l)
@@ -340,7 +373,9 @@ class AUL_Clustering:
             elif self.algoName == "HAC":
                 c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
                 l = c.labels_
-                
+            elif self.algoName == "DBSCAN":
+                c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
+                l = c.labels_    
             X["y"] = y
             X["l"] = l
             X.to_csv("Output/Temp/"+str(batch_index)+".csv", index=False)
@@ -641,6 +676,7 @@ class AUL_Clustering:
         df_csv_append.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
                         
     
+    
     def AUL_ARI(self):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
@@ -658,7 +694,10 @@ class AUL_Clustering:
             self.batch_count = 100
         else:
             self.batch_count = int(self.X.shape[0]/100000)*100
+        
         self.subSample()
+        if self.algoName == "DBSCAN":
+            self.set_DBSCAN_param()
         # print("Determine Parameters", end=' - ')
         self.determineParam()
         # self.batch_count = 100
@@ -726,7 +765,8 @@ def algo_parameters(algo):
         affinity = ["nearest_neighbors", "rbf"]
         # n_neighbors = [5, 10, 20, 30, 50, 75, 100]
         n_neighbors = [2, 3, 5, 10, 20, 30]
-        assign_labels = ["kmeans", "discretize"]
+        # assign_labels = ["kmeans", "discretize", "cluster_qr"]
+        assign_labels = ["kmeans", "cluster_qr"]
         degree = [2,3,4,5]
         n_jobs = [None, -1]
         
@@ -763,6 +803,14 @@ def algo_parameters(algo):
         
         parameters.append(["metric", "euclidean", metric])
         parameters.append(["linkage", "ward", linkage])
+    
+    if algo == "DBSCAN":
+        eps_min_samples = []
+        dbscan_algorithm = ['auto', 'ball_tree', 'kd_tree', 'brute']
+        
+        parameters.append(["eps_min_samples", (0.5, 5), eps_min_samples])
+        parameters.append(["algorithm", 'auto', dbscan_algorithm])
+        
     return parameters
 
 def BestSubsampleRun(algorithm, master_files):
@@ -779,7 +827,7 @@ def BestSubsampleRun(algorithm, master_files):
         
     # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
     DeterParamComp = ["KM", "DBS", "HAC", "AVG"]
-    if algorithm == "SC":
+    if algorithm == "SC" or algorithm == "DBSCAN":
         RerunModes = ["A"]
     else:    
         RerunModes = ["A", "B"]
@@ -876,7 +924,7 @@ def runDefault(algorithm, master_files):
             print("Fail")
             
 if __name__ == '__main__':
-    algorithm = "SC"
+    algorithm = "DBSCAN"
     
     folderpath = datasetFolderDir
     master_files = glob.glob(folderpath+"*.csv")
@@ -886,10 +934,10 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
-    runDefault(algorithm, master_files)
+    # runDefault(algorithm, master_files)
     
     # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files)
+    BestSubsampleRun(algorithm, master_files)
     
     # if os.path.exists("Stats/"+algorithm+".csv"):
     #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
@@ -927,7 +975,7 @@ if __name__ == '__main__':
     #         algoRun_ws = AUL_Clustering(parameters, file, algorithm)
     #         ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
     #         algoRun_ws.bestParams = bestParams
-    #         ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
+    #         ari_optVSss, ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
     #         algoRun_ws.destroy()
             
     #         # # WRITE TO FILE
@@ -945,4 +993,3 @@ if __name__ == '__main__':
     #         except:
     #             print("")
     #         print("Fail")
-        
