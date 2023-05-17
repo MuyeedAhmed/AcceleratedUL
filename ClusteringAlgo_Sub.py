@@ -968,7 +968,7 @@ if __name__ == '__main__':
     # runDefault(algorithm, master_files)
     
     # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files, 1)
+    BestSubsampleRun(algorithm, master_files, 1)
     
     # if os.path.exists("Stats/"+algorithm+".csv"):
     #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
