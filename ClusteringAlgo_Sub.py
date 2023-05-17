@@ -844,12 +844,12 @@ def algo_parameters(algo):
     return parameters
 
 def BestSubsampleRun(algorithm, master_files, n_runs):
-    if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
-        done_files = done_files["Filename"].to_numpy()
-        master_files = [x for x in master_files if x not in done_files]
+    # if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
+    #     done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
+    #     done_files = done_files["Filename"].to_numpy()
+    #     master_files = [x for x in master_files if x not in done_files]
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_Small.csv"):
+    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv"):
         done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_Small.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
@@ -866,7 +866,7 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
     
     
     if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv") == 0:
-        f=open("Stats/"+algorithm+"_Ablation_Small.csv", "w")
+        f=open("Stats/"+algorithm+"_Ablation_NoAnomaly.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Size')
         for dpc in DeterParamComp:
             for rm in RerunModes:
