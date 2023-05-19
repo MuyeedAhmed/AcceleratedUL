@@ -844,29 +844,32 @@ def algo_parameters(algo):
     return parameters
 
 def BestSubsampleRun(algorithm, master_files, n_runs):
-    # if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
-    #     done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
-    #     done_files = done_files["Filename"].to_numpy()
-    #     master_files = [x for x in master_files if x not in done_files]
+    if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv"):
+    if os.path.exists("Stats/"+algorithm+"_Ablation_Small.csv"):
         done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_Small.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
         
         
-    # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
-    DeterParamComp = ["AP", "KM", "DBS", "HAC", "AVG"]
-    if algorithm == "SC" or algorithm == "DBSCAN":
-        RerunModes = ["A"]
-    else:    
-        RerunModes = ["A", "B"]
-    MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
-    # MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
+    # # DeterParamComp = ["KM", "DBS", "HAC", "INERTIA", "AVG"]
+    # DeterParamComp = ["AP", "KM", "DBS", "HAC", "AVG"]
+    # if algorithm == "SC" or algorithm == "DBSCAN":
+    #     RerunModes = ["A"]
+    # else:    
+    #     RerunModes = ["A", "B"]
+    # MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
+    
+    DeterParamComp = ["HAC"]
+    RerunModes = ["A"]
+    MergeModes = ["DistanceRatio"]
     
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv") == 0:
-        f=open("Stats/"+algorithm+"_Ablation_NoAnomaly.csv", "w")
+    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv") == 0:
+        f=open("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Size')
         for dpc in DeterParamComp:
             for rm in RerunModes:
@@ -912,7 +915,7 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
                         print(counter, end=",")
                         counter+=1
                         
-            f=open("Stats/"+algorithm+"_Ablation_NoAnomaly.csv", "a")
+            f=open("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv", "a")
             f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+savestr)
             f.write("\n")
             f.close()
@@ -965,10 +968,10 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
-    runDefault(algorithm, master_files)
+    # runDefault(algorithm, master_files)
     
     # # Run Subsampling 10 times and calculate Inertia
-    # BestSubsampleRun(algorithm, master_files, 1)
+    BestSubsampleRun(algorithm, master_files, 1)
     
     # if os.path.exists("Stats/"+algorithm+".csv"):
     #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
