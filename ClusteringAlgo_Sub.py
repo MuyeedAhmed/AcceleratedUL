@@ -849,8 +849,8 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_Small.csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_Small.csv")
+    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
         
