@@ -29,10 +29,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -118,6 +118,11 @@ class AUL_Clustering:
             distance_values = np.concatenate((distance_values,upper_tri_values))
         
         p5 = np.percentile(distance_values, 5)
+        if p5 <= 0:
+            ii = 6
+            while p5 <= 0 and ii < 45:
+                p5 = np.percentile(distance_values, ii)
+                ii+=1
         p50 = np.percentile(distance_values, 50)
         eps = np.linspace(p5, p50, 10)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
@@ -844,13 +849,13 @@ def algo_parameters(algo):
     return parameters
 
 def BestSubsampleRun(algorithm, master_files, n_runs):
-    # if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
-    #     done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
-    #     done_files = done_files["Filename"].to_numpy()
-    #     master_files = [x for x in master_files if x not in done_files]
+    if os.path.exists("Stats/"+algorithm+"_Ablation.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation.csv")
+        done_files = done_files["Filename"].to_numpy()
+        master_files = [x for x in master_files if x not in done_files]
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_Small.csv")
+    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv"):
+        done_files = pd.read_csv("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
         
@@ -862,11 +867,14 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
     else:    
         RerunModes = ["A", "B"]
     MergeModes = ["Distance", "DistanceRatio", "ADLOF"]
-    # MergeADAlgo = ["LOF", "IF", "EE", "OCSVM"]
+    
+    # DeterParamComp = ["HAC"]
+    # RerunModes = ["A"]
+    # MergeModes = ["DistanceRatio"]
     
     
-    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly.csv") == 0:
-        f=open("Stats/"+algorithm+"_Ablation_NoAnomaly.csv", "w")
+    if os.path.exists("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv") == 0:
+        f=open("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Size')
         for dpc in DeterParamComp:
             for rm in RerunModes:
@@ -912,7 +920,7 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
                         print(counter, end=",")
                         counter+=1
                         
-            f=open("Stats/"+algorithm+"_Ablation_NoAnomaly.csv", "a")
+            f=open("Stats/"+algorithm+"_Ablation_NoAnomaly_Large.csv", "a")
             f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+savestr)
             f.write("\n")
             f.close()

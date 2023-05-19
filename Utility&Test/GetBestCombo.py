@@ -64,12 +64,11 @@ class EvaluateOutcome:
         if os.path.exists("Stats/"+self.algorithm+"_Ablation_NoAnomaly.csv"):
             ablation_noA = pd.read_csv("Stats/"+self.algorithm+"_Ablation_NoAnomaly.csv")
             self.df = pd.concat([self.df, ablation_noA], axis=0).reset_index(drop=True)        
+        
         try:
             default = pd.read_csv("Stats/"+self.algorithm+"_Default.csv")
         except:
             default = pd.read_csv("Stats/"+self.algorithm+".csv")
-        print(self.df.columns)
-        print(default.columns)
         
         self.df = self.df.merge(default, on='Filename', how='inner')
         
@@ -147,6 +146,7 @@ class EvaluateOutcome:
         plt.title("Sorted")
         plt.xlabel("Datasets")
         plt.ylabel("ARI")
+        plt.legend(["Default", "Subsampling"])
         plt.show()
 
         """ Sorted - Default """
@@ -163,6 +163,7 @@ class EvaluateOutcome:
         plt.title("Sorted - Default")
         plt.xlabel("Datasets")
         plt.ylabel("ARI")
+        plt.legend(["Default", "Subsampling"])
         plt.show()
 
 
@@ -176,6 +177,9 @@ class EvaluateOutcome:
 
         plt.xlabel("Datasets")
         plt.ylabel("ARI")
+        plt.xlabel("Datasets")
+        plt.ylabel("ARI")
+        plt.title("Delta: ARI_Default - ARI_Subsampling")
         plt.show()
     
         
