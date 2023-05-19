@@ -120,6 +120,7 @@ class AUL_Clustering:
         p5 = np.percentile(distance_values, 5)
         p50 = np.percentile(distance_values, 50)
         eps = np.linspace(p5, p50, 10)
+        print(eps)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
         
     def runWithoutSubsampling(self, mode):
