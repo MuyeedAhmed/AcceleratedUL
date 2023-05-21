@@ -71,10 +71,10 @@ class AUL_Clustering:
         except:
             print("File Doesn't Exist!")
             return True, 0, 0
-        # if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
-        #     return True, 0, 0
-        if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        if df.shape[0] < 10000: #Skip if dataset contains less than 10,000 rows
             return True, 0, 0
+        # if df.shape[0] > 10000 or df.shape[0] < 1000: #Skip if dataset contains more than 10,000 rows or less than 1,000 rows
+        #     return True, 0, 0
         
         if df.shape[1] > 1000: #Skip if dataset contains more than 1,000 columns
             return True, 0, 0
@@ -973,8 +973,9 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
+    # runDefault(algorithm, ["kddcup"])
     # runDefault(algorithm, master_files)
-    
+        
     # # Run Subsampling 10 times and calculate Inertia
     # BestSubsampleRun(algorithm, master_files, 1)
     
