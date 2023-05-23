@@ -29,10 +29,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-# datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
+datasetFolderDir = '/jimmy/hdd/ma234/Dataset/'
 # datasetFolderDir = '/louise/hdd/ma234/Dataset/'
 # datasetFolderDir = '../Datasets/'
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+# datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
 
 
 class AUL_Clustering:
@@ -127,16 +127,17 @@ class AUL_Clustering:
         eps = np.linspace(p5, p50, 10)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
         
-    def runWithoutSubsampling(self, mode):
+    def runWithoutSubsampling(self, mode, algo=""):
         if os.path.exists("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv"):
             df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")        
             self.y = df["y"].to_numpy()
             self.X = df.drop("y", axis=1)
             ss_predict = df["l"].to_numpy()
         else:
-            self.readData()
+            if self.X == []:
+                self.readData()
         t0 = time.time()
-        p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
+        p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,algo,))
         p.start()
         p.join(timeout=14400)
         t1 = time.time()
@@ -170,7 +171,7 @@ class AUL_Clustering:
                 return ari, ari_wo, t1-t0
     
     
-    def runWithoutSubsampling_w(self, mode):
+    def runWithoutSubsampling_w(self, mode,algo):
         if "l" in self.X:
             l_ss = self.X["l"].to_numpy()
             self.X = self.X.drop("l", axis=1)
@@ -189,7 +190,7 @@ class AUL_Clustering:
                 l = c.labels_
             elif self.algoName == "DBSCAN":
                 
-                c = DBSCAN().fit(self.X)
+                c = DBSCAN(algorithm=algo).fit(self.X)
                 l = c.labels_
                 
             self.X["y"] = self.y
@@ -932,13 +933,17 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
         
     
 def runDefault(algorithm, master_files):
-    if os.path.exists("Stats/"+algorithm+"_Default.csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+"_Default.csv")
+    # if os.path.exists("Stats/"+algorithm+"_Default.csv"):
+    if os.path.exists("Stats/"+algorithm+"_Default_Algo.csv"):
+    #     done_files = pd.read_csv("Stats/"+algorithm+"_Default.csv")
+        done_files = pd.read_csv("Stats/"+algorithm+"_Default_Algo.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
-    if os.path.exists("Stats/"+algorithm+"_Default.csv") == 0:
-        f=open("Stats/"+algorithm+"_Default.csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI_WD,Time_WD\n')
+    else:
+        # f=open("Stats/"+algorithm+"_Default.csv", "w")
+        f=open("Stats/"+algorithm+"_Default_Algo.csv", "w")
+        # f.write('Filename,Shape_R,Shape_C,Size,ARI_WD,Time_WD\n')
+        f.write('Filename,Shape_R,Shape_C,Size,ARI_WD_bt,Time_WD_bt,ARI_WD_kt,Time_WD_kt,ARI_WD_b,Time_WD_b\n')
         f.close()
      
     for file in master_files:
@@ -951,12 +956,17 @@ def runDefault(algorithm, master_files):
                 del algoRun_ws
                 continue
             print(file)
-            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            # ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            ari, ari_wd1, time_wd1 = algoRun_ws.runWithoutSubsampling("default", "ball_tree")
+            ari, ari_wd2, time_wd2 = algoRun_ws.runWithoutSubsampling("default", "kd_tree")
+            ari, ari_wd3, time_wd3 = algoRun_ws.runWithoutSubsampling("default", "brute")
             algoRun_ws.destroy()
             del algoRun_ws
             
-            f=open("Stats/"+algorithm+"_Default.csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd)+','+str(time_wd) +'\n')
+            # f=open("Stats/"+algorithm+"_Default.csv", "a")
+            f=open("Stats/"+algorithm+"_Default_Algo.csv", "a")
+            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd)+','+str(time_wd) +'\n')
+            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd1)+','+str(time_wd1)+','+str(ari_wd2)+','+str(time_wd2)+','+str(ari_wd3)+','+str(time_wd3) +'\n')
             f.close()
         
         except:
@@ -973,63 +983,62 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
-    # runDefault(algorithm, ["kddcup"])
-    # runDefault(algorithm, master_files)
+    runDefault(algorithm, master_files)
         
     # # Run Subsampling 10 times and calculate Inertia
     # BestSubsampleRun(algorithm, master_files, 1)
     
-    if os.path.exists("Stats/"+algorithm+".csv"):
-        done_files = pd.read_csv("Stats/"+algorithm+".csv")
-        done_files = done_files["Filename"].to_numpy()
-        master_files = [x for x in master_files if x not in done_files]
+    # if os.path.exists("Stats/"+algorithm+".csv"):
+    #     done_files = pd.read_csv("Stats/"+algorithm+".csv")
+    #     done_files = done_files["Filename"].to_numpy()
+    #     master_files = [x for x in master_files if x not in done_files]
     
-    master_files.sort(reverse=True)
+    # master_files.sort(reverse=True)
     
     
-    if os.path.exists("Stats/"+algorithm+".csv") == 0:
-        f=open("Stats/"+algorithm+".csv", "w")
-        f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
-        f.close()
+    # if os.path.exists("Stats/"+algorithm+".csv") == 0:
+    #     f=open("Stats/"+algorithm+".csv", "w")
+    #     f.write('Filename,Shape_R,Shape_C,Size,ARI,ARI_WD,Time_WD,ARI_SS,Time_SS,ARI_WO,Time_WO\n')
+    #     f.close()
     
-    for file in master_files:
-        try:
-            parameters = algo_parameters(algorithm)
+    # for file in master_files:
+    #     try:
+    #         parameters = algo_parameters(algorithm)
             
-            algoRun_ss = AUL_Clustering(parameters, file, algorithm)
+    #         algoRun_ss = AUL_Clustering(parameters, file, algorithm)
             
-            skip, shape, size = algoRun_ss.readData()
-            if skip:
-                algoRun_ss.destroy()
-                continue
+    #         skip, shape, size = algoRun_ss.readData()
+    #         if skip:
+    #             algoRun_ss.destroy()
+    #             continue
             
-            print(file)
+    #         print(file)
             
-            ari_ss, time_ss = algoRun_ss.run()
-            bestParams = algoRun_ss.bestParams
-            algoRun_ss.destroy()
-            del algoRun_ss
+    #         ari_ss, time_ss = algoRun_ss.run()
+    #         bestParams = algoRun_ss.bestParams
+    #         algoRun_ss.destroy()
+    #         del algoRun_ss
     
            
-            print("Start: Default without sampling")
-            algoRun_ws = AUL_Clustering(parameters, file, algorithm)
-            ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
-            algoRun_ws.bestParams = bestParams
-            ari_optVSss, ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
-            algoRun_ws.destroy()
+    #         print("Start: Default without sampling")
+    #         algoRun_ws = AUL_Clustering(parameters, file, algorithm)
+    #         ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+    #         algoRun_ws.bestParams = bestParams
+    #         ari_optVSss, ari_wo, time_wo = algoRun_ws.runWithoutSubsampling("optimized")
+    #         algoRun_ws.destroy()
             
-            # # WRITE TO FILE
-            f=open("Stats/"+algorithm+".csv", "a")
-            f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
-            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
-            f.close()
+    #         # # WRITE TO FILE
+    #         f=open("Stats/"+algorithm+".csv", "a")
+    #         f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+','+str(ari_wo)+','+str(time_wo) +'\n')
+    #         # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari)+','+str(ari_wd)+','+str(time_wd)+','+str(ari_ss)+','+str(time_ss)+',0,0\n')
+    #         f.close()
             
-        except:
-            try:
-                algoRun_ss.destroy()
-                del algoRun_ss
-                algoRun_ws.destroy()
-                del algoRun_ws
-            except:
-                print("")
-            print("Fail")
+    #     except:
+    #         try:
+    #             algoRun_ss.destroy()
+    #             del algoRun_ss
+    #             algoRun_ws.destroy()
+    #             del algoRun_ws
+    #         except:
+    #             print("")
+    #         print("Fail")
