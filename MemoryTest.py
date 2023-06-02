@@ -11,6 +11,7 @@ import numpy as np
 import random
 import time
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import AffinityPropagation
 
 f=open("Test/Run.csv", "w")
 f.write('Row,Columm,StartTime,EndTime\n')
@@ -22,7 +23,8 @@ for r in range(100000,1000001,100000):
         try:
             df = pd.DataFrame([i*random.randrange(10) for i in np.random.rand(r, c)])
             print("Dataset size:", r,c)
-            clustering = DBSCAN(algorithm="brute").fit(df)
+            # clustering = DBSCAN(algorithm="brute").fit(df)
+            clustering = AffinityPropagation().fit(df)
         except:
             print("killed")
         t1 = time.time()
