@@ -171,7 +171,7 @@ class AUL_Clustering:
                 return ari, ari_wo, t1-t0
     
     
-    def runWithoutSubsampling_w(self, mode,algo):
+    def runWithoutSubsampling_w(self, mode):
         if "l" in self.X:
             l_ss = self.X["l"].to_numpy()
             self.X = self.X.drop("l", axis=1)
