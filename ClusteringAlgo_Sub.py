@@ -134,7 +134,8 @@ class AUL_Clustering:
             self.X = df.drop("y", axis=1)
             ss_predict = df["l"].to_numpy()
         else:
-            self.readData()
+            if type(self.X) is list:
+                self.readData()
         t0 = time.time()
         p = multiprocessing.Process(target=self.runWithoutSubsampling_w, args=(mode,))
         p.start()
@@ -933,12 +934,16 @@ def BestSubsampleRun(algorithm, master_files, n_runs):
     
 def runDefault(algorithm, master_files):
     if os.path.exists("Stats/"+algorithm+"_Default.csv"):
+    # if os.path.exists("Stats/"+algorithm+"_Default_Algo.csv"):
         done_files = pd.read_csv("Stats/"+algorithm+"_Default.csv")
+        # done_files = pd.read_csv("Stats/"+algorithm+"_Default_Algo.csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
-    if os.path.exists("Stats/"+algorithm+"_Default.csv") == 0:
+    else:
         f=open("Stats/"+algorithm+"_Default.csv", "w")
+        # f=open("Stats/"+algorithm+"_Default_Algo.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Size,ARI_WD,Time_WD\n')
+        # f.write('Filename,Shape_R,Shape_C,Size,ARI_WD_bt,Time_WD_bt,ARI_WD_kt,Time_WD_kt,ARI_WD_b,Time_WD_b\n')
         f.close()
      
     for file in master_files:
@@ -952,16 +957,21 @@ def runDefault(algorithm, master_files):
                 continue
             print(file)
             ari, ari_wd, time_wd = algoRun_ws.runWithoutSubsampling("default")
+            # ari, ari_wd1, time_wd1 = algoRun_ws.runWithoutSubsampling("default", "ball_tree")
+            # ari, ari_wd2, time_wd2 = algoRun_ws.runWithoutSubsampling("default", "kd_tree")
+            # ari, ari_wd3, time_wd3 = algoRun_ws.runWithoutSubsampling("default", "brute")
             algoRun_ws.destroy()
             del algoRun_ws
             
             f=open("Stats/"+algorithm+"_Default.csv", "a")
+            # f=open("Stats/"+algorithm+"_Default_Algo.csv", "a")
             f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd)+','+str(time_wd) +'\n')
+            # f.write(file+','+str(shape[0])+','+str(shape[1])+','+str(size)+','+str(ari_wd1)+','+str(time_wd1)+','+str(ari_wd2)+','+str(time_wd2)+','+str(ari_wd3)+','+str(time_wd3) +'\n')
             f.close()
-        
+            
         except:
             print("Fail")
-            
+        
 if __name__ == '__main__':
     algorithm = "DBSCAN"
     
@@ -973,7 +983,6 @@ if __name__ == '__main__':
     master_files.sort()
 
     # # Run only defaults
-    # runDefault(algorithm, ["kddcup"])
     # runDefault(algorithm, master_files)
         
     # # Run Subsampling 10 times and calculate Inertia
