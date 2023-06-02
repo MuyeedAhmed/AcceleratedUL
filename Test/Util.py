@@ -18,6 +18,8 @@ run["Memory_Virtual_Max"] = None
 for index, row in run.iterrows():
     # row["Memory_Median"] = index
     t = time[(time["Time"] > row["StartTime"]) & (time["Time"] < row["EndTime"])]
+    if t.empty:
+        continue
     memory_physical = t["Memory_Physical"].to_numpy()
     mp_median = np.median(memory_physical)
     mp_max = np.max(memory_physical)
