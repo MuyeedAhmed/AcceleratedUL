@@ -13,7 +13,7 @@ import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 
-from .SS_Clustering import SS_Clustering
+from SS_Clustering import SS_Clustering
 
 def dbs():
     f=open("Test/DBSCAN_Run.csv", "w")
@@ -79,12 +79,12 @@ def DBSCAN_SS():
             except:
                 print("killed")
             t1 = time.time()
-            f=open("Test/DBSCAN_Run.csv", "a")
+            f=open("Test/DBSCAN_SS_Run.csv", "a")
             f.write(str(r)+','+str(c)+','+str(t0)+','+str(t1)+'\n')
             f.close()
     
     
-AP()
+DBSCAN_SS()
 
 # df = pd.DataFrame([i*random.randrange(10) for i in np.random.rand(1500000, 50)])
 # #df = pd.DataFrame(np.random.rand(1000000, 45))
