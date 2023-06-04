@@ -1,35 +1,44 @@
 import psutil
 import time
 import numpy as np
+import os
+import sys
 
-def monitor_memory_usage(interval):
-    print("Memory usage")
-    f=open("Test/Time.csv", "w")
-    f.write('Time,Memory\n')
-    f.close()
 
-    while True:
-        memory = []
-        for _ in range(10):
-            memory_info = psutil.virtual_memory()
-            memory_usage = memory_info.used / (1024 * 1024)  # Convert to megabytes
-            memory.append(memory_usage)
-            time.sleep(interval)
-        # print([ '%.2f' % elem for elem in memory])
+# def monitor_memory_usage(interval):
+#     print("Memory usage")
+#     f=open("MemoryStats/Time.csv", "w")
+#     f.write('Time,Memory\n')
+#     f.close()
+
+#     while True:
+#         memory = []
+#         for _ in range(10):
+#             memory_info = psutil.virtual_memory()
+#             memory_usage = memory_info.used / (1024 * 1024)  # Convert to megabytes
+#             memory.append(memory_usage)
+#             time.sleep(interval)
+#         # print([ '%.2f' % elem for elem in memory])
         
-        f=open("Test/Time.csv", "a")
-        f.write(str(time.time())+","+str(np.mean(memory))+'\n')
-        f.close()
+#         f=open("MemoryStats/Time.csv", "a")
+#         f.write(str(time.time())+","+str(np.mean(memory))+'\n')
+#         f.close()
 
 
 
-def monitor_memory_usage_pid(pid, interval):
+def monitor_memory_usage_pid(interval):
     print("Memory usage")
+    algo = sys.argv[1]
+    mode = sys.argv[2]
+    system = sys.argv[3]
     
-    f=open("Test/Time.csv", "w")
-    f.write('Name,Time,Memory_Physical,Memory_Virtual\n')
-    f.close()
-    
+    if os.path.exists("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv") == 0:
+        f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "w")
+        f.write('Name,Time,Memory_Physical,Memory_Virtual\n')
+        f.close()
+    else:
+        print("Path already Exists")
+        
     while True:
         memory = []
         memory_virtual = []
@@ -50,7 +59,7 @@ def monitor_memory_usage_pid(pid, interval):
         # print([ '%.2f' % elem for elem in memory])
         # print([ '%.2f' % elem for elem in memory_virtual])
         
-        f=open("Test/Time.csv", "a")
+        f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "a")
         f.write(name+","+str(time.time())+","+str(np.mean(memory))+","+str(np.mean(memory_virtual))+'\n')
         f.close()
         
@@ -76,7 +85,5 @@ def get_max_pid():
     return max_memory_name, max_memory_pid
 
 
-monitor_memory_usage_pid(38511, interval=1)
+monitor_memory_usage_pid(1)
 
-
-# monitor_memory_usage(interval=1)
