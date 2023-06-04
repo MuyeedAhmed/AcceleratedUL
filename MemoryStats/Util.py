@@ -47,13 +47,13 @@ def MemoryConsumptionCalculation(algo, mode, system):
     table.to_csv("Max_Memory_Usage_" + algo + "_" + mode + "_" + system + ".csv")
     print(table)
 
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
 
-algo = "DBSCAN"
-mode = "SS"
-system = "Louise"
+# algo = "DBSCAN"
+# mode = "SS"
+# system = "Louise"
 
 
 MemoryConsumptionCalculation(algo, mode, system)
