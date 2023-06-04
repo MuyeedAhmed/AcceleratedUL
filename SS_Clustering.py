@@ -34,7 +34,7 @@ class SS_Clustering:
     def __init__(self, algoName, parameters=None, fileName="_", n_cluster=2):
         self.algoName = algoName
         if parameters == None:
-            self.parameters = self.algo_parameters(self.algoName)
+            self.parameters = self.algo_parameters(algoName)
         else:
             self.parameters = parameters
         
@@ -65,7 +65,7 @@ class SS_Clustering:
         if os.path.isdir("Output"):
             shutil.rmtree("Output")
     
-    def algo_parameters(algo):
+    def algo_parameters(self, algo):
         parameters = []
         if algo == "AP":
             damping = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
