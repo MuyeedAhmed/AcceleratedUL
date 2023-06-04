@@ -193,7 +193,7 @@ class SS_Clustering:
             
             # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
-            if df["Time"].iloc[h_r] > 5:
+            if df["Time"].iloc[h_r] > 10:
                 print("Subsampling timeout")
                 raise Exception('')
         self.bestParams = [p[1] for p in self.parameters]
@@ -659,7 +659,6 @@ class SS_Clustering:
             ll = [value for index, value in enumerate(ll) if index not in indexes_to_delete]
             yy = [value for index, value in enumerate(yy) if index not in indexes_to_delete]
         ari = adjusted_rand_score(yy, ll)
-        print("ari diff:", (ari-old_ari))        
         
         return ari
     
@@ -684,7 +683,7 @@ class SS_Clustering:
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
-        # print("Time: ", time_ss)
+        print("\tTime: ", time_ss)
         return ari_ss, time_ss
         
     
