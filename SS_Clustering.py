@@ -31,10 +31,14 @@ from sklearn.mixture import GaussianMixture
 
 
 class SS_Clustering:
-    def __init__(self, parameters, algoName, fileName="_", n_cluster=2):
-        self.parameters = parameters
-        self.fileName = fileName
+    def __init__(self, algoName, parameters=None, fileName="_", n_cluster=2):
         self.algoName = algoName
+        if parameters == None:
+            self.parameters = self.algo_parameters(self.algoName)
+        else:
+            self.parameters = parameters
+        
+        self.fileName = fileName
         self.datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
         
         self.X = []
@@ -60,7 +64,76 @@ class SS_Clustering:
     def destroy(self):
         if os.path.isdir("Output"):
             shutil.rmtree("Output")
+    
+    def algo_parameters(algo):
+        parameters = []
+        if algo == "AP":
+            damping = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+            max_iter = [50, 100, 200, 300, 400, 500, 750, 1000]
+            convergence_iter = [5, 10, 15, 20, 25, 30, 40, 50] 
+            
+            
+            parameters.append(["damping", 0.5, damping])
+            parameters.append(["max_iter", 200, max_iter])
+            parameters.append(["convergence_iter", 15, convergence_iter])
         
+        if algo =="SC":
+            eigen_solver = ["arpack", "lobpcg"]
+            n_components = [None, 2, 3, 4, 5, 6, 10]
+            n_init = [1, 5, 10, 15, 20, 30, 50, 100]
+            gamma = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+            affinity = ["nearest_neighbors", "rbf"]
+            # n_neighbors = [5, 10, 20, 30, 50, 75, 100]
+            n_neighbors = [2, 3, 5, 10, 20, 30]
+            # assign_labels = ["kmeans", "discretize", "cluster_qr"]
+            assign_labels = ["kmeans", "cluster_qr"]
+            degree = [2,3,4,5]
+            n_jobs = [None, -1]
+            
+            
+            parameters.append(["eigen_solver", "arpack", eigen_solver])
+            parameters.append(["n_components", None, n_components])        
+            parameters.append(["n_init", 10, n_init])
+            parameters.append(["gamma", 1.0, gamma])   
+            parameters.append(["affinity", "rbf", affinity])
+            parameters.append(["n_neighbors", 10, n_neighbors])
+            parameters.append(["assign_labels", "kmeans", assign_labels])
+            parameters.append(["degree", 3, degree])
+            parameters.append(["n_jobs", None, n_jobs])  
+        if algo == "GMM":
+            covariance_type = ['full', 'tied', 'diag', 'spherical']
+            tol = [1e-2, 1e-3, 1e-4, 1e-5]
+            reg_covar = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+            max_iter = [50, 100, 150, 200]
+            n_init = [1,2,3,5]
+            init_params = ['kmeans', 'k-means++', 'random']
+            warm_start = [False, True]
+            
+            parameters.append(['covariance_type', 'full', covariance_type])
+            parameters.append(['tol', 1e-3, tol])
+            parameters.append(['reg_covar', 1e-6, reg_covar])
+            parameters.append(['max_iter', 100, max_iter])
+            parameters.append(['n_init', 1, n_init])
+            parameters.append(['init_params', 'kmeans', init_params])
+            parameters.append(['warm_start', False, warm_start])
+        
+        if algo == "HAC":
+            metric = ["euclidean", "l1", "l2", "manhattan", "cosine"]
+            linkage = ["ward", "complete", "average", "single"]
+            
+            parameters.append(["metric", "euclidean", metric])
+            parameters.append(["linkage", "ward", linkage])
+        
+        if algo == "DBSCAN":
+            eps_min_samples = []
+            dbscan_algorithm = ['auto', 'ball_tree', 'kd_tree', 'brute']
+            
+            parameters.append(["eps_min_samples", (0.5, 5), eps_min_samples])
+            parameters.append(["algorithm", 'auto', dbscan_algorithm])
+            
+        return parameters
+    
+    
     def subSample(self):
         batch_size = int(len(self.X)/self.batch_count)
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
