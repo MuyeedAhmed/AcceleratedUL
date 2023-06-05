@@ -2,14 +2,16 @@ import pandas as pd
 from scipy.stats import gmean
 import numpy as np
 import sys
-
+import matplotlib.pyplot as plt
 
 def MemoryConsumptionCalculation(algo, mode, system):
 
     memory = pd.read_csv("Memory_" + algo + "_" + mode + "_" + system + ".csv")
     time = pd.read_csv("Time_" + algo + "_" + mode + "_" + system + ".csv") 
     
-    
+    time["TotalTime"] = time["EndTime"] - time["StartTime"]
+    timeTable = time.pivot(index='Row', columns='Columm', values='TotalTime')
+    timeTable.to_csv("TimeTable_" + algo + "_" + mode + "_" + system + ".csv")
     
     time["Memory_Median"] = None
     time["Memory_Physical_Median"] = None
@@ -43,19 +45,59 @@ def MemoryConsumptionCalculation(algo, mode, system):
     
     
     table = time.pivot(index='Row', columns='Columm', values='Memory_Max')
-    
     table.to_csv("Max_Memory_Usage_" + algo + "_" + mode + "_" + system + ".csv")
     print(table)
 
+def drawGraph(algo, system):
+    memoryTable_D = pd.read_csv("Max_Memory_Usage_" + algo + "_Default_" + system + ".csv")
+    memoryTable_S = pd.read_csv("Max_Memory_Usage_" + algo + "_SS_" + system + ".csv")
+
+    timeTable_D = pd.read_csv("TimeTable_" + algo + "_Default_" + system + ".csv") 
+    timeTable_S = pd.read_csv("TimeTable_" + algo + "_SS_" + system + ".csv") 
+    
+    draw(memoryTable_D, memoryTable_S, "Memory")
+    draw(timeTable_D, timeTable_S, "Time")
+    
+def draw(df_d, df_s, tm):    
+    x = df_s["Row"]
+    y_10_Default = df_d["10"]
+    y_100_Default = df_d["100"]
+    y_10_SS = df_s["10"]
+    y_100_SS = df_s["100"]
+    
+    plt.figure(0)
+    print(len(x))
+    plt.plot(x[0:len(y_10_Default)],y_10_Default,color="orange")
+    plt.plot(x[0:len(y_100_Default)],y_100_Default,color="red")
+    plt.plot(x[0:len(y_10_SS)],y_10_SS,color="blue")
+    plt.plot(x[0:len(y_100_SS)],y_100_SS,color="navy")
+        
+    plt.grid(True)
+    plt.legend(["Default - 10 Features", "Default - 100 Features", "Subsample - 10 Features", "Subsample - 100 Features"])
+    plt.xlabel("Points (Rows)")
+    if tm == "Memory":
+        plt.ylabel("Memory (in MB)")
+        plt.title(algo + " Memory Usage in " + system)
+    else:
+        plt.ylabel("Time (in Seconds)")
+        plt.title(algo + " Execution Time in " + system)
+    
+    plt.savefig('Figures/'+tm+'_' + algo + '_' + system +'.pdf', bbox_inches='tight')
+    plt.show()
+
+    
 # algo = sys.argv[1]
 # mode = sys.argv[2]
 # system = sys.argv[3]
 
 algo = "DBSCAN"
+system = "M2"
+
 mode = "SS"
-system = "Louise"
-
-
+MemoryConsumptionCalculation(algo, mode, system)
+mode = "Default"
 MemoryConsumptionCalculation(algo, mode, system)
 
+
+drawGraph(algo, system)
 
