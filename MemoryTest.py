@@ -41,11 +41,16 @@ def MemTest(algo, mode, system):
                     clustering.X = df
                     clustering.y = [0] * r
                     clustering.run()
+                    clustering.destroy()
                 t1 = time.time()
                 f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
                 f.write(str(r)+','+str(c)+','+str(t0)+','+str(t1)+'\n')
                 f.close()
             except:
+                try:
+                    clustering.destroy()
+                except:
+                    print()
                 print("killed")
             
             
