@@ -60,7 +60,8 @@ def runFile(file, filepath, algo, mode, system):
     df = pd.read_csv(filepath)
     r = df.shape[0]
     c = df.shape[1]
-    if r > 1000:
+    if r < 1000:
+        print()
         return
     if "target" in df.columns:
         y=df["target"].to_numpy()
