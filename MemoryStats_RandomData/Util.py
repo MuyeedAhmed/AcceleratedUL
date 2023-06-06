@@ -91,7 +91,7 @@ def draw(df_d, df_s, tm):
 # system = sys.argv[3]
 
 algo = "DBSCAN"
-system = "M2"
+system = "Thelma"
 
 mode = "SS"
 MemoryConsumptionCalculation(algo, mode, system)
