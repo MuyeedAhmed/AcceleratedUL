@@ -14,6 +14,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 import sys
 from SS_Clustering import SS_Clustering
+from sklearn.mixture import GaussianMixture
 
 
 def MemTest(algo, mode, system):
@@ -36,16 +37,23 @@ def MemTest(algo, mode, system):
                         clustering = DBSCAN(algorithm="brute").fit(df)
                     elif algo == "AP":
                         clustering = AffinityPropagation().fit(df)
+                    elif algo == "GMM":
+                        clustering = GaussianMixture(n_components=2).fit(df)
                 else:
                     clustering = SS_Clustering(algoName=algo)
                     clustering.X = df
                     clustering.y = [0] * r
                     clustering.run()
+                    clustering.destroy()
                 t1 = time.time()
                 f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
                 f.write(str(r)+','+str(c)+','+str(t0)+','+str(t1)+'\n')
                 f.close()
             except:
+                try:
+                    clustering.destroy()
+                except:
+                    print()
                 print("killed")
             
             
