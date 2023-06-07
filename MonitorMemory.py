@@ -85,5 +85,5 @@ def get_max_pid():
     return max_memory_name, max_memory_pid
 
 
-monitor_memory_usage_pid(1)
+monitor_memory_usage_pid(0.1)
 
