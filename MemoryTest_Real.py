@@ -79,12 +79,10 @@ def runFile(file, filepath, algo, mode, system):
     else:
         y = [0]*r
         X = df
-    print(X)
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     if c > 10:
         # X = X.sample(n=10,axis='columns')
         X = PCA(n_components=10).fit_transform(X)
-        print(X)
     
     print("Dataset size:", r,c)
             
