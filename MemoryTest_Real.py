@@ -57,7 +57,7 @@ def MemTest(algo, mode, system):
         runFile(file, filepath, algo, mode, system)
         print(remaining, end=" - ")
         remaining-=1
-
+    # runFile("pendigits", folderpath+"pendigits.csv", "DBSCAN", "SS", "M2")
 
 def runFile(file, filepath, algo, mode, system):
     # print(file)
@@ -82,8 +82,11 @@ def runFile(file, filepath, algo, mode, system):
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     if c > 10:
         # X = X.sample(n=10,axis='columns')
+        columnNames = X.columns
         X = PCA(n_components=10).fit_transform(X)
-    
+        X = pd.DataFrame(X)
+        print(X)
+        print(type(X))
     print("Dataset size:", r,c)
             
     try:
