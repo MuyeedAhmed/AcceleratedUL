@@ -53,10 +53,11 @@ def MemTest(algo, mode, system):
     remaining = len(master_files)
     
     for file in master_files:
+        remaining-=1
         filepath = folderpath+file+".csv"
         runFile(file, filepath, algo, mode, system)
-        print(remaining, end=" - ")
-        remaining-=1
+        print(remaining)
+        
     # runFile("pendigits", folderpath+"pendigits.csv", "DBSCAN", "SS", "M2")
 
 def runFile(file, filepath, algo, mode, system):
@@ -66,7 +67,6 @@ def runFile(file, filepath, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
     if r < 1000:
-        print()
         return
     if "target" in df.columns:
         y=df["target"].to_numpy()
@@ -85,8 +85,6 @@ def runFile(file, filepath, algo, mode, system):
         columnNames = X.columns
         X = PCA(n_components=10).fit_transform(X)
         X = pd.DataFrame(X)
-        print(X)
-        print(type(X))
     print("Dataset size:", r,c)
             
     try:
