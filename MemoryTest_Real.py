@@ -17,36 +17,41 @@ from SS_Clustering import SS_Clustering
 from sklearn.mixture import GaussianMixture
 from pathlib import Path
 import glob
+from sklearn.decomposition import PCA
+
 
 def MemTest(algo, mode, system):
-    if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv") == 0:
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "w")
-        f.write('Filename,Row,Columm,StartTime,EndTime\n')
-        f.close()
-    else:
-        print("Path already Exists")
-
     if system == "M2":
         folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
     elif system == "Jimmy":
         folderpath = '/jimmy/hdd/ma234/Dataset/'
+    elif system == "Louise":
+        folderpath = '/louise/hdd/ma234/Dataset/'
+    elif system == "3070":
+        folderpath = '../Datasets/'
+    elif system == "Thelma":
+        folderpath = ""
     else:
         print("System name doesn't exist")
         return
     
-    master_files = glob.glob(folderpath+"*.csv")
+    filestats = pd.read_csv("Utility&Test/Stats/FileStats.csv")
+    filestats = filestats[filestats["Shape_R"] > 10000]
+    filestats.sort_values(by=['Shape_R'])
     
-    for i in range(len(master_files)):
-        # master_files[i] = master_files[i].split("/")[-1].split(".")[0]
-        master_files[i] = Path(master_files[i]).stem
-    master_files.sort()
+    master_files = filestats["Filename"].to_numpy()
+    
     if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv"):
         done_files = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv")
         done_files = done_files["Filename"].to_numpy()
         master_files = [x for x in master_files if x not in done_files]
-
-    
+    else:
+        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "w")
+        f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
+        f.close()
+        
     remaining = len(master_files)
+    
     for file in master_files:
         filepath = folderpath+file+".csv"
         runFile(file, filepath, algo, mode, system)
@@ -66,17 +71,20 @@ def runFile(file, filepath, algo, mode, system):
     if "target" in df.columns:
         y=df["target"].to_numpy()
         X=df.drop("target", axis=1)
+        c=c-1
     elif "class" in df.columns:
         y=df["class"].to_numpy()
         X=df.drop("class", axis=1)
+        c=c-1
     else:
         y = [0]*r
         X = df
-    
+    print(X)
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     if c > 10:
-        X = X.sample(n=10,axis='columns')
-
+        # X = X.sample(n=10,axis='columns')
+        X = PCA(n_components=10).fit_transform(X)
+        print(X)
     
     print("Dataset size:", r,c)
             
@@ -97,14 +105,17 @@ def runFile(file, filepath, algo, mode, system):
             clustering.destroy()
         t1 = time.time()
         f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+'\n')
+        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',1\n')
         f.close()
     except:
         try:
             clustering.destroy()
         except:
             print()
-        
+        t1 = time.time()
+        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',0\n')
+        f.close()
         print(file, "killed")
             
             
