@@ -20,7 +20,10 @@ import openml
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
+new_home_directory = '/jimmy/hdd/ma234/'
 
+# Set the HOME environment variable
+os.environ['HOME'] = new_home_directory
 
 def MemTest(algo, mode, system):
     if system == "M2":
