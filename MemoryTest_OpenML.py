@@ -205,9 +205,9 @@ def get_max_pid():
     return max_memory_name, max_memory_pid
            
             
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
 
-# MemTest(algo, mode, system)
-MemTest("DBSCAN", "SS", "M2")
+MemTest(algo, mode, system)
+# MemTest("DBSCAN", "SS", "M2")
