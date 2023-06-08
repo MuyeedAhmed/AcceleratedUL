@@ -13,6 +13,7 @@ count = 0
 for key, ddf in dataset_list.items():
     if "NumberOfInstances" in ddf:
         if ddf["NumberOfInstances"] > 1000000:
+            print(ddf)
             count+=1
             id_ =  ddf["did"]
             dataset = openml.datasets.get_dataset(id_)
@@ -25,7 +26,7 @@ for key, ddf in dataset_list.items():
             eeg["class"] = y
             is_numeric = eeg.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
             print(all(is_numeric))
-            
+            break
 # print(filtered_dict)
 # print(len(filtered_dict))
 
