@@ -17,25 +17,29 @@ import threading
 
 
 import openml
+import openml.config
+
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
-new_home_directory = '/jimmy/hdd/ma234/'
-
-# Set the HOME environment variable
-os.environ['HOME'] = new_home_directory
 
 def MemTest(algo, mode, system):
     if system == "M2":
         folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
     elif system == "Jimmy":
         folderpath = '/jimmy/hdd/ma234/Dataset/'
+        new_home_directory = '/jimmy/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
     elif system == "Louise":
         folderpath = '/louise/hdd/ma234/Dataset/'
+        new_home_directory = '/louise/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
     elif system == "3070":
         folderpath = '../Datasets/'
     elif system == "Thelma":
         folderpath = ""
+        new_home_directory = '/thelma/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
     else:
         print("System name doesn't exist")
         return
