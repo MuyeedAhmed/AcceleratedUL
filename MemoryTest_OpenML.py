@@ -52,9 +52,12 @@ def MemTest(algo, mode, system):
     
     dataset_list = openml.datasets.list_datasets()
     
+    instances_from = 100000
+    instances_to = 1000000
+    
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= 100000 and ddf["NumberOfInstances"] <= 1000000:
+            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
@@ -62,8 +65,8 @@ def MemTest(algo, mode, system):
                     continue
                 print(ddf["name"])
                 id_ =  ddf["did"]
-                dataset = openml.datasets.get_dataset(id_)
                 try:
+                    dataset = openml.datasets.get_dataset(id_)
                     X, y, categorical_indicator, attribute_names = dataset.get_data(
                         dataset_format="array", target=dataset.default_target_attribute
                         )
@@ -90,10 +93,15 @@ def MemTest(algo, mode, system):
                     MonitorMemory.join()
 
                     # runFile(filename, eeg, algo, mode, system)
+
+                    if ddf["NumberOfInstances"] == instances_from:
+                        instances_from += 1
+                    elif ddf["NumberOfInstances"] == instances_to:
+                        instances_to -= 1
                 else:
                     print("In dataset ", ddf["name"], ddf["did"], "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
     
-
+                
 
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
