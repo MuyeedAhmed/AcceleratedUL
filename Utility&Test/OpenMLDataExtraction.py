@@ -5,6 +5,15 @@ from collections import OrderedDict
 
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
+import openml.config
+
+home_dir = openml.config.get_cache_directory()
+print(home_dir)
+
+home_dir = '/jimmy/hdd/ma234/Temp/'
+openml.config.set_cache_directory(home_dir)
+
+print(openml.config.get_cache_directory())
 
 dataset_list = openml.datasets.list_datasets(size=1000000000)
 
