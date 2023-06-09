@@ -24,25 +24,25 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
 def MemTest(algo, mode, system):
-    if system == "M2":
-        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
-    elif system == "Jimmy":
-        folderpath = '/jimmy/hdd/ma234/Dataset/'
+    # if system == "M2":
+    #     folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+    if system == "Jimmy":
+        # folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
     elif system == "Louise":
-        folderpath = '/louise/hdd/ma234/Dataset/'
+        # folderpath = '/louise/hdd/ma234/Dataset/'
         new_home_directory = '/louise/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    elif system == "3070":
-        folderpath = '../Datasets/'
+    # elif system == "3070":
+    #     folderpath = '../Datasets/'
     elif system == "Thelma":
-        folderpath = ""
+        # folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    else:
-        print("System name doesn't exist")
-        return
+    # else:
+    #     print("System name doesn't exist")
+    #     return
     
 
     done_files = []
@@ -64,7 +64,7 @@ def MemTest(algo, mode, system):
             if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
-                if filename in done_files:
+                if filename in done_files and filename != "KDDCup99_OpenML":
                     print("Already done: ", filename)
                     continue
                 print(ddf["name"])
@@ -139,12 +139,22 @@ def runFile(file, df, algo, mode, system):
     try:
         t0 = time.time()
         if mode == "Default":
-            if algo == "DBSCAN":    
-                clustering = DBSCAN(algorithm="brute").fit(X)
-            elif algo == "AP":
-                clustering = AffinityPropagation().fit(X)
-            elif algo == "GMM":
-                clustering = GaussianMixture(n_components=2).fit(X)
+            run = threading.Thread(target=runDefault, args=(algo, X,))
+            run.start()
+            while run.is_alive():
+                memory_stats = psutil.virtual_memory().percent
+                memory_info = psutil.Process().memory_info()
+                memory_usage = ((memory_info.rss) / (1024 * 1024)) + (memory_info.vms / (1024 * 1024))
+                if psutil.virtual_memory().percent > 98:
+                    print(memory_usage)
+                    run.join(timeout=0)
+                    break
+            # if algo == "DBSCAN":
+            #     clustering = DBSCAN(algorithm="brute").fit(X)
+            # elif algo == "AP":
+            #     clustering = AffinityPropagation().fit(X)
+            # elif algo == "GMM":
+            #     clustering = GaussianMixture(n_components=2).fit(X)
         else:
             clustering = SS_Clustering(algoName=algo)
             clustering.X = X
@@ -152,19 +162,29 @@ def runFile(file, df, algo, mode, system):
             clustering.run()
             clustering.destroy()
         t1 = time.time()
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',1\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+        # f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',1\n')
+        # f.close()
     except MemoryError:
         try:
             clustering.destroy()
         except:
             print()
         t1 = time.time()
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',0\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+        # f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',0\n')
+        # f.close()
         print(file, "killed")
+
+def runDefault(algo, X):
+    if algo == "DBSCAN":
+        clustering = DBSCAN(algorithm="brute").fit(X)
+    elif algo == "AP":
+        clustering = AffinityPropagation().fit(X)
+    elif algo == "GMM":
+        clustering = GaussianMixture(n_components=2).fit(X)
+
+
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
