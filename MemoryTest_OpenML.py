@@ -124,6 +124,8 @@ def runFile(file, df, algo, mode, system):
         y = [0]*r
         X = df
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
+    if c < 10:
+        return
     try:
         if c > 10:
             # X = X.sample(n=10,axis='columns')
