@@ -61,7 +61,8 @@ def MemTest(algo, mode, system):
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
+            # if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
+            if ddf["NumberOfInstances"] >= instances_from:            
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
@@ -98,10 +99,10 @@ def MemTest(algo, mode, system):
 
                     # runFile(filename, eeg, algo, mode, system)
 
-                    if ddf["NumberOfInstances"] == instances_from:
-                        instances_from += 1
-                    elif ddf["NumberOfInstances"] == instances_to:
-                        instances_to -= 1
+                    # if ddf["NumberOfInstances"] == instances_from:
+                    #     instances_from += 1
+                    # elif ddf["NumberOfInstances"] == instances_to:
+                    #     instances_to -= 1
                 else:
                     print("In dataset ", ddf["name"], ddf["did"], "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
     
