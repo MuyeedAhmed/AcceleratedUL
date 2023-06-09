@@ -120,13 +120,16 @@ def runFile(file, df, algo, mode, system):
         y = [0]*r
         X = df
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
-    if c > 10:
-        # X = X.sample(n=10,axis='columns')
-        columnNames = X.columns
-        X = PCA(n_components=10).fit_transform(X)
-        X = pd.DataFrame(X)
+    try:
+        if c > 10:
+            # X = X.sample(n=10,axis='columns')
+            columnNames = X.columns
+            X = PCA(n_components=10).fit_transform(X)
+            X = pd.DataFrame(X)
+    except:
+        print("Killed during PCA")
     print("Dataset size:", r,c)
-            
+    
     try:
         t0 = time.time()
         if mode == "Default":
