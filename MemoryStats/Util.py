@@ -54,7 +54,7 @@ def drawGraph(algo, system):
     draw(default, ss, "TotalTime")
     
 def draw(df_d, df_s, tm):    
-    x = df_s["Row"]
+    x = df_d["Row"]
     y_Default = df_d[tm]
     y_SS = df_s[tm]
     
@@ -64,7 +64,7 @@ def draw(df_d, df_s, tm):
     plt.plot(x[0:len(y_SS)],y_SS, ".",color="blue")
         
     plt.grid(True)
-    plt.legend(["Default - 10 Features", "Default - 100 Features", "Subsample - 10 Features", "Subsample - 100 Features"])
+    plt.legend(["Default", "Subsampling"])
     plt.xlabel("Points (Rows)")
     if tm == "Memory_Max":
         plt.ylabel("Memory (in MB)")
