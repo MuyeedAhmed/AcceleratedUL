@@ -1,3 +1,4 @@
+import pandas as pd
 import openml
 from collections import OrderedDict
 
