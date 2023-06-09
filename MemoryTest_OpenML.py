@@ -155,7 +155,7 @@ def runFile(file, df, algo, mode, system):
         f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',1\n')
         f.close()
-    except:
+    except MemoryError:
         try:
             clustering.destroy()
         except:
