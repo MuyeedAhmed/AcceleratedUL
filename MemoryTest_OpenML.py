@@ -176,8 +176,10 @@ def runFile(file, df, algo, mode, system):
         f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+',0\n')
         f.close()
-        print(file, "killed")
-
+        print(file, "killed due to low memory")
+    except Exception as e:
+        print(file + "killed to ", e)
+    
 def runDefault(algo, X):
     if algo == "DBSCAN":
         clustering = DBSCAN(algorithm="brute").fit(X)
