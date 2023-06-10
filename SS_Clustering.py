@@ -159,6 +159,9 @@ class SS_Clustering:
             while p5 <= 0 and ii < 45:
                 p5 = np.percentile(distance_values, ii)
                 ii+=1
+            if ii == 45:
+                print("45th Percentile of distance is: ", p5)
+                raise Exception('Stopped: Percentile Issue')
         p50 = np.percentile(distance_values, 50)
         eps = np.linspace(p5, p50, 10)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
