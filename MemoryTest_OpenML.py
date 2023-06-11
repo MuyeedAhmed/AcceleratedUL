@@ -189,6 +189,10 @@ def runFile(file, df, algo, mode, system):
         except:
             print()
         print(file + " killed. Reason: ", e)
+        executed = -1
+        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
+        f.close()
     
 def runDefault(algo, X):
     if algo == "DBSCAN":
