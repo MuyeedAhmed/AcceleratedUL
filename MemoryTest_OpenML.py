@@ -107,7 +107,6 @@ def MemTest(algo, mode, system):
                     print("In dataset ", ddf["name"], ddf["did"], "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
     
                 
-import resource
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
