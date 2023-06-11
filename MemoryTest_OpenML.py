@@ -150,7 +150,10 @@ def runFile(file, df, algo, mode, system):
                         print(memory_usage)
                         run.join(timeout=0)
                         time.sleep(1)
-                        break        
+                        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+                        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
+                        f.close()
+                        return        
             else:
                 if algo == "DBSCAN":
                     clustering = DBSCAN(algorithm="brute").fit(X)
