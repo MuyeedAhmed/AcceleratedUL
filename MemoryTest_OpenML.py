@@ -142,25 +142,33 @@ def runFile(file, df, algo, mode, system):
         t0 = time.time()
         if mode == "Default":
             if system == "M2":
-                run = threading.Thread(target=runDefault, args=(algo, X,))
-                run.start()
-                while run.is_alive():
-                    memory_usage = psutil.Process().memory_info().vms / (1024 ** 2)
-                    if memory_usage > 210000:
-                        print(memory_usage)
-                        run.join(timeout=0)
-                        time.sleep(1)
-                        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-                        f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
-                        f.close()
-                        return        
-            else:
-                if algo == "DBSCAN":
-                    clustering = DBSCAN(algorithm="brute").fit(X)
-                elif algo == "AP":
-                    clustering = AffinityPropagation().fit(X)
-                elif algo == "GMM":
-                    clustering = GaussianMixture(n_components=2).fit(X)
+                max_memory_usage = 200000
+            elif system == "Jimmy":
+                max_memory_usage = 800000
+            elif system == "Louise":
+                max_memory_usage = 70000
+            elif system == "Thelma":
+                max_memory_usage = 120000
+                
+            run = threading.Thread(target=runDefault, args=(algo, X,))
+            run.start()
+            while run.is_alive():
+                memory_usage = psutil.Process().memory_info().vms / (1024 ** 2)
+                if memory_usage > max_memory_usage:
+                    print(memory_usage)
+                    run.join(timeout=0)
+                    time.sleep(1)
+                    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+                    f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
+                    f.close()
+                    return        
+            # else:
+            #     if algo == "DBSCAN":
+            #         clustering = DBSCAN(algorithm="brute").fit(X)
+            #     elif algo == "AP":
+            #         clustering = AffinityPropagation().fit(X)
+            #     elif algo == "GMM":
+            #         clustering = GaussianMixture(n_components=2).fit(X)
             print("*Done*")
         else:
             clustering = SS_Clustering(algoName=algo)
