@@ -107,7 +107,6 @@ def MemTest(algo, mode, system):
                     print("In dataset ", ddf["name"], ddf["did"], "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
     
                 
-
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
@@ -146,12 +145,12 @@ def runFile(file, df, algo, mode, system):
                 run = threading.Thread(target=runDefault, args=(algo, X,))
                 run.start()
                 while run.is_alive():
-                    memory_info = psutil.Process().memory_info()
-                    memory_usage = memory_info.vms / (1024 * 1024)
-                    if memory_usage > 260000:
+                    memory_usage = psutil.Process().memory_info().vms / (1024 ** 2)
+                    if memory_usage > 210000:
                         print(memory_usage)
                         run.join(timeout=0)
-                        break
+                        time.sleep(1)
+                        break        
             else:
                 if algo == "DBSCAN":
                     clustering = DBSCAN(algorithm="brute").fit(X)
@@ -159,6 +158,7 @@ def runFile(file, df, algo, mode, system):
                     clustering = AffinityPropagation().fit(X)
                 elif algo == "GMM":
                     clustering = GaussianMixture(n_components=2).fit(X)
+            print("*Done*")
         else:
             clustering = SS_Clustering(algoName=algo)
             clustering.X = X
@@ -261,4 +261,4 @@ mode = sys.argv[2]
 system = sys.argv[3]
 
 MemTest(algo, mode, system)
-# MemTest("DBSCAN", "SS", "M2")
+# MemTest("DBSCAN", "Default", "M1")
