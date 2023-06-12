@@ -54,7 +54,7 @@ def drawGraph(algo, system):
     draw(default, ss, "TotalTime")
     
 def draw(df_d, df_s, tm):    
-    x = df_d["Row"]
+    x = df_s["Row"]
     y_Default = df_d[tm]
     y_SS = df_s[tm]
     
@@ -82,7 +82,7 @@ def draw(df_d, df_s, tm):
 # system = sys.argv[3]
 
 algo = "DBSCAN"
-system = "Jimmy"
+system = "M2"
 
 mode = "SS"
 MemoryConsumptionCalculation(algo, mode, system)
