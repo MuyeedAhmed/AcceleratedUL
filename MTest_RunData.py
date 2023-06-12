@@ -26,18 +26,38 @@ filename = sys.argv[5]
 
 
 def MTest_Run(algo, mode, system, did, filename):
-    # try:
-    dataset = openml.datasets.get_dataset(did)
+    # if system == "M2":
+    #     folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+    if system == "Jimmy":
+        # folderpath = '/jimmy/hdd/ma234/Dataset/'
+        new_home_directory = '/jimmy/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Louise":
+        # folderpath = '/louise/hdd/ma234/Dataset/'
+        new_home_directory = '/louise/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    # elif system == "3070":
+    #     folderpath = '../Datasets/'
+    elif system == "Thelma":
+        # folderpath = ""
+        new_home_directory = '/thelma/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    # else:
+    #     print("System name doesn't exist")
+    #     return
     
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-        )
-    df = pd.DataFrame(X)
-    df["class"] = y
-    is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
-    # except:
-    #     print("Failed to read data: ", did)
-    #     return                    
+    try:
+        dataset = openml.datasets.get_dataset(did)
+        
+        X, y, categorical_indicator, attribute_names = dataset.get_data(
+            dataset_format="array", target=dataset.default_target_attribute
+            )
+        df = pd.DataFrame(X)
+        df["class"] = y
+        is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
+    except:
+        print("Failed to read data: ", did)
+        return                    
     if all(is_numeric):                
         # stop_flag = threading.Event()
         # MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
