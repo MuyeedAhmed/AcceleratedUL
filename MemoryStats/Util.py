@@ -11,11 +11,11 @@ def MemoryConsumptionCalculation(algo, mode, system):
     
     time["TotalTime"] = time["EndTime"] - time["StartTime"]
     
-    time["Memory_Median"] = None
+    # time["Memory_Median"] = None
     time["Memory_Physical_Median"] = None
     time["Memory_Virtual_Median"] = None
     
-    time["Memory_Max"] = None
+    # time["Memory_Max"] = None
     time["Memory_Physical_Max"] = None
     time["Memory_Virtual_Max"] = None
     
@@ -33,11 +33,11 @@ def MemoryConsumptionCalculation(algo, mode, system):
         mv_median = np.median(memory_virtual)
         mv_max = np.max(memory_virtual)
         
-        time.loc[index, "Memory_Median"] = mp_median + mv_median
+        # time.loc[index, "Memory_Median"] = mp_median + mv_median
         time.loc[index, "Memory_Physical_Median"] = mp_median
         time.loc[index, "Memory_Virtual_Median"] = mv_median
         
-        time.loc[index, "Memory_Max"] = mp_max + mv_max
+        # time.loc[index, "Memory_Max"] = mp_max + mv_max
         time.loc[index, "Memory_Physical_Max"] = mp_max
         time.loc[index, "Memory_Virtual_Max"] = int(mv_max)
     
@@ -50,11 +50,18 @@ def drawGraph(algo, system):
     default = pd.read_csv("Time_Memory_" + algo + "_Default_" + system + ".csv")
     ss = pd.read_csv("Time_Memory_" + algo + "_SS_" + system + ".csv")
 
-    draw(default, ss, "Memory_Max")
-    draw(default, ss, "TotalTime")
+    draw(default, ss, "Memory_Virtual_Max", algo, system)
+    draw(default, ss, "TotalTime", algo, system)
     
-def draw(df_d, df_s, tm):    
-    x = df_s["Row"]
+def draw(df_d, df_s, tm, algo, system):    
+    s_count = df_s.shape[0]
+    d_count = df_d.shape[0]
+    print(f"Subsample: {s_count}\nDefault: {d_count}")
+    if s_count > d_count:
+        x = df_s["Row"]
+    else:
+        x = df_d["Row"]
+        
     y_Default = df_d[tm]
     y_SS = df_s[tm]
     
@@ -66,7 +73,7 @@ def draw(df_d, df_s, tm):
     plt.grid(True)
     plt.legend(["Default", "Subsampling"])
     plt.xlabel("Points (Rows)")
-    if tm == "Memory_Max":
+    if tm == "Memory_Virtual_Max":
         plt.ylabel("Memory (in MB)")
         plt.title(algo + " Memory Usage in " + system)
     else:
@@ -81,14 +88,56 @@ def draw(df_d, df_s, tm):
 # mode = sys.argv[2]
 # system = sys.argv[3]
 
-algo = "DBSCAN"
-system = "M2"
 
-mode = "SS"
-MemoryConsumptionCalculation(algo, mode, system)
-mode = "Default"
-MemoryConsumptionCalculation(algo, mode, system)
+# algo = "DBSCAN"
+# system = "M2"
+
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
 
 
-drawGraph(algo, system)
+# drawGraph(algo, system)
+
+
+import seaborn as sns
+
+def drawBoxPlot(algo):
+    systems = ["M2", "Jimmy"]
+    modes = ["Default", "SS"]
+    
+    df_merged = pd.DataFrame()
+
+    
+    for s in systems:
+        for m in modes:            
+            df = pd.read_csv("Time_Memory_" + algo + "_" + m + "_" + s + ".csv")
+            df["System"] = s
+            df["Mode"] = m
+            df_merged = pd.concat([df_merged, df], axis=0)
+    df_merged = df_merged.reset_index(drop=True)
+    
+    sns.boxplot(x = df_merged['System'],
+            y = df_merged['TotalTime'],
+            hue = df_merged['Mode'])
+            # showfliers=False)
+    plt.yscale('log')
+    
+    plt.savefig('Figures/Time_' + algo +'.pdf', bbox_inches='tight')
+    
+    plt.figure()
+    sns.boxplot(x = df_merged['System'],
+            y = df_merged['Memory_Virtual_Max'],
+            hue = df_merged['Mode'])
+            # showfliers=False)
+    plt.yscale('log')
+    
+    plt.savefig('Figures/Memory_' + algo +'.pdf', bbox_inches='tight')
+    
+drawBoxPlot("DBSCAN")    
+    
+    
+    
+    
 
