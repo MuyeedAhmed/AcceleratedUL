@@ -114,8 +114,8 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     # system = sys.argv[3]
     # filename = sys.argv[4]
     
-    if os.path.exists("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv") == 0:
-        f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "w")
+    if os.path.exists("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv") == 0:
+        f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv", "w")
         f.write('Name,Time,Memory_Physical,Memory_Virtual,Filename\n')
         f.close()
         
