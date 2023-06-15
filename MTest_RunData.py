@@ -57,6 +57,7 @@ def MTest_Run(algo, mode, system, did, filename):
         is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
     except:
         print("Failed to read data: ", did)
+        writeFailed(filename)
         return                    
     if all(is_numeric):                
         # stop_flag = threading.Event()
@@ -74,12 +75,13 @@ def MTest_Run(algo, mode, system, did, filename):
     else:
         print("In dataset ", filename, did, "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
         
-                
+
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
     if r < 100000:
         print("Row: ", r)
+        writeFailed(filename)
         return
     if "target" in df.columns:
         y=df["target"].to_numpy()
@@ -95,6 +97,7 @@ def runFile(file, df, algo, mode, system):
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     if c < 10:
         print("#Column too low")
+        writeFailed(filename)
         return
     try:
         if c > 10:
@@ -103,6 +106,7 @@ def runFile(file, df, algo, mode, system):
             X = PCA(n_components=10).fit_transform(X)
             X = pd.DataFrame(X)
     except:
+        writeFailed(filename)
         print("Killed during PCA")
     print("Dataset size:", r,c)
     
@@ -190,6 +194,10 @@ def runDefault(algo, X):
     elif algo == "GMM":
         clustering = GaussianMixture(n_components=2).fit(X)
 
+def writeFailed(filename):
+    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+    f.write(filename+',0,0,0,0,-1\n')
+    f.close()
 
 if __name__ == '__main__':
     MTest_Run(algo, mode, system, did, filename)
