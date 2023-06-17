@@ -57,6 +57,7 @@ def MemTest(algo, mode, system):
     c = df.shape[1]
     print(df.shape)
     rows = [100, 500, 1000, 5000, 10000, 25000, 50000, 100000, 200000, 500000, 1000000, 2000000, 3000000]
+    rows.reverse()
     for row in rows:
         d = df.iloc[:row].copy()
         
@@ -89,6 +90,7 @@ def MemTest(algo, mode, system):
             f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
             f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
             f.close()
+            
         except MemoryError:
             t1 = time.time()
             f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
