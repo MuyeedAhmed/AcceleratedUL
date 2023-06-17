@@ -61,52 +61,67 @@ def MemTest(algo, mode, system):
     for row in rows:
         d = df.iloc[:row].copy()
         
-        stop_flag = threading.Event()
-        MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, str(row), stop_flag,))
-        MonitorMemory.start()
+        # stop_flag = threading.Event()
+        # MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, str(row), stop_flag,))
+        # MonitorMemory.start()
         
-        try:
-            executed = 0
-            
-            t0 = time.time()
-            
-            if mode == "Default":
-                # else:
-                if algo == "DBSCAN":
-                    clustering = DBSCAN(algorithm="brute").fit(d)
-                elif algo == "AP":
-                    clustering = AffinityPropagation().fit(d)
-                elif algo == "GMM":
-                    clustering = GaussianMixture(n_components=2).fit(d)
-            else:
-                clustering = SS_Clustering(algoName=algo)
-                clustering.X = X
-                clustering.y = y
-                clustering.run()
-                clustering.destroy()
+        t0 = time.time()
+        p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
+        p.start()
+        p.join(timeout=5)
+        
+        if p.is_alive():
+            p.terminate()
+            print("Terminated")
             t1 = time.time()
-            print("hue: ", row, t1-t0)
-            executed = 1
+            executed = -1
             f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
             f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
             f.close()
-            
-        except MemoryError:
-            t1 = time.time()
-            f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
-            f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
-            f.close()
-            print(file, " killed due to low memory")
         
-        stop_flag.set()
-        MonitorMemory.join()
+        
+        print("hue: ", row, t1-t0)
+        
+
+        
+        # stop_flag.set()
+        # MonitorMemory.join()
         
         command = "import gc; gc.collect()"
         subprocess.run(["python", "-c", command])
         
         time.sleep(5)
         
+def worker(d, algo, mode, system, row, c, file):
+    t0 = time.time()
+    try:
+        executed = 0
+        if mode == "Default":
+            # else:
+            if algo == "DBSCAN":
+                clustering = DBSCAN(algorithm="brute").fit(d)
+            elif algo == "AP":
+                clustering = AffinityPropagation().fit(d)
+            elif algo == "GMM":
+                clustering = GaussianMixture(n_components=2).fit(d)
+        else:
+            clustering = SS_Clustering(algoName=algo)
+            clustering.X = d
+            clustering.y = [0]*d.shape[0]
+            clustering.run()
+            clustering.destroy()
+        t1 = time.time()
+        executed = 1
+        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        f.close()
         
+    except MemoryError:
+        t1 = time.time()
+        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        f.close()
+        print(file, " killed due to low memory")
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
