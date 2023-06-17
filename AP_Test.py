@@ -68,7 +68,7 @@ def MemTest(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
-        p.join(timeout=5)
+        p.join(timeout=1800)
         
         if p.is_alive():
             p.terminate()
@@ -80,7 +80,7 @@ def MemTest(algo, mode, system):
             f.close()
         
         
-        print("hue: ", row, t1-t0)
+        # print("hue: ", row, t1-t0)
         
 
         
