@@ -162,6 +162,7 @@ def runFile(file, df, algo, mode, system):
                     f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
                     f.close()
                     return        
+            run.join()
             # else:
             #     if algo == "DBSCAN":
             #         clustering = DBSCAN(algorithm="brute").fit(X)
