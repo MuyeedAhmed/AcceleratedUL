@@ -68,7 +68,7 @@ def MemTest(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
-        p.join(timeout=1800)
+        p.join(timeout=7200)
         
         if p.is_alive():
             p.terminate()
@@ -187,7 +187,95 @@ mode = sys.argv[2]
 system = sys.argv[3]
 
 MemTest(algo, mode, system)
-# MemTest("DBSCAN", "Default", "M1")
 
 
+# import matplotlib.pyplot as plt
+
+
+# def MemoryConsumptionCalculation(algo, mode, system):
+#     memory = pd.read_csv("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv")
+#     time = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv") 
+    
+#     time["TotalTime"] = time["EndTime"] - time["StartTime"]
+    
+#     # time["Memory_Median"] = None
+#     time["Memory_Physical_Median"] = None
+#     time["Memory_Virtual_Median"] = None
+    
+#     # time["Memory_Max"] = None
+#     time["Memory_Physical_Max"] = None
+#     time["Memory_Virtual_Max"] = None
+    
+#     for index, row in time.iterrows():
+#         t = memory[(memory["Time"] > row["StartTime"]) & (memory["Time"] < row["EndTime"])]
+#             # print(t)
+#         if t.empty:
+#             print(row["Filename"])
+#             continue
+        
+#         memory_physical = t["Memory_Physical"].to_numpy()
+#         mp_median = np.median(memory_physical)
+#         mp_max = np.max(memory_physical)
+        
+#         memory_virtual = t["Memory_Virtual"].to_numpy()
+#         mv_median = np.median(memory_virtual)
+#         mv_max = np.max(memory_virtual)
+        
+#         # time.loc[index, "Memory_Median"] = mp_median + mv_median
+#         time.loc[index, "Memory_Physical_Median"] = mp_median
+#         time.loc[index, "Memory_Virtual_Median"] = mv_median
+        
+#         # time.loc[index, "Memory_Max"] = mp_max + mv_max
+#         time.loc[index, "Memory_Physical_Max"] = mp_max
+#         time.loc[index, "Memory_Virtual_Max"] = int(mv_max)
+    
+#     time.to_csv("MemoryStats/Time_Memory_" + algo + "_" + mode + "_" + system + "_Row.csv")
+    
+# def drawGraph(algo, system):
+#     default = pd.read_csv("MemoryStats/Time_Memory_" + algo + "_Default_" + system + "_Row.csv")
+#     ss = pd.read_csv("MemoryStats/Time_Memory_" + algo + "_SS_" + system + "_Row.csv")
+
+#     draw(default, ss, "Memory_Virtual_Max", algo, system)
+#     draw(default, ss, "TotalTime", algo, system)
+    
+# def draw(df_d, df_s, tm, algo, system):    
+#     df_s = df_s[df_s['Filename'].isin(df_d['Filename'])]
+#     df_d = df_d[df_d['Filename'].isin(df_s['Filename'])]
+    
+#     x_Default = df_d["Row"]
+#     x_SS = df_s["Row"]
+    
+#     y_Default = df_d[tm]
+#     y_SS = df_s[tm]
+    
+#     plt.figure(0)
+#     plt.plot(x_Default,y_Default, ".",color="red")
+#     plt.plot(x_SS,y_SS, ".",color="blue")
+        
+#     plt.grid(True)
+#     plt.legend(["Default", "Subsampling"])
+#     plt.xlabel("Points (Rows)")
+
+#     if tm == "Memory_Virtual_Max":
+#         plt.ylabel("Memory (in MB)")
+#         plt.title(algo + " Memory Usage in " + system)
+#     else:
+#         plt.ylabel("Time (in Seconds)")
+#         plt.title(algo + " Execution Time in " + system)
+    
+#     plt.savefig('MemoryStats/Figures/'+tm+'_' + algo + '_' + system +'_Row.pdf', bbox_inches='tight')
+#     plt.show()
+
+    
+# algo = "AP"
+# system = "Jimmy"
+
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
+
+
+# drawGraph(algo, system)
+    
 
