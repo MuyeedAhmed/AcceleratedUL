@@ -123,7 +123,7 @@ def runFile(file, df, algo, mode, system):
                 clustering = GaussianMixture(n_components=2).fit(X)
                 l = clustering.predict(X)
             df["predicted_labels"] = l
-            df.to_csv("ClusteringOutput/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
+            df.to_csv("../AcceleratedUL_Output/ClusteringOutput/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
             
             
             print("*Done*")
