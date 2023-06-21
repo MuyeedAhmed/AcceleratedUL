@@ -3,14 +3,19 @@ from scipy.stats import gmean
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 def MemoryConsumptionCalculation(algo, mode, system):
 
     memory = pd.read_csv("Memory_" + algo + "_" + mode + "_" + system + ".csv")
     time = pd.read_csv("Time_" + algo + "_" + mode + "_" + system + ".csv") 
     
-    time["TotalTime"] = time["EndTime"] - time["StartTime"]
+    time = time[time["Completed"] != -1]
     
+    time["TotalTime"] = time["EndTime"] - time["StartTime"]
+    time['TotalTime'] = time['TotalTime'].mask(time['TotalTime'] < 0, np.nan)
+
     # time["Memory_Median"] = None
     time["Memory_Physical_Median"] = None
     time["Memory_Virtual_Median"] = None
@@ -22,8 +27,16 @@ def MemoryConsumptionCalculation(algo, mode, system):
     
     for index, row in time.iterrows():
         # row["Memory_Median"] = index
-        t = memory[(memory["Time"] > row["StartTime"]) & (memory["Time"] < row["EndTime"])]
+        # if row["Completed"] == -1:
+        #     continue
+        if row["Completed"] == -22:
+            # print(row["Filename"])
+            t = memory[memory["Filename"] == row["Filename"]]
+            # print(t)
+        else:
+            t = memory[(memory["Time"] > row["StartTime"]) & (memory["Time"] < row["EndTime"])]
         if t.empty:
+            print(row["Filename"])
             continue
         memory_physical = t["Memory_Physical"].to_numpy()
         mp_median = np.median(memory_physical)
@@ -54,25 +67,23 @@ def drawGraph(algo, system):
     draw(default, ss, "TotalTime", algo, system)
     
 def draw(df_d, df_s, tm, algo, system):    
-    s_count = df_s.shape[0]
-    d_count = df_d.shape[0]
-    print(f"Subsample: {s_count}\nDefault: {d_count}")
-    if s_count > d_count:
-        x = df_s["Row"]
-    else:
-        x = df_d["Row"]
-        
+    df_s = df_s[df_s['Filename'].isin(df_d['Filename'])]
+    df_d = df_d[df_d['Filename'].isin(df_s['Filename'])]
+    
+    x_Default = df_d["Row"]
+    x_SS = df_s["Row"]
+    
     y_Default = df_d[tm]
     y_SS = df_s[tm]
     
     plt.figure(0)
-    print(len(x))
-    plt.plot(x[0:len(y_Default)],y_Default, ".",color="red")
-    plt.plot(x[0:len(y_SS)],y_SS, ".",color="blue")
+    plt.plot(x_Default,y_Default, ".",color="red")
+    plt.plot(x_SS,y_SS, ".",color="blue")
         
     plt.grid(True)
     plt.legend(["Default", "Subsampling"])
     plt.xlabel("Points (Rows)")
+
     if tm == "Memory_Virtual_Max":
         plt.ylabel("Memory (in MB)")
         plt.title(algo + " Memory Usage in " + system)
@@ -83,28 +94,9 @@ def draw(df_d, df_s, tm, algo, system):
     plt.savefig('Figures/'+tm+'_' + algo + '_' + system +'.pdf', bbox_inches='tight')
     plt.show()
 
-    
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
-
-
-# algo = "DBSCAN"
-# system = "M2"
-
-# mode = "SS"
-# MemoryConsumptionCalculation(algo, mode, system)
-# mode = "Default"
-# MemoryConsumptionCalculation(algo, mode, system)
-
-
-# drawGraph(algo, system)
-
-
-import seaborn as sns
 
 def drawBoxPlot(algo):
-    systems = ["M2", "Jimmy"]
+    systems = ["M2", "Louise", "Jimmy"]
     modes = ["Default", "SS"]
     
     df_merged = pd.DataFrame()
@@ -134,8 +126,47 @@ def drawBoxPlot(algo):
     plt.yscale('log')
     
     plt.savefig('Figures/Memory_' + algo +'.pdf', bbox_inches='tight')
+
+def memoryUsageGraph(algo, mode, system):
+    memory = pd.read_csv("Memory_" + algo + "_" + mode + "_" + system + ".csv")
+    Filenames = memory["Filename"].to_numpy()
+    files = set(Filenames)
+    # np.set_printoptions(threshold=1000000)
     
-drawBoxPlot("DBSCAN")    
+    plt.figure(0)
+    for file in files:
+        df = memory[memory["Filename"] == file]
+        print(df.shape[0], end=' ')
+        if df.shape[0] < 50:
+            continue
+        # print(df["Time"].to_numpy())
+        df["Time"] = df["Time"] - df["Time"].min()
+        df = df.sort_values(by='Time')
+        
+        t = df["Time"].to_numpy()
+        m = df["Memory_Virtual"].to_numpy()
+        
+        rolling_average = df['Memory_Virtual'].rolling(window=10, min_periods=1).mean()
+
+        # print(t)
+        # break
+        
+        plt.plot(t, rolling_average)
+        
+algo = "AP"
+system = "Jimmy"
+
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
+
+
+# drawGraph(algo, system)
+
+memoryUsageGraph(algo, "Default", system)
+
+# drawBoxPlot("DBSCAN")    
     
     
     
