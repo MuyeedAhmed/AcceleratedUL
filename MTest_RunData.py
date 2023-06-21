@@ -74,7 +74,7 @@ def MTest_Run(algo, mode, system, did, filename):
         
     else:
         print("In dataset ", filename, did, "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
-        
+        writeFailed(filename)
 
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
@@ -108,7 +108,6 @@ def runFile(file, df, algo, mode, system):
             """
             To see if it started or not
             """
-            print("Start default run")
             f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
             f.write(file+','+str(r)+','+str(c)+','+str(t0)+',0,-22\n')
             f.close()
