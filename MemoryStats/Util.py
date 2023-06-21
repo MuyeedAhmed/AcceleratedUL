@@ -137,9 +137,11 @@ def memoryUsageGraph(algo, mode, system):
     for file in files:
         df = memory[memory["Filename"] == file]
         print(df.shape[0], end=' ')
+        
         if df.shape[0] < 50:
             continue
-        # print(df["Time"].to_numpy())
+        print(df["Filename"])
+        print(df["Time"].to_numpy())
         df["Time"] = df["Time"] - df["Time"].min()
         df = df.sort_values(by='Time')
         
@@ -152,6 +154,9 @@ def memoryUsageGraph(algo, mode, system):
         # break
         
         plt.plot(t, rolling_average)
+        plt.axvline(x = 7200, color = 'r', linestyle = '-')
+        plt.axvline(x = 1800, color = 'b', linestyle = '-')
+        plt.xlim([0, 30000])
         
 algo = "AP"
 system = "Jimmy"
