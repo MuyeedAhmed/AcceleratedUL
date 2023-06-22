@@ -109,10 +109,10 @@ def getThreshold(algo, mode, system):
     start = 200000
     end = 500000
     while True:
-        if start == end:
+        if start >= end:
             print("Threshold: ", start)
             break
-        mid = int((end+start)/2)
+        mid = ceil((end+start)/2)
         d = df.iloc[:mid].copy()
         print("mid: ", mid)
         t0 = time.time()
