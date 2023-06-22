@@ -18,6 +18,7 @@ import threading
 import subprocess
 import openml
 import openml.config
+import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
@@ -61,10 +62,6 @@ def MemTest(algo, mode, system):
     for row in rows:
         d = df.iloc[:row].copy()
         
-        # stop_flag = threading.Event()
-        # MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, str(row), stop_flag,))
-        # MonitorMemory.start()
-        
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
@@ -80,24 +77,69 @@ def MemTest(algo, mode, system):
             f.close()
         
         
-        # print("hue: ", row, t1-t0)
         
+        command = "import gc; gc.collect()"
+        subprocess.run(["python", "-c", command])
+        
+        time.sleep(5)
 
+
+def getThreshold(algo, mode, system):
+    if system == "Jimmy":
+        new_home_directory = '/jimmy/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Louise":
+        new_home_directory = '/louise/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Thelma":
+        new_home_directory = '/thelma/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    
+    file = "bot-iot-all-features"
+    
+    dataset = openml.datasets.get_dataset(file)
+    
+    X, y, categorical_indicator, attribute_names = dataset.get_data(
+        dataset_format="array", target=dataset.default_target_attribute
+        )
+    df = pd.DataFrame(X)
+    # df["class"] = y
+    c = df.shape[1]
+    print(df.shape)
+    start = 200000
+    end = 500000
+    while True:
+        if start == end:
+            print("Threshold: ", start)
+            break
+        mid = int((end-start)/2)
+        d = df.iloc[:mid].copy()
         
-        # stop_flag.set()
-        # MonitorMemory.join()
+        t0 = time.time()
+        p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
+        p.start()
+        p.join(timeout=5)
+        
+        if p.is_alive():
+            p.terminate()
+            print("Terminated: ", mid)
+            end = mid
+        else:
+            start = mid
+        
         
         command = "import gc; gc.collect()"
         subprocess.run(["python", "-c", command])
         
         time.sleep(5)
         
+        
+        
 def worker(d, algo, mode, system, row, c, file):
     t0 = time.time()
     try:
         executed = 0
         if mode == "Default":
-            # else:
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(d)
             elif algo == "AP":
@@ -112,15 +154,15 @@ def worker(d, algo, mode, system, row, c, file):
             clustering.destroy()
         t1 = time.time()
         executed = 1
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
-        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        # f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        # f.close()
         
     except MemoryError:
         t1 = time.time()
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
-        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        # f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        # f.close()
         print(file, " killed due to low memory")
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
@@ -181,15 +223,7 @@ def get_max_pid():
             max_memory_pid = process.info['pid']
     return max_memory_name, max_memory_pid
            
-               
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
 
-# MemTest(algo, mode, system)
-
-
-import matplotlib.pyplot as plt
 
 
 def MemoryConsumptionCalculation(algo, mode, system):
@@ -267,15 +301,25 @@ def draw(df_d, df_s, tm, algo, system):
     plt.show()
 
     
-algo = "AP"
-system = "Jimmy"
+# algo = "AP"
+# system = "Jimmy"
 
-mode = "SS"
-MemoryConsumptionCalculation(algo, mode, system)
-mode = "Default"
-MemoryConsumptionCalculation(algo, mode, system)
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
+
+# drawGraph(algo, system)
+
+               
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
+
+MemTest(algo, mode, system)
 
 
-drawGraph(algo, system)
+
+
     
 
