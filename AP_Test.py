@@ -118,7 +118,7 @@ def getThreshold(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
         p.start()
-        p.join(timeout=5)
+        p.join(timeout=20)
         
         if p.is_alive():
             p.terminate()
@@ -316,7 +316,9 @@ algo = sys.argv[1]
 mode = sys.argv[2]
 system = sys.argv[3]
 
-MemTest(algo, mode, system)
+# MemTest(algo, mode, system)
+
+getThreshold(algo, mode, system)
 
 
 
