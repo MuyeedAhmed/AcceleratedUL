@@ -112,7 +112,7 @@ def getThreshold(algo, mode, system):
         if start == end:
             print("Threshold: ", start)
             break
-        mid = int((end-start)/2)
+        mid = int((end+start)/2)
         d = df.iloc[:mid].copy()
         print("mid: ", mid)
         t0 = time.time()
@@ -123,9 +123,9 @@ def getThreshold(algo, mode, system):
         if p.is_alive():
             p.terminate()
             print("Terminated: ", mid)
-            end = mid
-        else:
             start = mid
+        else:
+            end = mid
         
         
         command = "import gc; gc.collect()"
