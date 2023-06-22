@@ -114,7 +114,7 @@ def getThreshold(algo, mode, system):
             break
         mid = int((end-start)/2)
         d = df.iloc[:mid].copy()
-        
+        print("mid: ", mid)
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
         p.start()
