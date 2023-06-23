@@ -283,11 +283,15 @@ def draw(df_d, df_s, tm, algo, system):
     y_SS = df_s[tm]
     
     plt.figure(0)
-    plt.plot(x_Default,y_Default, ".",color="red")
     plt.plot(x_SS,y_SS, ".",color="blue")
+    plt.plot(x_Default,y_Default, ".",color="red")
+    
+    plt.axvline(x = 433653, linestyle = '-')
+    plt.axvline(x = 3, linestyle = '-')
+    plt.axvline(x = 218749, linestyle = '-')
         
     plt.grid(True)
-    plt.legend(["Default", "Subsampling"])
+    plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "Louise"])
     plt.xlabel("Points (Rows)")
     # plt.xticks([0, 500000])
     if tm == "Memory_Virtual_Max":
@@ -301,24 +305,24 @@ def draw(df_d, df_s, tm, algo, system):
     plt.show()
 
     
-# algo = "AP"
-# system = "Jimmy"
+algo = "AP"
+system = "Jimmy"
 
-# mode = "SS"
-# MemoryConsumptionCalculation(algo, mode, system)
-# mode = "Default"
-# MemoryConsumptionCalculation(algo, mode, system)
+mode = "SS"
+MemoryConsumptionCalculation(algo, mode, system)
+mode = "Default"
+MemoryConsumptionCalculation(algo, mode, system)
 
-# drawGraph(algo, system)
+drawGraph(algo, system)
 
                
-algo = sys.argv[1]
-mode = sys.argv[2]
-system = sys.argv[3]
+# algo = sys.argv[1]
+# mode = sys.argv[2]
+# system = sys.argv[3]
 
-# MemTest(algo, mode, system)
+# # MemTest(algo, mode, system)
 
-getThreshold(algo, mode, system)
+# getThreshold(algo, mode, system)
 
 
 
