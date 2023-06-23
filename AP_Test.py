@@ -286,9 +286,10 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
     plt.plot(x_Default,y_Default, ".",color="red")
     
-    plt.axvline(x = 433653, linestyle = '-')
-    plt.axvline(x = 3, linestyle = '-')
-    plt.axvline(x = 218749, linestyle = '-')
+    
+    plt.axvline(x = 433653, color='r', linestyle = '-')
+    plt.axvline(x = 306573, color='orange',linestyle = '--')
+    plt.axvline(x = 218749, color='purple',linestyle = '--')
         
     plt.grid(True)
     plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "Louise"])
