@@ -57,6 +57,7 @@ def MTest_Run(algo, mode, system, did, filename):
         is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
     except:
         print("Failed to read data: ", did)
+        writeFailed(filename)
         return                    
     if all(is_numeric):                
         # stop_flag = threading.Event()
@@ -73,14 +74,12 @@ def MTest_Run(algo, mode, system, did, filename):
         
     else:
         print("In dataset ", filename, did, "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
-        
-                
+        writeFailed(filename)
+
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
-    if r < 100000:
-        print("Row: ", r)
-        return
+
     if "target" in df.columns:
         y=df["target"].to_numpy()
         X=df.drop("target", axis=1)
@@ -95,15 +94,9 @@ def runFile(file, df, algo, mode, system):
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     if c < 10:
         print("#Column too low")
+        writeFailed(filename)
         return
-    try:
-        if c > 10:
-            # X = X.sample(n=10,axis='columns')
-            columnNames = X.columns
-            X = PCA(n_components=10).fit_transform(X)
-            X = pd.DataFrame(X)
-    except:
-        print("Killed during PCA")
+
     print("Dataset size:", r,c)
     
     try:
@@ -111,43 +104,26 @@ def runFile(file, df, algo, mode, system):
         
         t0 = time.time()
         if mode == "Default":
-            # else:
+            
+            """
+            To see if it started or not
+            """
+            f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+            f.write(file+','+str(r)+','+str(c)+','+str(t0)+',0,-22\n')
+            f.close()
+            
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(X)
+                l = clustering.labels_
             elif algo == "AP":
                 clustering = AffinityPropagation().fit(X)
+                l = clustering.labels_
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(X)
+                l = clustering.predict(X)
+            df["predicted_labels"] = l
+            df.to_csv("../AcceleratedUL_Output/ClusteringOutput/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
             
-            # max_memory_usage = 100
-            # if system == "M2":
-            #     max_memory_usage = 200000
-            # elif system == "Jimmy":
-            #     max_memory_usage = 800000
-            # elif system == "Louise":
-            #     max_memory_usage = 70000
-            # elif system == "Thelma":
-            #     max_memory_usage = 120000
-                
-            # run = threading.Thread(target=runDefault, args=(algo, X,))
-            # run.start()
-            # while run.is_alive():
-            #     memory_usage = psutil.Process().memory_info().vms / (1024 ** 2)
-            #     if memory_usage > max_memory_usage:
-                    
-            #         run.join(timeout=0)
-                    
-            #         f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-            #         f.write(file+','+str(r)+','+str(c)+','+str(t0)+','+str(time.time())+','+str(executed)+'\n')
-            #         f.close()
-                    
-            #         print("Killed due to resource limitations. Memory Usage: ", memory_usage)
-                    
-            #         # pdb.set_trace()
-            #         return
-            #         # sys.exit()
-            #         # print("Exit didn't work")
-            # run.join()
             
             print("*Done*")
         else:
@@ -190,6 +166,10 @@ def runDefault(algo, X):
     elif algo == "GMM":
         clustering = GaussianMixture(n_components=2).fit(X)
 
+def writeFailed(filename):
+    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+    f.write(filename+',0,0,0,0,-1\n')
+    f.close()
 
 if __name__ == '__main__':
     MTest_Run(algo, mode, system, did, filename)
