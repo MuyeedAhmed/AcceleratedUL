@@ -78,8 +78,10 @@ def MemTest(algo, mode, system):
                 stop_flag = threading.Event()
                 MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
                 MonitorMemory.start()
-                
-                subprocess.run(command, timeout=5)
+                try:
+                    subprocess.run(command, timeout=5)
+                except subprocess.TimeoutExpired:
+                    print("Timed out")
                 print(stop_flag.is_set())
                 stop_flag.set()
                 print(stop_flag.is_set())
@@ -125,7 +127,7 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
             except:
                 none_count += 1
                 print("none", none_count)
-                if none_count > 5:
+                if none_count > 50:
                     return
                 continue
             time.sleep(interval)
