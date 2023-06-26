@@ -80,8 +80,10 @@ def MemTest(algo, mode, system):
                 MonitorMemory.start()
                 
                 subprocess.run(command, timeout=5)
-                
+                print(stop_flag.is_set())
                 stop_flag.set()
+                print(stop_flag.is_set())
+                
                 MonitorMemory.join()
                 print("Joined")
                 
@@ -103,8 +105,11 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
         f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "w")
         f.write('Name,Time,Memory_Physical,Memory_Virtual,Filename\n')
         f.close()
-        
+    
+    none_count = 0
+    
     while not stop_flag.is_set():
+        print(stop_flag.is_set())
         memory = []
         memory_virtual = []
         name, pid = get_max_pid()
@@ -116,8 +121,12 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
                 memory.append(memory_usage)
                 memory_usage_virtual = memory_info.vms / (1024 * 1024)
                 memory_virtual.append(memory_usage_virtual)
+                none_count = 0
             except:
-                print("none")
+                none_count += 1
+                print("none", none_count)
+                if none_count > 5:
+                    return
                 continue
             time.sleep(interval)
         # print(name, pid)
