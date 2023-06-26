@@ -83,12 +83,14 @@ def MemTest(algo, mode, system):
                 
                 stop_flag.set()
                 MonitorMemory.join()
+                print("Joined")
                 
                 command = "import gc; gc.collect()"
                 subprocess.run(["python", "-c", command])
-                
+                print("gc done")
                 time.sleep(5)
-
+                print("Slept")
+                
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
     interval = 0.1
