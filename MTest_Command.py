@@ -79,7 +79,7 @@ def MemTest(algo, mode, system):
                 MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
                 MonitorMemory.start()
                 
-                subprocess.run(command, timeout=1800)
+                subprocess.run(command, timeout=5)
                 
                 stop_flag.set()
                 MonitorMemory.join()
