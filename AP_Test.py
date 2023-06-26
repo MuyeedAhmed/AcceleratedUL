@@ -18,6 +18,7 @@ import threading
 import subprocess
 import openml
 import openml.config
+import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
@@ -61,14 +62,10 @@ def MemTest(algo, mode, system):
     for row in rows:
         d = df.iloc[:row].copy()
         
-        # stop_flag = threading.Event()
-        # MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, str(row), stop_flag,))
-        # MonitorMemory.start()
-        
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
-        p.join(timeout=1800)
+        p.join(timeout=7200)
         
         if p.is_alive():
             p.terminate()
@@ -80,24 +77,70 @@ def MemTest(algo, mode, system):
             f.close()
         
         
-        # print("hue: ", row, t1-t0)
         
+        command = "import gc; gc.collect()"
+        subprocess.run(["python", "-c", command])
+        
+        time.sleep(5)
 
+
+def getThreshold(algo, mode, system):
+    if system == "Jimmy":
+        new_home_directory = '/jimmy/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Louise":
+        new_home_directory = '/louise/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Thelma":
+        new_home_directory = '/thelma/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    
+    file = "bot-iot-all-features"
+    
+    dataset = openml.datasets.get_dataset(file)
+    
+    X, y, categorical_indicator, attribute_names = dataset.get_data(
+        dataset_format="array", target=dataset.default_target_attribute
+        )
+    df = pd.DataFrame(X)
+    # df["class"] = y
+    c = df.shape[1]
+    print(df.shape)
+    start = 80000
+    
+    end = 120000
+    while True:
+        if start >= end:
+            print("Threshold: ", start)
+            break
+        mid =int((end+start)/2)
+        d = df.iloc[:mid].copy()
+        print("mid: ", mid)
+        t0 = time.time()
+        p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
+        p.start()
+        p.join(timeout=7200)
         
-        # stop_flag.set()
-        # MonitorMemory.join()
+        if p.is_alive():
+            p.terminate()
+            print("Terminated: ", mid)
+            start = mid
+        else:
+            end = mid
+        
         
         command = "import gc; gc.collect()"
         subprocess.run(["python", "-c", command])
         
         time.sleep(5)
         
+        
+        
 def worker(d, algo, mode, system, row, c, file):
     t0 = time.time()
     try:
         executed = 0
         if mode == "Default":
-            # else:
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(d)
             elif algo == "AP":
@@ -112,15 +155,15 @@ def worker(d, algo, mode, system, row, c, file):
             clustering.destroy()
         t1 = time.time()
         executed = 1
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
-        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        # f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        # f.close()
         
     except MemoryError:
         t1 = time.time()
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
-        f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
-        f.close()
+        # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
+        # f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
+        # f.close()
         print(file, " killed due to low memory")
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
@@ -181,13 +224,112 @@ def get_max_pid():
             max_memory_pid = process.info['pid']
     return max_memory_name, max_memory_pid
            
+
+
+
+def MemoryConsumptionCalculation(algo, mode, system):
+    memory = pd.read_csv("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv")
+    time = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv") 
+    
+    time["TotalTime"] = time["EndTime"] - time["StartTime"]
+    
+    # time["Memory_Median"] = None
+    time["Memory_Physical_Median"] = None
+    time["Memory_Virtual_Median"] = None
+    
+    # time["Memory_Max"] = None
+    time["Memory_Physical_Max"] = None
+    time["Memory_Virtual_Max"] = None
+    
+    for index, row in time.iterrows():
+        t = memory[(memory["Time"] > row["StartTime"]) & (memory["Time"] < row["EndTime"])]
+            # print(t)
+        if t.empty:
+            print(row["Filename"])
+            continue
+        
+        memory_physical = t["Memory_Physical"].to_numpy()
+        mp_median = np.median(memory_physical)
+        mp_max = np.max(memory_physical)
+        
+        memory_virtual = t["Memory_Virtual"].to_numpy()
+        mv_median = np.median(memory_virtual)
+        mv_max = np.max(memory_virtual)
+        
+        # time.loc[index, "Memory_Median"] = mp_median + mv_median
+        time.loc[index, "Memory_Physical_Median"] = mp_median
+        time.loc[index, "Memory_Virtual_Median"] = mv_median
+        
+        # time.loc[index, "Memory_Max"] = mp_max + mv_max
+        time.loc[index, "Memory_Physical_Max"] = mp_max
+        time.loc[index, "Memory_Virtual_Max"] = int(mv_max)
+    
+    time.to_csv("MemoryStats/Time_Memory_" + algo + "_" + mode + "_" + system + "_Row.csv")
+    
+def drawGraph(algo, system):
+    default = pd.read_csv("MemoryStats/Time_Memory_" + algo + "_Default_" + system + "_Row.csv")
+    ss = pd.read_csv("MemoryStats/Time_Memory_" + algo + "_SS_" + system + "_Row.csv")
+
+    draw(default, ss, "Memory_Virtual_Max", algo, system)
+    draw(default, ss, "TotalTime", algo, system)
+    
+def draw(df_d, df_s, tm, algo, system):    
+    df_s = df_s[df_s['Filename'].isin(df_d['Filename'])]
+    df_d = df_d[df_d['Filename'].isin(df_s['Filename'])]
+    
+    x_Default = df_d["Row"]
+    x_SS = df_s["Row"]
+    
+    y_Default = df_d[tm]
+    y_SS = df_s[tm]
+    
+    plt.figure(0)
+    plt.plot(x_SS,y_SS, ".",color="blue")
+    plt.plot(x_Default,y_Default, ".",color="red")
+    
+    # row = math.sqrt((memory_size * 10**9)/28)
+    plt.axvline(x = 169000, color='red', linestyle = '-')
+    plt.axvline(x = 110000, color='orange',linestyle = '--')
+    plt.axvline(x = 84000, color='purple',linestyle = '--')
+    plt.axvline(x = 80000, color='cyan', linestyle = '-')
+        
+    plt.grid(True)
+    plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "M2", "Louise"])
+    plt.xlabel("Points (Rows)")
+    # plt.xlim([0, 500000])
+    if tm == "Memory_Virtual_Max":
+        plt.ylabel("Memory (in MB)")
+        plt.title(algo + " Memory Usage in " + system)
+    else:
+        plt.ylabel("Time (in Seconds)")
+        plt.title(algo + " Execution Time in " + system)
+    
+    plt.savefig('MemoryStats/Figures/'+tm+'_' + algo + '_' + system +'_Row.pdf', bbox_inches='tight')
+    plt.show()
+
+    
+# algo = "AP"
+# system = "Jimmy"
+
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
+
+# drawGraph(algo, system)
+
                
 algo = sys.argv[1]
 mode = sys.argv[2]
 system = sys.argv[3]
 
-MemTest(algo, mode, system)
-# MemTest("DBSCAN", "Default", "M1")
+# # MemTest(algo, mode, system)
+
+if __name__ == '__main__':
+    getThreshold(algo, mode, system)
 
 
+
+
+    
 
