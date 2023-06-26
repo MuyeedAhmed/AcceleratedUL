@@ -78,23 +78,23 @@ def MemTest(algo, mode, system):
                 stop_flag = threading.Event()
                 MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
                 MonitorMemory.start()
-                try:
-                    subprocess.run(command, timeout=5)
-                except subprocess.TimeoutExpired:
-                    print("Timed out")
-                print(stop_flag.is_set())
-                stop_flag.set()
-                print(stop_flag.is_set())
                 
+                try:
+                    subprocess.run(command, timeout=3600)
+                except subprocess.TimeoutExpired:
+                    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+                    f.write(filename+',0,0,0,0,-23\n')
+                    f.close()
+                    print("Timed out")
+                
+                stop_flag.set()
                 MonitorMemory.join()
-                print("Joined")
                 
                 command = "import gc; gc.collect()"
                 subprocess.run(["python", "-c", command])
-                print("gc done")
-                time.sleep(5)
-                print("Slept")
                 
+                time.sleep(5)
+
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
     interval = 0.1
@@ -107,11 +107,8 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
         f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "w")
         f.write('Name,Time,Memory_Physical,Memory_Virtual,Filename\n')
         f.close()
-    
-    none_count = 0
-    
+        
     while not stop_flag.is_set():
-        print(stop_flag.is_set())
         memory = []
         memory_virtual = []
         name, pid = get_max_pid()
@@ -123,12 +120,8 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
                 memory.append(memory_usage)
                 memory_usage_virtual = memory_info.vms / (1024 * 1024)
                 memory_virtual.append(memory_usage_virtual)
-                none_count = 0
             except:
-                none_count += 1
-                print("none", none_count)
-                if none_count > 50:
-                    return
+                print("none")
                 continue
             time.sleep(interval)
         # print(name, pid)
