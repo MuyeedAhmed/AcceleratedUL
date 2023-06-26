@@ -106,19 +106,20 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 200000
-    end = 500000
+    start = 80000
+    
+    end = 120000
     while True:
         if start >= end:
             print("Threshold: ", start)
             break
-        mid =int((end+start)/2)+1
+        mid =int((end+start)/2)
         d = df.iloc[:mid].copy()
         print("mid: ", mid)
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
         p.start()
-        p.join(timeout=20)
+        p.join(timeout=7200)
         
         if p.is_alive():
             p.terminate()
@@ -286,15 +287,16 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
     plt.plot(x_Default,y_Default, ".",color="red")
     
-    
-    plt.axvline(x = 433653, color='r', linestyle = '-')
-    plt.axvline(x = 306573, color='orange',linestyle = '--')
-    plt.axvline(x = 218749, color='purple',linestyle = '--')
+    # row = math.sqrt((memory_size * 10**9)/28)
+    plt.axvline(x = 169000, color='red', linestyle = '-')
+    plt.axvline(x = 110000, color='orange',linestyle = '--')
+    plt.axvline(x = 84000, color='purple',linestyle = '--')
+    plt.axvline(x = 80000, color='cyan', linestyle = '-')
         
     plt.grid(True)
-    plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "Louise"])
+    plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "M2", "Louise"])
     plt.xlabel("Points (Rows)")
-    # plt.xticks([0, 500000])
+    # plt.xlim([0, 500000])
     if tm == "Memory_Virtual_Max":
         plt.ylabel("Memory (in MB)")
         plt.title(algo + " Memory Usage in " + system)
@@ -306,24 +308,25 @@ def draw(df_d, df_s, tm, algo, system):
     plt.show()
 
     
-algo = "AP"
-system = "Jimmy"
+# algo = "AP"
+# system = "Jimmy"
 
-mode = "SS"
-MemoryConsumptionCalculation(algo, mode, system)
-mode = "Default"
-MemoryConsumptionCalculation(algo, mode, system)
+# mode = "SS"
+# MemoryConsumptionCalculation(algo, mode, system)
+# mode = "Default"
+# MemoryConsumptionCalculation(algo, mode, system)
 
-drawGraph(algo, system)
+# drawGraph(algo, system)
 
                
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
 
 # # MemTest(algo, mode, system)
 
-# getThreshold(algo, mode, system)
+if __name__ == '__main__':
+    getThreshold(algo, mode, system)
 
 
 
