@@ -79,7 +79,13 @@ def MemTest(algo, mode, system):
                 MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
                 MonitorMemory.start()
                 
-                subprocess.run(command, timeout=1800)
+                try:
+                    subprocess.run(command, timeout=3600)
+                except subprocess.TimeoutExpired:
+                    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+                    f.write(filename+',0,0,0,0,-23\n')
+                    f.close()
+                    print("Timed out")
                 
                 stop_flag.set()
                 MonitorMemory.join()
