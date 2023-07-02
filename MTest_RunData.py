@@ -3,9 +3,11 @@ import pandas as pd
 import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.mixture import GaussianMixture
+
 import sys
 from SS_Clustering import SS_Clustering
-from sklearn.mixture import GaussianMixture
 from sklearn.decomposition import PCA
 import psutil
 import threading
@@ -120,6 +122,9 @@ def runFile(file, df, algo, mode, system):
                 l = clustering.labels_
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(X)
+                l = clustering.predict(X)
+            elif algo == "HAC":
+                clustering = AgglomerativeClustering().fit(X)
                 l = clustering.predict(X)
             df["predicted_labels"] = l
             df.to_csv("../AcceleratedUL_Output/ClusteringOutput/"+file+"_"+algo+"_"+mode+"_"+system+".csv")

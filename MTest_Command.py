@@ -56,7 +56,7 @@ def MemTest(algo, mode, system):
     
     dataset_list = openml.datasets.list_datasets()
     
-    instances_from = 100000
+    instances_from = 5000000#100000
     instances_to = 1000000
     
     for key, ddf in dataset_list.items():
