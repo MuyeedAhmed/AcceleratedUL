@@ -58,7 +58,6 @@ def monitor_memory_usage_pid(interval):
         # print(name, pid)
         # print([ '%.2f' % elem for elem in memory])
         # print([ '%.2f' % elem for elem in memory_virtual])
-        
         f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv", "a")
         f.write(name+","+str(time.time())+","+str(np.mean(memory))+","+str(np.mean(memory_virtual))+'\n')
         f.close()
