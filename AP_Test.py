@@ -86,9 +86,9 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 40000
+    start = 80000
     
-    end = 500000
+    end = 320000
     while True:
         done = multiprocessing.Value('i', 0)
         if start >= end:
