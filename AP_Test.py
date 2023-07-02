@@ -105,6 +105,7 @@ def getThreshold(algo, mode, system):
             p.terminate()
             print("Terminated: ", mid)
             start = mid
+            time.sleep(60)
         else:
             if done.value == 1:
                 print("Done in time: ", time.time() - t0)
@@ -112,6 +113,7 @@ def getThreshold(algo, mode, system):
             else:
                 print("Killed in time: ", time.time() - t0)
                 end = mid
+                time.sleep(60)
         
         
         command = "import gc; gc.collect()"
