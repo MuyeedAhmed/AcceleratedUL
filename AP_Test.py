@@ -100,7 +100,7 @@ def getThreshold(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file, done,))
         p.start()
-        p.join(timeout=7200)
+        p.join(timeout=14400)
         if p.is_alive():
             p.terminate()
             print("Terminated: ", mid)
