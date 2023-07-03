@@ -53,7 +53,7 @@ def MemoryTest_List(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
-        p.join(timeout=20000)
+        p.join(timeout=7200)
         
         if p.is_alive():
             p.terminate()
@@ -86,9 +86,9 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 80000
+    start = 260000
     
-    end = 320000
+    end = 290000
     while True:
         while True:
             p_name, p_id, mem = get_max_pid()
@@ -109,7 +109,7 @@ def getThreshold(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file, done,))
         p.start()
-        p.join(timeout=14400)
+        p.join(timeout=20000)
         if p.is_alive():
             p.terminate()
             print("Terminated: ", mid)
