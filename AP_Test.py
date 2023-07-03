@@ -53,7 +53,7 @@ def MemoryTest_List(algo, mode, system):
         t0 = time.time()
         p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, row, c, file,))
         p.start()
-        p.join(timeout=7200)
+        p.join(timeout=20000)
         
         if p.is_alive():
             p.terminate()
@@ -90,6 +90,15 @@ def getThreshold(algo, mode, system):
     
     end = 320000
     while True:
+        while True:
+            p_name, p_id, mem = get_max_pid()
+            print(p_name, p_id, mem )
+            if mem > 100000:
+                command = "kill -9 " + str(p_id)
+                print(command)
+                os.system(command)
+            else:
+                break
         done = multiprocessing.Value('i', 0)
         if start >= end:
             print("Threshold: ", start)
@@ -105,7 +114,7 @@ def getThreshold(algo, mode, system):
             p.terminate()
             print("Terminated: ", mid)
             start = mid
-            time.sleep(60)
+            time.sleep(30)
         else:
             if done.value == 1:
                 print("Done in time: ", time.time() - t0)
@@ -113,13 +122,13 @@ def getThreshold(algo, mode, system):
             else:
                 print("Killed in time: ", time.time() - t0)
                 end = mid
-                time.sleep(60)
+                time.sleep(30)
         
         
         command = "import gc; gc.collect()"
         subprocess.run(["python", "-c", command])
         
-        time.sleep(5)
+        time.sleep(10)
         
         
         
@@ -173,7 +182,7 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     while not stop_flag.is_set():
         memory = []
         memory_virtual = []
-        name, pid = get_max_pid()
+        name, pid, _ = get_max_pid()
         for _ in range(10):
             try:
                 process = psutil.Process(pid)
@@ -199,14 +208,14 @@ def get_max_pid():
     for process in processes:
         try:
             memory_info = process.info['memory_info']
-            memory_usage = memory_info.rss
+            memory_usage = memory_info.vms / (1024 * 1024)
         except:
             memory_usage = 0
         if memory_usage > max_memory and 'python' in process.info['name'].lower():
             max_memory = memory_usage
             max_memory_name = process.info['name']
             max_memory_pid = process.info['pid']
-    return max_memory_name, max_memory_pid
+    return max_memory_name, max_memory_pid, max_memory
            
 
 
@@ -271,14 +280,28 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
     plt.plot(x_Default,y_Default, ".",color="red")
     
+    # AP
     # row = math.sqrt((memory_size * 10**9)/ (7 * 4)) ## AP each value 4 bytes
-    # row = math.sqrt((memory_size * 10**9)/ (4 * 8)) ## SC each value 8 bytes
+    plt.axvline(x = 169000, color='red', linestyle = '-') # Jimmy 800
+    plt.axvline(x = 110000, color='orange',linestyle = '--') # Thelma 340
+    plt.axvline(x = 84000, color='purple',linestyle = '--') # M2 200
+    plt.axvline(x = 80000, color='cyan', linestyle = '--') # Louise 180
     
-    plt.axvline(x = 169000, color='red', linestyle = '-')
-    plt.axvline(x = 110000, color='orange',linestyle = '--')
-    plt.axvline(x = 84000, color='purple',linestyle = '--')
-    plt.axvline(x = 80000, color='cyan', linestyle = '-')
-        
+    # SC
+    # row = math.sqrt((memory_size * 10**9)/ (4 * 8)) ## SC each value 8 bytes
+    # plt.axvline(x = 158000, color='red', linestyle = '-') # Jimmy 800
+    # plt.axvline(x = 103000, color='orange',linestyle = '--') # Thelma 340
+    # plt.axvline(x = 79000, color='purple',linestyle = '--') # M2 200
+    # plt.axvline(x = 75000, color='cyan', linestyle = '--') # Louise 180
+
+
+    # HAC
+    # plt.axvline(x = , color='red', linestyle = '-') # Jimmy 800
+    # plt.axvline(x = 223442, color='orange',linestyle = '--') # Thelma 340
+    # plt.axvline(x = 112834, color='purple',linestyle = '--') # M2 200
+    # plt.axvline(x = , color='cyan', linestyle = '--') # Louise 180
+    
+    
     plt.grid(True)
     plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "M2", "Louise"])
     plt.xlabel("Points (Rows)")
