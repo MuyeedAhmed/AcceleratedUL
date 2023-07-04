@@ -103,7 +103,7 @@ def runFile(file, df, algo, mode, system):
                 l = clustering.predict(X)
             elif algo == "HAC":
                 clustering = AgglomerativeClustering().fit(X)
-                l = clustering.predict(X)
+                l = clustering.labels_
             # df["predicted_labels"] = l
             # df.to_csv("../AcceleratedUL_Output/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
             ari = adjusted_rand_score(y,l)
@@ -152,6 +152,5 @@ def writeTimeFile(filename, r, c, t0, t1, status):
 
 if __name__ == '__main__':
     MTest_Run(algo, mode, system, did, filename)
-    
     
     
