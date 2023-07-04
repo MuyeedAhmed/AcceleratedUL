@@ -25,18 +25,46 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 def MemTest(algo, mode, system):
     if system == "M2":
+        if algo == "AP":
+            instances_to = 84000
+        if algo == "SC":
+            instances_to = 79000
+        elif algo == "HAC":
+            instances_to = 120000 ###
+            
         folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
-    if system == "Jimmy":
+    elif system == "Jimmy":
+        if algo == "AP":
+            instances_to = 170000
+        if algo == "SC":
+            instances_to = 158000
+        elif algo == "HAC":
+            instances_to = 0 ###
+            
         folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
     elif system == "Louise":
+        if algo == "AP":
+            instances_to = 80000
+        if algo == "SC":
+            instances_to = 75000
+        elif algo == "HAC":
+            instances_to = 157000
+            
         folderpath = '/louise/hdd/ma234/Dataset/'
         new_home_directory = '/louise/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
     elif system == "3070":
         folderpath = '../Datasets/'
     elif system == "Thelma":
+        if algo == "AP":
+            instances_to = 110000
+        if algo == "SC":
+            instances_to = 103000
+        elif algo == "HAC":
+            instances_to = 220000
+        
         folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
@@ -62,14 +90,22 @@ def MemTest(algo, mode, system):
     
     dataset_list = openml.datasets.list_datasets()
     
-    instances_from = 5000000#100000
-    instances_to = 10000
+    instances_from = 50000
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            # if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
+            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
             # if ddf["NumberOfInstances"] >= instances_from:      
-            if ddf["NumberOfInstances"] <= instances_to: 
+                """
+                Kill previous process
+                """
+                while True:
+                    p_name, p_id, mem = get_max_pid()
+                    if mem > 100000:
+                        command = "kill -9 " + str(p_id)
+                        os.system(command)
+                    else:
+                        break
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
@@ -99,7 +135,6 @@ def MemTest(algo, mode, system):
                 command = "import gc; gc.collect()"
                 subprocess.run(["python", "-c", command])
                 
-                time.sleep(5)
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
@@ -117,7 +152,7 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     while not stop_flag.is_set():
         memory = []
         memory_virtual = []
-        name, pid = get_max_pid()
+        name, pid, _ = get_max_pid()
         for _ in range(10):
             try:
                 process = psutil.Process(pid)
@@ -149,7 +184,7 @@ def get_max_pid():
         # Get the memory usage information for each process
         try:
             memory_info = process.info['memory_info']
-            memory_usage = memory_info.rss
+            memory_usage = memory_info.vms / (1024 * 1024)
         except:
             memory_usage = 0
         # Check if the current process has higher memory usage
@@ -157,7 +192,7 @@ def get_max_pid():
             max_memory = memory_usage
             max_memory_name = process.info['name']
             max_memory_pid = process.info['pid']
-    return max_memory_name, max_memory_pid
+    return max_memory_name, max_memory_pid, max_memory
            
                
 algo = sys.argv[1]
