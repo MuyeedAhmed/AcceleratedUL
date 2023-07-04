@@ -24,26 +24,32 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
 def MemTest(algo, mode, system):
-    # if system == "M2":
-    #     folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+    if system == "M2":
+        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
     if system == "Jimmy":
-        # folderpath = '/jimmy/hdd/ma234/Dataset/'
+        folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
     elif system == "Louise":
-        # folderpath = '/louise/hdd/ma234/Dataset/'
+        folderpath = '/louise/hdd/ma234/Dataset/'
         new_home_directory = '/louise/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    # elif system == "3070":
-    #     folderpath = '../Datasets/'
+    elif system == "3070":
+        folderpath = '../Datasets/'
     elif system == "Thelma":
-        # folderpath = ""
+        folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    # else:
-    #     print("System name doesn't exist")
-    #     return
+    else:
+        print("System name doesn't exist")
+        return
     
+    if os.path.exists("Stats/" + algo + "/"+ system + ".csv") == 0:
+        if os.path.isdir("Stats/" + algo + "/") == 0:    
+            os.mkdir("Stats/" + algo + "/")
+        f=open("Stats/" + algo + "/"+ system + ".csv", "w")
+        f.write('Filename,Row,Columm,Mode,System,Time,ARI\n')
+        f.close()
 
     done_files = []
     if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv"):
@@ -57,13 +63,13 @@ def MemTest(algo, mode, system):
     dataset_list = openml.datasets.list_datasets()
     
     instances_from = 5000000#100000
-    instances_to = 1000000
+    instances_to = 10000
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
             # if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
-            if ddf["NumberOfInstances"] >= instances_from:      
-                
+            # if ddf["NumberOfInstances"] >= instances_from:      
+            if ddf["NumberOfInstances"] <= instances_to: 
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
