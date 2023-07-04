@@ -5,9 +5,12 @@ import random
 import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import SpectralClustering
 import sys
 from SS_Clustering import SS_Clustering
-from sklearn.mixture import GaussianMixture
+
 from pathlib import Path
 import glob
 from sklearn.decomposition import PCA
@@ -24,23 +27,8 @@ from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
-def MemTest(algo, mode, system):
-    # if system == "M2":
-    #     folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
-    if system == "Jimmy":
-        # folderpath = '/jimmy/hdd/ma234/Dataset/'
-        new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    elif system == "Louise":
-        # folderpath = '/louise/hdd/ma234/Dataset/'
-        new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    # elif system == "3070":
-    #     folderpath = '../Datasets/'
-    elif system == "Thelma":
-        # folderpath = ""
-        new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+def MemoryTest_List(algo, mode, system):
+    
         
     f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "w")
     f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
@@ -85,18 +73,10 @@ def MemTest(algo, mode, system):
 
 
 def getThreshold(algo, mode, system):
-    if system == "Jimmy":
-        new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    elif system == "Louise":
-        new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    elif system == "Thelma":
-        new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    
+
     file = "bot-iot-all-features"
-    
+    # file = "KDDCup99"
+    # file = "delays_zurich_transport"
     dataset = openml.datasets.get_dataset(file)
     
     X, y, categorical_indicator, attribute_names = dataset.get_data(
@@ -106,38 +86,55 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 80000
+    start = 260000
     
-    end = 120000
+    end = 290000
     while True:
+        while True:
+            p_name, p_id, mem = get_max_pid()
+            print(p_name, p_id, mem )
+            if mem > 100000:
+                command = "kill -9 " + str(p_id)
+                print(command)
+                os.system(command)
+            else:
+                break
+        done = multiprocessing.Value('i', 0)
         if start >= end:
             print("Threshold: ", start)
             break
-        mid =int((end+start)/2)
+        mid =int((end+start)/2)+1
         d = df.iloc[:mid].copy()
         print("mid: ", mid)
         t0 = time.time()
-        p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file,))
+        p = multiprocessing.Process(target=worker, args=(d, algo, mode, system, mid, c, file, done,))
         p.start()
-        p.join(timeout=7200)
-        
+        p.join(timeout=20000)
         if p.is_alive():
             p.terminate()
             print("Terminated: ", mid)
             start = mid
+            time.sleep(30)
         else:
-            end = mid
+            if done.value == 1:
+                print("Done in time: ", time.time() - t0)
+                start = mid            
+            else:
+                print("Killed in time: ", time.time() - t0)
+                end = mid
+                time.sleep(30)
         
         
         command = "import gc; gc.collect()"
         subprocess.run(["python", "-c", command])
         
-        time.sleep(5)
+        time.sleep(10)
         
         
         
-def worker(d, algo, mode, system, row, c, file):
+def worker(d, algo, mode, system, row, c, file, done):
     t0 = time.time()
+    done.value = 0
     try:
         executed = 0
         if mode == "Default":
@@ -147,17 +144,25 @@ def worker(d, algo, mode, system, row, c, file):
                 clustering = AffinityPropagation().fit(d)
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(d)
+            elif algo == "SC":
+                clustering = SpectralClustering(n_clusters=2).fit(d)
+            elif algo == "HAC":
+                clustering = AgglomerativeClustering().fit(d)
+                # print(clustering.labels_)
         else:
             clustering = SS_Clustering(algoName=algo)
             clustering.X = d
             clustering.y = [0]*d.shape[0]
             clustering.run()
             clustering.destroy()
+        done.value = 1
         t1 = time.time()
+        
         executed = 1
         # f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
         # f.write(file+','+str(row)+','+str(c)+','+str(t0)+','+str(t1)+','+str(executed)+'\n')
         # f.close()
+        
         
     except MemoryError:
         t1 = time.time()
@@ -169,11 +174,6 @@ def worker(d, algo, mode, system, row, c, file):
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     print("Memory usage")
     interval = 0.1
-    # algo = sys.argv[1]
-    # mode = sys.argv[2]
-    # system = sys.argv[3]
-    # filename = sys.argv[4]
-    
     if os.path.exists("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv") == 0:
         f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv", "w")
         f.write('Name,Time,Memory_Physical,Memory_Virtual,Filename\n')
@@ -182,7 +182,7 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
     while not stop_flag.is_set():
         memory = []
         memory_virtual = []
-        name, pid = get_max_pid()
+        name, pid, _ = get_max_pid()
         for _ in range(10):
             try:
                 process = psutil.Process(pid)
@@ -195,9 +195,6 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
                 print("none")
                 continue
             time.sleep(interval)
-        # print(name, pid)
-        # print([ '%.2f' % elem for elem in memory])
-        # print([ '%.2f' % elem for elem in memory_virtual])
         
         f=open("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + "_Row.csv", "a")
         f.write(name+","+str(time.time())+","+str(np.mean(memory))+","+str(np.mean(memory_virtual))+","+filename+'\n')
@@ -205,24 +202,20 @@ def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
         
 def get_max_pid():
     processes = psutil.process_iter(['pid', 'name', 'memory_info'])
-    # Initialize variables to track the highest memory usage
     max_memory = 0
     max_memory_pid = None
     
-    # Iterate over the processes
     for process in processes:
-        # Get the memory usage information for each process
         try:
             memory_info = process.info['memory_info']
-            memory_usage = memory_info.rss
+            memory_usage = memory_info.vms / (1024 * 1024)
         except:
             memory_usage = 0
-        # Check if the current process has higher memory usage
         if memory_usage > max_memory and 'python' in process.info['name'].lower():
             max_memory = memory_usage
             max_memory_name = process.info['name']
             max_memory_pid = process.info['pid']
-    return max_memory_name, max_memory_pid
+    return max_memory_name, max_memory_pid, max_memory
            
 
 
@@ -287,12 +280,28 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
     plt.plot(x_Default,y_Default, ".",color="red")
     
-    # row = math.sqrt((memory_size * 10**9)/28)
-    plt.axvline(x = 169000, color='red', linestyle = '-')
-    plt.axvline(x = 110000, color='orange',linestyle = '--')
-    plt.axvline(x = 84000, color='purple',linestyle = '--')
-    plt.axvline(x = 80000, color='cyan', linestyle = '-')
-        
+    # AP
+    # row = math.sqrt((memory_size * 10**9)/ (7 * 4)) ## AP each value 4 bytes
+    plt.axvline(x = 169000, color='red', linestyle = '-') # Jimmy 800
+    plt.axvline(x = 110000, color='orange',linestyle = '--') # Thelma 340
+    plt.axvline(x = 84000, color='purple',linestyle = '--') # M2 200
+    plt.axvline(x = 80000, color='cyan', linestyle = '--') # Louise 180
+    
+    # SC
+    # row = math.sqrt((memory_size * 10**9)/ (4 * 8)) ## SC each value 8 bytes
+    # plt.axvline(x = 158000, color='red', linestyle = '-') # Jimmy 800
+    # plt.axvline(x = 103000, color='orange',linestyle = '--') # Thelma 340
+    # plt.axvline(x = 79000, color='purple',linestyle = '--') # M2 200
+    # plt.axvline(x = 75000, color='cyan', linestyle = '--') # Louise 180
+
+
+    # HAC
+    # plt.axvline(x = , color='red', linestyle = '-') # Jimmy 800
+    # plt.axvline(x = 223442, color='orange',linestyle = '--') # Thelma 340
+    # plt.axvline(x = 112834, color='purple',linestyle = '--') # M2 200
+    # plt.axvline(x = 157000, color='cyan', linestyle = '--') # Louise 180
+    
+    
     plt.grid(True)
     plt.legend(["Subsampling", "Default", "Jimmy", "Thelma", "M2", "Louise"])
     plt.xlabel("Points (Rows)")
@@ -308,28 +317,45 @@ def draw(df_d, df_s, tm, algo, system):
     plt.show()
 
     
-# algo = "AP"
-# system = "Jimmy"
 
-# mode = "SS"
-# MemoryConsumptionCalculation(algo, mode, system)
-# mode = "Default"
-# MemoryConsumptionCalculation(algo, mode, system)
-
-# drawGraph(algo, system)
 
                
 algo = sys.argv[1]
 mode = sys.argv[2]
 system = sys.argv[3]
 
-# # MemTest(algo, mode, system)
-
 if __name__ == '__main__':
+    # if system == "M2":
+    #     folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+    if system == "Jimmy":
+        # folderpath = '/jimmy/hdd/ma234/Dataset/'
+        new_home_directory = '/jimmy/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    elif system == "Louise":
+        # folderpath = '/louise/hdd/ma234/Dataset/'
+        new_home_directory = '/louise/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    # elif system == "3070":
+    #     folderpath = '../Datasets/'
+    elif system == "Thelma":
+        # folderpath = ""
+        new_home_directory = '/thelma/hdd/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+        
+    # MemoryTest_List(algo, mode, system)
+    
     getThreshold(algo, mode, system)
 
+    
+    # algo = "AP"
+    # system = "Jimmy"
 
+    # mode = "SS"
+    # MemoryConsumptionCalculation(algo, mode, system)
+    # mode = "Default"
+    # MemoryConsumptionCalculation(algo, mode, system)
 
+    # drawGraph(algo, system)
 
     
 
