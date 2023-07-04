@@ -132,6 +132,8 @@ def MemTest(algo, mode, system):
                 stop_flag.set()
                 MonitorMemory.join()
                 
+                done_files += filename
+
                 command = "import gc; gc.collect()"
                 subprocess.run(["python", "-c", command])
                 
