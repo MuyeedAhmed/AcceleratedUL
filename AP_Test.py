@@ -86,9 +86,9 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 260000
+    start = 300000
     
-    end = 290000
+    end = 350000
     while True:
         while True:
             p_name, p_id, mem = get_max_pid()
