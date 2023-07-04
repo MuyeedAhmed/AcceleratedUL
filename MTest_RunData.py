@@ -8,10 +8,11 @@ from sklearn.mixture import GaussianMixture
 
 import sys
 from SS_Clustering import SS_Clustering
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 import psutil
 import threading
 import pdb
+from sklearn.metrics.cluster import adjusted_rand_score
             
 
 
@@ -28,25 +29,15 @@ filename = sys.argv[5]
 
 
 def MTest_Run(algo, mode, system, did, filename):
-    if system == "M2":
-        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
-    elif system == "Jimmy":
-        # folderpath = '/jimmy/hdd/ma234/Dataset/'
+    if system == "Jimmy":
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
     elif system == "Louise":
-        # folderpath = '/louise/hdd/ma234/Dataset/'
         new_home_directory = '/louise/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    elif system == "3070":
-        folderpath = '../Datasets/'
     elif system == "Thelma":
-        # folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    else:
-        print("System name doesn't exist")
-        return
     
     try:
         dataset = openml.datasets.get_dataset(did)
@@ -113,18 +104,23 @@ def runFile(file, df, algo, mode, system):
             elif algo == "HAC":
                 clustering = AgglomerativeClustering().fit(X)
                 l = clustering.predict(X)
-            df["predicted_labels"] = l
-            df.to_csv("../AcceleratedUL_Output/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
-            
+            # df["predicted_labels"] = l
+            # df.to_csv("../AcceleratedUL_Output/"+file+"_"+algo+"_"+mode+"_"+system+".csv")
+            ari = adjusted_rand_score(y,l)
+            time_ = time.time()-t0    
             
         else:
             clustering = SS_Clustering(algoName=algo)
             clustering.X = X
             clustering.y = y
-            clustering.run()
+            ari, time_ = clustering.run()
             clustering.destroy()
-        print("*Done*")
         
+        if gt_available:           
+            f=open("Stats/" + algo + "/"+ system + ".csv", "a")
+            f.write(file+','+str(r)+','+str(c)+','+mode+','+system+','+str(time_)+','+str(ari)+'\n')
+            f.close()
+            
         writeTimeFile(file, r, c, t0, time.time(), 1) # Successful = 1
         
     except MemoryError:
