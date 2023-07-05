@@ -21,7 +21,6 @@ import threading
 import subprocess
 import openml
 import openml.config
-import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
@@ -267,6 +266,8 @@ def drawGraph(algo, system):
     draw(default, ss, "TotalTime", algo, system)
     
 def draw(df_d, df_s, tm, algo, system):    
+    import matplotlib.pyplot as plt
+
     df_s = df_s[df_s['Filename'].isin(df_d['Filename'])]
     df_d = df_d[df_d['Filename'].isin(df_s['Filename'])]
     
