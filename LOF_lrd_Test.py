@@ -73,7 +73,7 @@ def MemTest(algo, mode, system):
     else:
         print("System name doesn't exist")
         return
-    
+    done_files = []
     if os.path.exists("Stats/" + algo + "/"+ system + "_lrd.csv"):
         done_files = pd.read_csv("Stats/" + algo + "/"+ system + "_lrd.csv")
         done_files = done_files["Filename"].to_numpy()
