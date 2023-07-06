@@ -121,7 +121,7 @@ def MemTest(algo, mode, system):
                     is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
                 except:
                     print("Failed to read data: ", id_)
-                    return
+                    continue
                 if all(is_numeric):                
                     if "target" in df.columns:
                         y=df["target"].to_numpy()
@@ -137,7 +137,7 @@ def MemTest(algo, mode, system):
                         X = df
                     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
                     if c < 10:
-                        return
+                        continue
                     
                     clf = LocalOutlierFactor(n_neighbors=5)
                     
