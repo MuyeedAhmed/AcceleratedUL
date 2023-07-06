@@ -120,7 +120,7 @@ def MemTest(algo, mode, system):
                     df["class"] = y
                     is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
                 except:
-                    print("Failed to read data: ", did)
+                    print("Failed to read data: ", id_)
                     return
                 if all(is_numeric):                
                     if "target" in df.columns:
