@@ -123,14 +123,13 @@ def MemTest(algo, mode, system):
                     print("Failed to read data: ", id_)
                     continue
                 if all(is_numeric):                
+                    c = df.shape[1]
                     if "target" in df.columns:
                         y=df["target"].to_numpy()
                         X=df.drop("target", axis=1)
-                        c=c-1
                     elif "class" in df.columns:
                         y=df["class"].to_numpy()
                         X=df.drop("class", axis=1)
-                        c=c-1
                     else:
                         gt_available = False
                         y = [0]*r
@@ -139,7 +138,7 @@ def MemTest(algo, mode, system):
                     if c < 10:
                         continue
                     
-                    clf = LocalOutlierFactor(n_neighbors=5)
+                    clf = LocalOutlierFactor(n_neighbors=5).fit(X)
                     
                     lrd = clf.negative_outlier_factor_
                     f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
