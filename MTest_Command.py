@@ -90,7 +90,7 @@ def MemTest(algo, mode, system):
     
     dataset_list = openml.datasets.list_datasets()
     
-    instances_from = 50000
+    instances_from = 10000
     if mode == "SS" or algo == "DBSCAN":
         instances_to = 20000000
     for key, ddf in dataset_list.items():
