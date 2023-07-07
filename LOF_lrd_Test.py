@@ -140,16 +140,16 @@ def MemTest(algo, mode, system):
                         continue
                     try:
                         clf = LocalOutlierFactor(n_neighbors=5).fit(X)
+                    
+                        lrd = clf.negative_outlier_factor_
+                        f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
+                        f.write(filename+','+str(max(lrd))+','+str(min(lrd))+','+str(np.mean(lrd))+','+str(np.std(lrd))+'\n')
+                        f.close()
+                        
+                        df = pd.DataFrame(lrd)
+                        df.to_csv("lrd/"+filename+".csv", index=False, header=False)
                     except Exception as e:
                         print("Failed: ", e)
-                    lrd = clf.negative_outlier_factor_
-                    f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
-                    f.write(filename+','+str(max(lrd))+','+str(min(lrd))+','+str(np.mean(lrd))+','+str(np.std(lrd))+'\n')
-                    f.close()
-                    
-                    df = pd.DataFrame(lrd)
-                    df.to_csv("lrd/"+filename+".csv", index=False, header=False)
-                    
                     
                
 algo = "DBSCAN"
