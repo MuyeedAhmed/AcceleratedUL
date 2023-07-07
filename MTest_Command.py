@@ -39,7 +39,7 @@ def MemTest(algo, mode, system):
         if algo == "SC":
             instances_to = 158000
         elif algo == "HAC":
-            instances_to = 0 ###
+            instances_to = 315000 ###
             
         folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
