@@ -138,9 +138,10 @@ def MemTest(algo, mode, system):
                     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
                     if c < 10:
                         continue
-                    
-                    clf = LocalOutlierFactor(n_neighbors=5).fit(X)
-                    
+                    try:
+                        clf = LocalOutlierFactor(n_neighbors=5).fit(X)
+                    except Exception as e:
+                        print("Failed: ", e)
                     lrd = clf.negative_outlier_factor_
                     f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
                     f.write(filename+','+str(max(lrd))+','+str(min(lrd))+','+str(np.mean(lrd))+','+str(np.std(lrd))+'\n')
