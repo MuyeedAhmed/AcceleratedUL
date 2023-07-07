@@ -39,7 +39,7 @@ def MemTest(algo, mode, system):
         if algo == "SC":
             instances_to = 158000
         elif algo == "HAC":
-            instances_to = 315000 ###
+            instances_to = 315000
             
         folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
@@ -91,7 +91,8 @@ def MemTest(algo, mode, system):
     dataset_list = openml.datasets.list_datasets()
     
     instances_from = 50000
-    
+    if mode == "SS" or algo == "DBSCAN":
+        instances_to = 20000000
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
             if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
