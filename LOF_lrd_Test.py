@@ -90,7 +90,7 @@ def MemTest(algo, mode, system):
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
+            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= 100000:
             # if ddf["NumberOfInstances"] >= instances_from:      
                 """
                 Kill previous process
@@ -123,6 +123,7 @@ def MemTest(algo, mode, system):
                     print("Failed to read data: ", id_)
                     continue
                 if all(is_numeric):                
+                    r = df.shape[0]
                     c = df.shape[1]
                     if "target" in df.columns:
                         y=df["target"].to_numpy()
@@ -146,7 +147,7 @@ def MemTest(algo, mode, system):
                     f.close()
                     
                     df = pd.DataFrame(lrd)
-                    df.to_csv("lrd/"+filename+"csv")
+                    df.to_csv("lrd/"+filename+".csv", index=False, header=False)
                     
                     
                
