@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
@@ -95,12 +96,19 @@ def runFile(file, df, algo, mode, system):
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(X)
                 l = clustering.labels_
+                outliers = np.count_nonzero((l==-1))
+                uniq = len(set(l))
+                f=open("Stats/" + algo + "/"+ system + "_Uniq&Outlier.csv", "a")
+                f.write(file+','+str(uniq)+','+str(outliers)+'\n')
+                f.close()
             elif algo == "AP":
                 clustering = AffinityPropagation().fit(X)
                 l = clustering.labels_
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(X)
                 l = clustering.predict(X)
+                
+                
             elif algo == "HAC":
                 clustering = AgglomerativeClustering().fit(X)
                 l = clustering.labels_
