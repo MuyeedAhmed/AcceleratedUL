@@ -110,18 +110,18 @@ def MemTest(algo, mode, system):
                 print(ddf["name"])
                 id_ =  ddf["did"]
                 
-                try:
-                    dataset = openml.datasets.get_dataset(id_)
-                    
-                    X, y, categorical_indicator, attribute_names = dataset.get_data(
-                        dataset_format="array", target=dataset.default_target_attribute
-                        )
-                    df = pd.DataFrame(X)
-                    df["class"] = y
-                    is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
-                except:
-                    print("Failed to read data: ", id_)
-                    continue
+                # try:
+                dataset = openml.datasets.get_dataset(id_)
+                
+                X, y, categorical_indicator, attribute_names = dataset.get_data(
+                    dataset_format="array", target=dataset.default_target_attribute
+                    )
+                df = pd.DataFrame(X)
+                df["class"] = y
+                is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
+                # except:
+                #     print("Failed to read data: ", id_)
+                #     continue
                 if all(is_numeric):                
                     r = df.shape[0]
                     c = df.shape[1]
@@ -153,7 +153,7 @@ def MemTest(algo, mode, system):
                
 algo = "DBSCAN"
 mode = "Default"
-system = "M2"
+system = sys.argv[1]
 
 MemTest(algo, mode, system)
 # MemTest("DBSCAN", "Default", "M1")
