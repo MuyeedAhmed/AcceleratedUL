@@ -84,6 +84,13 @@ def MemTest(algo, mode, system):
         f.write('Filename,max,min,mean,std\n')
         f.close()
     
+    files_needed_to_run = []
+    if os.path.exists("MemoryStats/Time_" + algo + "_Default_" + system + ".csv"):
+        dfm = pd.read_csv("MemoryStats/Time_" + algo + "_Default_" + system + ".csv")
+        dfm = dfm[dfm["Completed"]==-22]
+        files_needed_to_run = dfm["Filename"].to_numpy()
+    
+    
     dataset_list = openml.datasets.list_datasets()
     
     instances_from = 50000
@@ -106,6 +113,9 @@ def MemTest(algo, mode, system):
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
                     print("Already done: ", filename)
+                    continue
+                if filename not in files_needed_to_run:
+                    print("Didn't run the algo")
                     continue
                 print(ddf["name"])
                 id_ =  ddf["did"]
