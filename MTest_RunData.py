@@ -42,19 +42,19 @@ def MTest_Run(algo, mode, system, did, filename):
     elif system == "Silo":
         new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    try:
-        dataset = openml.datasets.get_dataset(did)
-        
-        X, y, categorical_indicator, attribute_names = dataset.get_data(
-            dataset_format="array", target=dataset.default_target_attribute
-            )
-        df = pd.DataFrame(X)
-        df["class"] = y
-        is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
-    except:
-        print("Failed to read data: ", did)
-        writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
-        return                    
+    # try:
+    dataset = openml.datasets.get_dataset(did)
+    
+    X, y, categorical_indicator, attribute_names = dataset.get_data(
+        dataset_format="array", target=dataset.default_target_attribute
+        )
+    df = pd.DataFrame(X)
+    df["class"] = y
+    is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
+    # except:
+    #     print("Failed to read data: ", did)
+    #     writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
+    #     return                    
     if all(is_numeric):                
         runFile(filename, df, algo, mode, system)
     else:
