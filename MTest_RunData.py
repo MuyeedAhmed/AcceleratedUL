@@ -39,7 +39,9 @@ def MTest_Run(algo, mode, system, did, filename):
     elif system == "Thelma":
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
-    
+    elif system == "Silo":
+        new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
     try:
         dataset = openml.datasets.get_dataset(did)
         

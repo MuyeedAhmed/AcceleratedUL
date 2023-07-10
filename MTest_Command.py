@@ -68,6 +68,10 @@ def MemTest(algo, mode, system):
         folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
         openml.config.set_cache_directory(new_home_directory)
+    elif system == "Silo":
+        new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
+        openml.config.set_cache_directory(new_home_directory)
+    
     else:
         print("System name doesn't exist")
         return
