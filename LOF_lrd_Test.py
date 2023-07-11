@@ -89,15 +89,15 @@ def MemTest(algo, mode, system):
         dfm = pd.read_csv("MemoryStats/Time_" + algo + "_Default_" + system + ".csv")
         dfm = dfm[dfm["Completed"]==-22]
         files_needed_to_run = dfm["Filename"].to_numpy()
-    
-    
+    #     print(files_needed_to_run)
+    # return
     dataset_list = openml.datasets.list_datasets()
     
     instances_from = 50000
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= 100000:
+            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= 100000000:
             # if ddf["NumberOfInstances"] >= instances_from:      
                 """
                 Kill previous process
