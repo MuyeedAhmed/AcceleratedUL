@@ -122,9 +122,7 @@ def MemTest(algo, mode, system):
                 if filename in done_files:
                     print("Already done: ", filename)
                     continue
-                else:
-                    print("Not done, ", filename)
-                    continue
+                
                 print(ddf["name"])
                 id_ =  ddf["did"]
                 argument = [algo, mode, system, str(id_), filename]
