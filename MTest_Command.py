@@ -91,7 +91,10 @@ def MemTest(algo, mode, system):
     # done_files = []
     if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv"):
         df_done_files = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv")
-        done_files += df_done_files["Filename"].to_numpy()
+        df_done_files = df_done_files["Filename"].to_numpy()
+        for dfd in df_done_files:
+            if dfd not in done_files:
+                done_files.append(dfd)
     else:
         f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "w")
         f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
