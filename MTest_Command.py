@@ -57,6 +57,8 @@ def MemTest(algo, mode, system):
         openml.config.set_cache_directory(new_home_directory)
     elif system == "3070":
         folderpath = '../Datasets/'
+    elif system == "2060":
+        folderpath = '../Datasets/'
     elif system == "Thelma":
         if algo == "AP":
             instances_to = 110000
