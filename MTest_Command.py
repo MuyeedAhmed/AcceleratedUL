@@ -72,21 +72,26 @@ def MemTest(algo, mode, system):
         print("System name doesn't exist")
         return
     
+    
+    done_files = []
     if os.path.exists("Stats/" + algo + "/"+ system + ".csv") == 0:
         if os.path.isdir("Stats/" + algo + "/") == 0:    
             os.mkdir("Stats/" + algo + "/")
         f=open("Stats/" + algo + "/"+ system + ".csv", "w")
         f.write('Filename,Row,Columm,Mode,System,Time,ARI\n')
         f.close()
-
-    done_files = []
-    if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv"):
-        done_files = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv")
-        done_files = done_files["Filename"].to_numpy()
     else:
-        f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "w")
-        f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
-        f.close()
+        done_files = pd.read_csv("Stats/" + algo + "/"+ system + ".csv")
+        done_files = done_files["Filename"].to_numpy()
+
+    # done_files = []
+    # if os.path.exists("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv"):
+    #     done_files = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv")
+    #     done_files = done_files["Filename"].to_numpy()
+    # else:
+    #     f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "w")
+    #     f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
+    #     f.close()
     
     dataset_list = openml.datasets.list_datasets()
     
@@ -99,7 +104,7 @@ def MemTest(algo, mode, system):
             # if ddf["NumberOfInstances"] >= instances_from:      
                 """
                 Kill previous process
-                """
+                
                 while True:
                     p_name, p_id, mem = get_max_pid()
                     if mem > 100000:
@@ -107,10 +112,14 @@ def MemTest(algo, mode, system):
                         os.system(command)
                     else:
                         break
+                """
                 filename = ddf["name"]+"_OpenML" 
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
                     print("Already done: ", filename)
+                    continue
+                else:
+                    print("Not done, ", filename)
                     continue
                 print(ddf["name"])
                 id_ =  ddf["did"]
