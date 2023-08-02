@@ -32,16 +32,16 @@ filename = sys.argv[5]
 def MTest_Run(algo, mode, system, did, filename):
     if system == "Jimmy":
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "Louise":
         new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "Thelma":
         new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "Silo":
         new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     # try:
     dataset = openml.datasets.get_dataset(did)
     

@@ -43,7 +43,7 @@ def MemTest(algo, mode, system):
             
         folderpath = '/jimmy/hdd/ma234/Dataset/'
         new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "Louise":
         if algo == "AP":
             instances_to = 80000
@@ -54,7 +54,7 @@ def MemTest(algo, mode, system):
             
         folderpath = '/louise/hdd/ma234/Dataset/'
         new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "3070":
         folderpath = '../Datasets/'
     elif system == "2060":
@@ -69,10 +69,10 @@ def MemTest(algo, mode, system):
         
         folderpath = ""
         new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     elif system == "Silo":
         new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        openml.config.cache_directory = new_home_directory
     
     else:
         print("System name doesn't exist")
