@@ -181,6 +181,6 @@ def writeTimeFile(filename, r, c, t0, t1, status):
     f.close()
 
 if __name__ == '__main__':
-    MTest_Run(algo, mode, system, did, filename)
+    MTest_Run(algo, mode, system, filename)
     
     
