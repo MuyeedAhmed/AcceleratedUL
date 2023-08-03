@@ -5,6 +5,7 @@ import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import SpectralClustering
 from sklearn.mixture import GaussianMixture
 
 import sys
@@ -65,15 +66,13 @@ def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
     gt_available = True
-    if "target" in df.columns:
-        y=df["target"].to_numpy()
-        X=df.drop("target", axis=1)
-        c=c-1
-    elif "class" in df.columns:
+    
+    if "class" in df.columns:
         y=df["class"].to_numpy()
         X=df.drop("class", axis=1)
         c=c-1
     else:
+        print("Ground truth not available")
         gt_available = False
         y = [0]*r
         X = df
@@ -90,10 +89,8 @@ def runFile(file, df, algo, mode, system):
         
         t0 = time.time()
         if mode == "Default":
-            
-            
-            
             writeTimeFile(filename, r, c, t0, 0, -22) # To see if it started or not = -22
+            
             
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(X)
@@ -109,8 +106,9 @@ def runFile(file, df, algo, mode, system):
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(X)
                 l = clustering.predict(X)
-                
-                
+            elif algo == "SC":
+                clustering = SpectralClustering().fit(X)
+                l = clustering.labels_
             elif algo == "HAC":
                 clustering = AgglomerativeClustering().fit(X)
                 l = clustering.labels_
