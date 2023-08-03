@@ -26,42 +26,64 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 algo = sys.argv[1]
 mode = sys.argv[2]
 system = sys.argv[3]
-did = sys.argv[4]
-filename = sys.argv[5]
+filename = sys.argv[4]
 
 
-def MTest_Run(algo, mode, system, did, filename):
-    if system == "Jimmy":
-        new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    elif system == "Louise":
-        new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    elif system == "Thelma":
-        new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    elif system == "Silo":
-        new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    # try:
-    dataset = openml.datasets.get_dataset(did)
-    
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-        )
-    df = pd.DataFrame(X)
-    df["class"] = y
-    is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
-    # except:
-    #     print("Failed to read data: ", did)
-    #     writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
-    #     return                    
-    if all(is_numeric):                
-        runFile(filename, df, algo, mode, system)
-    else:
-        print("In dataset ", filename, did, "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
-        writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
+def MTest_Run(algo, mode, system, filename):
+    instances_to = 2000000000
+    if system == "M2":
+        if algo == "AP":
+            instances_to = 84000
+        if algo == "SC":
+            instances_to = 79000
+        elif algo == "HAC":
+            instances_to = 120000 ###
+            
+        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
         
+    elif system == "Jimmy":
+        if algo == "AP":
+            instances_to = 170000
+        if algo == "SC":
+            instances_to = 158000
+        elif algo == "HAC":
+            instances_to = 315000
+            
+        folderpath = '/jimmy/hdd/ma234/Openml/'
+        
+    elif system == "Louise":
+        if algo == "AP":
+            instances_to = 80000
+        if algo == "SC":
+            instances_to = 75000
+        elif algo == "HAC":
+            instances_to = 157000
+            
+        folderpath = '/louise/hdd/ma234/Openml/'
+        
+    elif system == "3070":
+        folderpath = '../Openml/'
+    elif system == "2060":
+        folderpath = '../Openml/'
+    elif system == "Thelma":
+        if algo == "AP":
+            instances_to = 110000
+        if algo == "SC":
+            instances_to = 103000
+        elif algo == "HAC":
+            instances_to = 220000
+        
+        folderpath = "/thelma/hdd/ma234/Openml/"
+    else:
+        print("System name doesn't exist")
+        return
+    
+
+    df = pd.read_csv(folderpath+filename+".csv")
+        
+    runFile(filename, df, algo, mode, system)
+    
+    
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]

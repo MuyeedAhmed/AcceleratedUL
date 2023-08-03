@@ -25,58 +25,21 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 def MemTest(algo, mode, system):
     if system == "M2":
-        if algo == "AP":
-            instances_to = 84000
-        if algo == "SC":
-            instances_to = 79000
-        elif algo == "HAC":
-            instances_to = 120000 ###
-            
         folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
     elif system == "Jimmy":
-        if algo == "AP":
-            instances_to = 170000
-        if algo == "SC":
-            instances_to = 158000
-        elif algo == "HAC":
-            instances_to = 315000
-            
-        folderpath = '/jimmy/hdd/ma234/Dataset/'
-        new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
+        folderpath = '/jimmy/hdd/ma234/Openml/'
     elif system == "Louise":
-        if algo == "AP":
-            instances_to = 80000
-        if algo == "SC":
-            instances_to = 75000
-        elif algo == "HAC":
-            instances_to = 157000
-            
-        folderpath = '/louise/hdd/ma234/Dataset/'
-        new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
+        folderpath = '/louise/hdd/ma234/Openml/'
     elif system == "3070":
-        folderpath = '../Datasets/'
+        folderpath = '../Openml/'
     elif system == "2060":
-        folderpath = '../Datasets/'
+        folderpath = '../Openml/'
     elif system == "Thelma":
-        if algo == "AP":
-            instances_to = 110000
-        if algo == "SC":
-            instances_to = 103000
-        elif algo == "HAC":
-            instances_to = 220000
-        
-        folderpath = ""
-        new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    elif system == "Silo":
-        new_home_directory = '/silo100/sdd/ineamtiu/ma234/Temp/'
-        openml.config.cache_directory = new_home_directory
-    
+        folderpath = "/thelma/hdd/ma234/Openml/"
     else:
         print("System name doesn't exist")
         return
+    
     
     
     done_files = []
@@ -100,57 +63,51 @@ def MemTest(algo, mode, system):
         f.write('Filename,Row,Columm,StartTime,EndTime,Completed\n')
         f.close()
     
-    dataset_list = openml.datasets.list_datasets()
+    master_files = glob.glob(folderpath+"*.csv")
     
-    instances_from = 10000
-    if mode == "SS" or algo == "DBSCAN":
-        instances_to = 20000000
-    for key, ddf in dataset_list.items():
-        if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= instances_to:
-            # if ddf["NumberOfInstances"] >= instances_from:      
-                """
-                Kill previous process
-                
-                while True:
-                    p_name, p_id, mem = get_max_pid()
-                    if mem > 100000:
-                        command = "kill -9 " + str(p_id)
-                        os.system(command)
-                    else:
-                        break
-                """
-                filename = ddf["name"]+"_OpenML" 
-                filename = filename.replace(",", "_COMMA_")
-                if filename in done_files:
-                    print("Already done: ", filename)
-                    continue
-                
-                print(ddf["name"])
-                id_ =  ddf["did"]
-                argument = [algo, mode, system, str(id_), filename]
-                command = ["python", "MTest_RunData.py"] + argument
+    for i in range(len(master_files)):
+        master_files[i] = master_files[i].split("/")[-1].split(".")[0]
+    master_files = [x for x in master_files if x not in done_files] 
+    master_files.sort()
+    
+    
+    for filename in master_files:
+        print(filename)
+        """
+        Kill previous process
+        
+        while True:
+            p_name, p_id, mem = get_max_pid()
+            if mem > 100000:
+                command = "kill -9 " + str(p_id)
+                os.system(command)
+            else:
+                break
+        """
+        
+        argument = [algo, mode, system, filename]
+        command = ["python", "MTest_RunData.py"] + argument
 
-                
-                stop_flag = threading.Event()
-                MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
-                MonitorMemory.start()
-                
-                try:
-                    subprocess.run(command, timeout=3600)
-                except subprocess.TimeoutExpired:
-                    f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
-                    f.write(filename+',0,0,0,0,-23\n')
-                    f.close()
-                    print("Timed out")
-                
-                stop_flag.set()
-                MonitorMemory.join()
-                
-                done_files += filename
+        
+        stop_flag = threading.Event()
+        MonitorMemory = threading.Thread(target=monitor_memory_usage_pid, args=(algo, mode, system, filename,stop_flag,))
+        MonitorMemory.start()
+        
+        try:
+            subprocess.run(command, timeout=3600)
+        except subprocess.TimeoutExpired:
+            f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
+            f.write(filename+',0,0,0,0,-23\n')
+            f.close()
+            print("Timed out")
+        
+        stop_flag.set()
+        MonitorMemory.join()
+        
+        done_files += filename
 
-                command = "import gc; gc.collect()"
-                subprocess.run(["python", "-c", command])
+        command = "import gc; gc.collect()"
+        subprocess.run(["python", "-c", command])
                 
 
 def monitor_memory_usage_pid(algo, mode, system, filename, stop_flag):
