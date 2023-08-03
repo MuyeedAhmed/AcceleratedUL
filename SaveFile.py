@@ -1,5 +1,5 @@
 import pandas as pd
-
+import glob
 
 import openml
 import openml.config
@@ -10,6 +10,10 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 def saveOpenMLFile():
     dataset_list = openml.datasets.list_datasets()
     
+    master_files = glob.glob("../Openml/*.csv")
+    for i in range(len(master_files)):
+        master_files[i] = master_files[i].split("/")[-1].split(".")[0]
+        
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
             if ddf["NumberOfInstances"] >= 10000:
@@ -18,8 +22,13 @@ def saveOpenMLFile():
                 filename = filename.replace(",", "_COMMA_")
             
                 print(ddf["name"])
+                if filename in master_files:
+                    print("File Already Exists")
+                    continue
                 did =  ddf["did"]
-   
+                
+                
+                
                 dataset = openml.datasets.get_dataset(did)
                  
                 X, y, categorical_indicator, attribute_names = dataset.get_data(
