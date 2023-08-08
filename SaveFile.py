@@ -27,8 +27,6 @@ def saveOpenMLFile():
                     continue
                 did =  ddf["did"]
                 
-                
-                
                 dataset = openml.datasets.get_dataset(did)
                  
                 X, y, categorical_indicator, attribute_names = dataset.get_data(
