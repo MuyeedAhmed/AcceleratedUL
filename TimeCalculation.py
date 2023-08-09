@@ -59,6 +59,11 @@ def TimeCalc(algo, mode, system):
                 print("Wrong Algo")
                 return
             time_ = time.time()-t0
+            if r == 1000 and time_ > 10:
+                f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
+                f.write(filename+','+str(row)+','+str(col)+',?,'+str(time_)+',0,0,0,0,0,0,0\n')
+                f.close()
+                continue
             times.append(time_)
             print(time_)
             
