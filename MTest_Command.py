@@ -25,7 +25,7 @@ openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 def MemTest(algo, mode, system):
     if system == "M2":
-        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+        folderpath = '../Openml/'
     elif system == "Jimmy":
         folderpath = '/jimmy/hdd/ma234/Openml/'
     elif system == "Louise":
@@ -71,9 +71,15 @@ def MemTest(algo, mode, system):
     master_files = [x for x in master_files if x not in done_files] 
     master_files.sort()
     
+    ## For AP and SC Default
+    algoTime = pd.read_csv("Stats/Time/"+algo+"/"+system+".csv")
     
     for filename in master_files:
         print(filename)
+        if filename in algoTime["Filename"].values:
+            est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
+            if est > 3000:
+                continue
         """
         Kill previous process
         
@@ -95,7 +101,7 @@ def MemTest(algo, mode, system):
         MonitorMemory.start()
         
         try:
-            subprocess.run(command, timeout=3600)
+            subprocess.run(command, timeout=7200)
         except subprocess.TimeoutExpired:
             f=open("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv", "a")
             f.write(filename+',0,0,0,0,-23\n')
@@ -175,4 +181,4 @@ mode = sys.argv[2]
 system = sys.argv[3]
 
 MemTest(algo, mode, system)
-# MemTest("AP", "Default", "M1")
+# MemTest("AP", "Default", "M2")
