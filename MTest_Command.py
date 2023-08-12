@@ -66,7 +66,8 @@ def MemTest(algo, mode, system):
     master_files = glob.glob(folderpath+"*.csv")
     
     for i in range(len(master_files)):
-        master_files[i] = master_files[i].split("/")[-1].split(".")[0]
+        master_files[i] = master_files[i].split("/")[-1]
+        master_files[i] = master_files[i][:-4]
     master_files = [x for x in master_files if x not in done_files] 
     master_files.sort()
     
@@ -174,4 +175,4 @@ mode = sys.argv[2]
 system = sys.argv[3]
 
 MemTest(algo, mode, system)
-# MemTest("DBSCAN", "Default", "M1")
+# MemTest("AP", "Default", "M1")
