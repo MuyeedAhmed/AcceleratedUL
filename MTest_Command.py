@@ -16,11 +16,6 @@ import multiprocessing
 import threading
 
 import subprocess
-import openml
-import openml.config
-
-from collections import OrderedDict
-openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
 def MemTest(algo, mode, system):
