@@ -72,7 +72,7 @@ def MemTest(algo, mode, system):
         for filename in master_files:
             if filename in algoTime["Filename"].values:
                 est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
-                if est > 3000:
+                if est > 6000:
                     master_files.remove(filename)
     
     for filename in master_files:

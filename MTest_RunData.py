@@ -80,11 +80,12 @@ def MTest_Run(algo, mode, system, filename):
     
 
     df = pd.read_csv(folderpath+filename+".csv")
-    if df.shape[0] <= instances_to:
-        runFile(filename, df, algo, mode, system)
-    else:
+    if df.shape[0] > instances_to and mode == "Default":
         writeTimeFile(filename, 0, 0, 0, 0, -10) # Memory No available
         print("Too large for this algorithm")
+    else:
+        runFile(filename, df, algo, mode, system)
+        
         
     
 def runFile(file, df, algo, mode, system):
