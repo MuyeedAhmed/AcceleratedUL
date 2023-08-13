@@ -15,12 +15,6 @@ import psutil
 import threading
 import pdb
 from sklearn.metrics.cluster import adjusted_rand_score
-            
-
-
-import openml
-import openml.config
-openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
 algo = sys.argv[1]
