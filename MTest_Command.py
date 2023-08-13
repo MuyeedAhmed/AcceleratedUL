@@ -67,14 +67,14 @@ def MemTest(algo, mode, system):
     master_files.sort()
     
     ## For AP and SC Default
-    algoTime = pd.read_csv("Stats/Time/"+algo+"/"+system+".csv")
+    # algoTime = pd.read_csv("Stats/Time/"+algo+"/"+system+".csv")
     
     for filename in master_files:
         print(filename)
-        if filename in algoTime["Filename"].values:
-            est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
-            if est > 3000:
-                continue
+        # if filename in algoTime["Filename"].values:
+        #     est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
+        #     if est > 3000:
+        #         continue
         """
         Kill previous process
         

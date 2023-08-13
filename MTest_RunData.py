@@ -39,7 +39,7 @@ def MTest_Run(algo, mode, system, filename):
         elif algo == "HAC":
             instances_to = 120000 ###
             
-        folderpath = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+        folderpath = '../Openml/'
         
     elif system == "Jimmy":
         if algo == "AP":
@@ -80,9 +80,12 @@ def MTest_Run(algo, mode, system, filename):
     
 
     df = pd.read_csv(folderpath+filename+".csv")
+    if df.shape[0] <= instances_to:
+        runFile(filename, df, algo, mode, system)
+    else:
+        writeTimeFile(filename, 0, 0, 0, 0, -10) # Memory No available
+        print("Too large for this algorithm")
         
-    runFile(filename, df, algo, mode, system)
-    
     
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
