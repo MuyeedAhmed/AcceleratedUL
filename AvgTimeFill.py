@@ -50,7 +50,6 @@ def AvgTime(algo, mode):
             ari, time_ = clustering.run()
             clustering.destroy()
         
-        print("\n\n****\n\n")
         print("***", filename, time_)
         
 AvgTime("AP", "SS")
