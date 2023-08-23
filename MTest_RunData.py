@@ -5,6 +5,7 @@ import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import SpectralClustering
 from sklearn.mixture import GaussianMixture
 
 import sys
@@ -14,64 +15,84 @@ import psutil
 import threading
 import pdb
 from sklearn.metrics.cluster import adjusted_rand_score
-            
-
-
-import openml
-import openml.config
-openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
 
 
 algo = sys.argv[1]
 mode = sys.argv[2]
 system = sys.argv[3]
-did = sys.argv[4]
-filename = sys.argv[5]
+filename = sys.argv[4]
 
 
-def MTest_Run(algo, mode, system, did, filename):
-    if system == "Jimmy":
-        new_home_directory = '/jimmy/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+def MTest_Run(algo, mode, system, filename):
+    instances_to = 2000000000
+    if system == "M2":
+        if algo == "AP":
+            instances_to = 84000
+        if algo == "SC":
+            instances_to = 79000
+        elif algo == "HAC":
+            instances_to = 120000 ###
+            
+        folderpath = '../Openml/'
+        
+    elif system == "Jimmy":
+        if algo == "AP":
+            instances_to = 170000
+        if algo == "SC":
+            instances_to = 158000
+        elif algo == "HAC":
+            instances_to = 315000
+            
+        folderpath = '/jimmy/hdd/ma234/Openml/'
+        
     elif system == "Louise":
-        new_home_directory = '/louise/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
+        if algo == "AP":
+            instances_to = 80000
+        if algo == "SC":
+            instances_to = 75000
+        elif algo == "HAC":
+            instances_to = 157000
+            
+        folderpath = '/louise/hdd/ma234/Openml/'
+        
+    elif system == "3070":
+        folderpath = '../Openml/'
+    elif system == "2060":
+        folderpath = '../Openml/'
     elif system == "Thelma":
-        new_home_directory = '/thelma/hdd/ma234/Temp/'
-        openml.config.set_cache_directory(new_home_directory)
-    
-    try:
-        dataset = openml.datasets.get_dataset(did)
+        if algo == "AP":
+            instances_to = 110000
+        if algo == "SC":
+            instances_to = 103000
+        elif algo == "HAC":
+            instances_to = 220000
         
-        X, y, categorical_indicator, attribute_names = dataset.get_data(
-            dataset_format="array", target=dataset.default_target_attribute
-            )
-        df = pd.DataFrame(X)
-        df["class"] = y
-        is_numeric = df.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().all())
-    except:
-        print("Failed to read data: ", did)
-        writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
-        return                    
-    if all(is_numeric):                
-        runFile(filename, df, algo, mode, system)
+        folderpath = "/thelma/hdd/ma234/Openml/"
     else:
-        print("In dataset ", filename, did, "non numaric columns exists (", sum(is_numeric), "out of", len(is_numeric), ")")
-        writeTimeFile(filename, 0, 0, 0, 0, -1) # Other Errors or Invalid Dataset = -1
+        print("System name doesn't exist")
+        return
+    
+
+    df = pd.read_csv(folderpath+filename+".csv")
+    if df.shape[0] > instances_to and mode == "Default":
+        writeTimeFile(filename, 0, 0, 0, 0, -10) # Memory No available
+        print("Too large for this algorithm")
+    else:
+        runFile(filename, df, algo, mode, system)
         
+        
+    
 def runFile(file, df, algo, mode, system):
     r = df.shape[0]
     c = df.shape[1]
     gt_available = True
-    if "target" in df.columns:
-        y=df["target"].to_numpy()
-        X=df.drop("target", axis=1)
-        c=c-1
-    elif "class" in df.columns:
+    
+    if "class" in df.columns:
         y=df["class"].to_numpy()
         X=df.drop("class", axis=1)
         c=c-1
     else:
+        print("Ground truth not available")
         gt_available = False
         y = [0]*r
         X = df
@@ -88,10 +109,8 @@ def runFile(file, df, algo, mode, system):
         
         t0 = time.time()
         if mode == "Default":
-            
-            
-            
             writeTimeFile(filename, r, c, t0, 0, -22) # To see if it started or not = -22
+            
             
             if algo == "DBSCAN":
                 clustering = DBSCAN(algorithm="brute").fit(X)
@@ -107,8 +126,9 @@ def runFile(file, df, algo, mode, system):
             elif algo == "GMM":
                 clustering = GaussianMixture(n_components=2).fit(X)
                 l = clustering.predict(X)
-                
-                
+            elif algo == "SC":
+                clustering = SpectralClustering().fit(X)
+                l = clustering.labels_
             elif algo == "HAC":
                 clustering = AgglomerativeClustering().fit(X)
                 l = clustering.labels_
@@ -159,6 +179,6 @@ def writeTimeFile(filename, r, c, t0, t1, status):
     f.close()
 
 if __name__ == '__main__':
-    MTest_Run(algo, mode, system, did, filename)
+    MTest_Run(algo, mode, system, filename)
     
     

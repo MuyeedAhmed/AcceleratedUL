@@ -84,13 +84,20 @@ def MemTest(algo, mode, system):
         f.write('Filename,max,min,mean,std\n')
         f.close()
     
+    files_needed_to_run = []
+    if os.path.exists("MemoryStats/Time_" + algo + "_Default_" + system + ".csv"):
+        dfm = pd.read_csv("MemoryStats/Time_" + algo + "_Default_" + system + ".csv")
+        dfm = dfm[dfm["Completed"]==-22]
+        files_needed_to_run = dfm["Filename"].to_numpy()
+    #     print(files_needed_to_run)
+    # return
     dataset_list = openml.datasets.list_datasets()
     
     instances_from = 50000
     
     for key, ddf in dataset_list.items():
         if "NumberOfInstances" in ddf:
-            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= 100000:
+            if ddf["NumberOfInstances"] >= instances_from and ddf["NumberOfInstances"] <= 100000000:
             # if ddf["NumberOfInstances"] >= instances_from:      
                 """
                 Kill previous process
@@ -106,6 +113,9 @@ def MemTest(algo, mode, system):
                 filename = filename.replace(",", "_COMMA_")
                 if filename in done_files:
                     print("Already done: ", filename)
+                    continue
+                if filename not in files_needed_to_run:
+                    print("Didn't run the algo")
                     continue
                 print(ddf["name"])
                 id_ =  ddf["did"]
@@ -138,17 +148,18 @@ def MemTest(algo, mode, system):
                     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
                     if c < 10:
                         continue
+                    try:
+                        clf = LocalOutlierFactor(n_neighbors=5).fit(X)
                     
-                    clf = LocalOutlierFactor(n_neighbors=5).fit(X)
-                    
-                    lrd = clf.negative_outlier_factor_
-                    f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
-                    f.write(filename+','+str(max(lrd))+','+str(min(lrd))+','+str(np.mean(lrd))+','+str(np.std(lrd))+'\n')
-                    f.close()
-                    
-                    df = pd.DataFrame(lrd)
-                    df.to_csv("lrd/"+filename+".csv", index=False, header=False)
-                    
+                        lrd = clf.negative_outlier_factor_
+                        f=open("Stats/" + algo + "/"+ system + "_lrd.csv", "a")
+                        f.write(filename+','+str(max(lrd))+','+str(min(lrd))+','+str(np.mean(lrd))+','+str(np.std(lrd))+'\n')
+                        f.close()
+                        
+                        df = pd.DataFrame(lrd)
+                        df.to_csv("lrd/"+filename+".csv", index=False, header=False)
+                    except Exception as e:
+                        print("Failed: ", e)
                     
                
 algo = "DBSCAN"

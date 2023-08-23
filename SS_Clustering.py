@@ -692,7 +692,7 @@ class SS_Clustering:
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
-        print("\tTime: ", time_ss)
+        # print("\tTime: ", time_ss)
         return ari_ss, time_ss
         
     
