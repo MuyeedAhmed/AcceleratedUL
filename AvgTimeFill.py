@@ -15,8 +15,8 @@ def AvgTime(algo, mode):
     
     print(algo, mode)
 
-    # files = ["har_OpenML", "pendigits_OpenML", "eye_movements_OpenML"]
-    files = ["letter_OpenML", "BNG(autos_COMMA_nominal_COMMA_1000000)_OpenML", "BNG(lymph_COMMA_nominal_COMMA_1000000)_OpenML"] 
+    files = ["har_OpenML", "pendigits_OpenML", "eye_movements_OpenML"]
+    # files = ["letter_OpenML", "BNG(autos_COMMA_nominal_COMMA_1000000)_OpenML", "BNG(lymph_COMMA_nominal_COMMA_1000000)_OpenML"] 
     for filename in files:
         df = pd.read_csv(folderpath+filename+".csv")
         y=df["class"].to_numpy()
@@ -53,12 +53,12 @@ def AvgTime(algo, mode):
         
         print("***", filename, time_)
         
-AvgTime("AP", "SS")
-AvgTime("AP", "Default")
+# AvgTime("AP", "SS")
+# AvgTime("AP", "Default")
 
 
-# AvgTime("DBSCAN", "SS")
-# AvgTime("DBSCAN", "Default")
+AvgTime("DBSCAN", "SS")
+AvgTime("DBSCAN", "Default")
 
 
 # AvgTime("HAC", "SS")
