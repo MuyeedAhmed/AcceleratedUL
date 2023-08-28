@@ -21,7 +21,6 @@ import threading
 import subprocess
 import openml
 import openml.config
-import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 openml.config.apikey = '311e9ca589cd8291d0f4f67c7d0ba5de'
@@ -86,9 +85,9 @@ def getThreshold(algo, mode, system):
     # df["class"] = y
     c = df.shape[1]
     print(df.shape)
-    start = 260000
+    start = 300000
     
-    end = 290000
+    end = 350000
     while True:
         while True:
             p_name, p_id, mem = get_max_pid()
@@ -267,6 +266,8 @@ def drawGraph(algo, system):
     draw(default, ss, "TotalTime", algo, system)
     
 def draw(df_d, df_s, tm, algo, system):    
+    import matplotlib.pyplot as plt
+
     df_s = df_s[df_s['Filename'].isin(df_d['Filename'])]
     df_d = df_d[df_d['Filename'].isin(df_s['Filename'])]
     
@@ -296,7 +297,7 @@ def draw(df_d, df_s, tm, algo, system):
 
 
     # HAC
-    # plt.axvline(x = , color='red', linestyle = '-') # Jimmy 800
+    # plt.axvline(x = 315000, color='red', linestyle = '-') # Jimmy 800
     # plt.axvline(x = 223442, color='orange',linestyle = '--') # Thelma 340
     # plt.axvline(x = 112834, color='purple',linestyle = '--') # M2 200
     # plt.axvline(x = 157000, color='cyan', linestyle = '--') # Louise 180

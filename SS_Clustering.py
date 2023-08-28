@@ -218,6 +218,12 @@ class SS_Clustering:
                                    init_params=parameter[5], warm_start=parameter[6]).fit(X)
             l = c.predict(X)
         elif self.algoName == "HAC":
+            if parameter[1] == "ward" and  parameter[0] != "euclidean":
+               saveStr = str(batch_index)+","+str(parameter_index)+","+str(-1)+","+str(9999999)+"\n"    
+               f = open("Output/Rank.csv", 'a')
+               f.write(saveStr)
+               f.close()
+               return
             c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
             l = c.labels_
         elif self.algoName == "DBSCAN":
@@ -686,7 +692,7 @@ class SS_Clustering:
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
-        print("\tTime: ", time_ss)
+        # print("\tTime: ", time_ss)
         return ari_ss, time_ss
         
     
