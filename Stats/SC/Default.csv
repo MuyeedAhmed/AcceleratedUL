@@ -1,0 +1,12 @@
+Filename,Row,Columm,Mode,System,Time_Jimmy,Time_M2,Time_Thelma,Time_Louise,ARI
+2dplanes_OpenML,40768,10,Default,Jimmy,445.62,1077.07,316.57,389.99,6.82E-07
+Diabetes130US_OpenML,101766,49,Default,Jimmy,3258.13,4791.37,3421.04,3844.60,0.000224411
+OnlineNewsPopularity_OpenML,39644,60,Default,Jimmy,215.27,311.99,226.03,254.02,-1.86E-06
+PhishingWebsites_OpenML,11055,30,Default,Jimmy,50.70,36.43,25.79,28.45,0.011232664
+eye_movements_OpenML,10936,27,Default,Jimmy,8.07,19.18,13.13,17.56,8.82E-05
+fried_OpenML,40768,10,Default,Jimmy,287.13,416.13,301.48,338.81,0.042790397
+gas-drift-different-concentrations_OpenML,13910,129,Default,Jimmy,14.40,38.68,22.22,30.19,0.000244848
+gas-drift_OpenML,13910,128,Default,Jimmy,14.73,21.66,15.46,17.38,-9.72E-05
+mnist_784_OpenML,70000,784,Default,Jimmy,991.19,1436.50,1040.75,1169.60,1.51E-05
+sylva_prior_OpenML,14395,108,Default,Jimmy,16.55,24.70,17.38,19.53,-0.010969462
+numerai28.6_OpenML,96320,21,Default,Jimmy,2965.29,4360.72,3113.55,3499.04,0.00034271
