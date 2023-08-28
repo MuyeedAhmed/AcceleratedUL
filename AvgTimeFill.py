@@ -63,10 +63,10 @@ def AvgTime(algo, mode):
 # AvgTime("DBSCAN", "Default")
 
 
-# AvgTime("HAC", "SS")
-# AvgTime("HAC", "Default")
+AvgTime("HAC", "SS")
+AvgTime("HAC", "Default")
 
-AvgTime("SC", "SS")
-AvgTime("SC", "Default")
+# AvgTime("SC", "SS")
+# AvgTime("SC", "Default")
 
 
