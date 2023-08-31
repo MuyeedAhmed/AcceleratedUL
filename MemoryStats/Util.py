@@ -179,7 +179,38 @@ def memoryUsageGraph(algo, mode, system):
         plt.axvline(x = 7200, color = 'r', linestyle = '-')
         plt.axvline(x = 1800, color = 'b', linestyle = '-')
         plt.xlim([0, 30000])
+
+def RunStatusDefault(algo, mode, system):
+    time = pd.read_csv("Time_" + algo + "_" + mode + "_" + system + ".csv") 
+    
+    count = time['Completed'].value_counts()
+    print(count)
+    
+    time = time[time["Completed"] != -1]
+    
+    
+    
+    df_SS = pd.read_csv("FileList.csv")
+    ss_files = df_SS["Filename"].to_numpy()
+    
+    filtered_time = time[time['Filename'].isin(ss_files)]
+    
+    count = filtered_time['Completed'].value_counts()
+    print(count)
+    
+    time_out = 0
+    mem_out = 0
+    done = 0
+    for sf in ss_files:
+        df = time[time["Filename"] == sf]
         
+        if (df["Completed"] == 1).any():
+            done+=1
+        elif (df["Completed"] == -23).any():
+            time_out+=1
+        else:
+            mem_out+=1
+    print(done, mem_out, time_out)
 # algo = "DBSCAN"
 # system = "Thelma"
 
@@ -203,9 +234,9 @@ def memoryUsageGraph(algo, mode, system):
 
 # memoryUsageGraph(algo, "Default", system)
 
-drawBoxPlot("DBSCAN")    
+# drawBoxPlot("DBSCAN")    
     
+RunStatusDefault("DBSCAN", "Default", "M2")
     
-    
-    
+
 
