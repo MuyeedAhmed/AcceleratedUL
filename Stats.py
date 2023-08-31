@@ -131,14 +131,33 @@ def boxPlot(algo):
     default = df_Default["ARI_"+algo].to_numpy()
     default = [x for x in default if str(x) != 'nan']
     
-    # print(default)
-    my_dict = {'AUL': ss, 'Default': default}
-
-    fig, ax = plt.subplots()
-    ax.boxplot(my_dict.values())
-    ax.set_xticklabels(my_dict.keys())
     
-# boxPlot("SC")
+    # Determine the longer and shorter lists
+    longer_list = ss if len(ss) > len(default) else default
+    shorter_list = ss if len(ss) <= len(default) else default
+    
+    # Fill the shorter list with NaN values to match the length of the longer list
+    num_missing = len(longer_list) - len(shorter_list)
+    shorter_list += [np.nan] * num_missing
+    
+    my_dict = {'Default': default, 'SAC': ss}
+    
+    df = pd.DataFrame(my_dict)
+    
+    import seaborn as sns
+    fig, ax = plt.subplots()
+    # ax.boxplot(my_dict.values())
+    # ax.set_xticklabels(my_dict.keys())
+    
+    # fig.savefig('Figures/'+algo+'_ARI.pdf', bbox_inches='tight')
+    
+    
+    sns.boxplot(data=df)
+    plt.ylabel('ARI')
+    # plt.yscale('log')
+    fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
+    
+boxPlot("DBSCAN")
 
 
 
@@ -168,8 +187,10 @@ def CalculateAvg(Algo):
     
     
     print("Default (R)")
-    print("M2: ", merged_df_default["Time_M2"].mean())
-    print("Jimmy: ", merged_df_default["Time_Jimmy"].mean())
+    # print("M2: ", merged_df_default["Time_M2"].mean())
+    # print("Jimmy: ", merged_df_default["Time_Jimmy"].mean())
+    print("M2: ", merged_df_default[merged_df_default["Time_M2"] <= 7200]["Time_M2"].mean(), merged_df_default[merged_df_default["Time_M2"] > 7200]["Time_M2"].count())
+    print("Jimmy: ", merged_df_default[merged_df_default["Time_Jimmy"] <= 7200]["Time_Jimmy"].mean(), merged_df_default[merged_df_default["Time_Jimmy"] > 7200]["Time_Jimmy"].count())
     print("Thelma: ", merged_df_default[merged_df_default["Time_Thelma"] <= 7200]["Time_Thelma"].mean(), merged_df_default[merged_df_default["Time_Thelma"] > 7200]["Time_Thelma"].count())
     print("Louise: ", merged_df_default[merged_df_default["Time_Louise"] <= 7200]["Time_Louise"].mean(), merged_df_default[merged_df_default["Time_Louise"] > 7200]["Time_Louise"].count())
     
@@ -186,7 +207,7 @@ def CalculateAvg(Algo):
     # print("Louise: ", SS_R["Time_Louise"].mean())
     
     
-CalculateAvg("DBSCAN")
+# CalculateAvg("SC")
 
 
 
