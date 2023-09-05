@@ -27,7 +27,12 @@ def TimeCalc(algo, mode, system):
 
     
     master_files = glob.glob(folderpath+"*.csv")
-
+    
+    FileList = pd.read_csv("MemoryStats/FileList.csv")
+    FileList = FileList["Filename"].to_numpy()
+    
+    master_files = [value for value in master_files if value in FileList]
+    
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
@@ -40,10 +45,11 @@ def TimeCalc(algo, mode, system):
 def runfile(file, filename, algo, mode, system):
     print(filename)
     df = pd.read_csv(file)
+    df = df.drop(columns=["class"])
     row = df.shape[0]
     col = df.shape[1]
 
-    if row < 50000:
+    if row < 50000 or row > 200000:
         return
     
     
@@ -100,7 +106,7 @@ def linear_regression_function(X, Y):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("SC", "Default", "M2")
+TimeCalc("AP", "Default", "Jimmy_")
 
 
 
