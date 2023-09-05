@@ -7,7 +7,10 @@ from sklearn.cluster import SpectralClustering
 import sys
 import glob
 
-
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 
@@ -40,7 +43,11 @@ def TimeCalc(algo, mode, system):
             print("Already done", filename)
             continue
         runfile(file, filename, algo, mode, system)
-
+        
+    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
+    
+    
+    
 def runfile(file, filename, algo, mode, system):
     print(filename)
     df = pd.read_csv(file)
@@ -48,7 +55,7 @@ def runfile(file, filename, algo, mode, system):
     row = df.shape[0]
     col = df.shape[1]
 
-    if row < 50000 or row > 200000:
+    if row < 30000 or row > 200000:
         print("Row:", row)
         return
     
@@ -74,14 +81,15 @@ def runfile(file, filename, algo, mode, system):
         if (r < 1000 and time_ > 10) or time_ > 200:
             time_str = ",".join(str(x) for x in times)
             
+            estimated_time = predict_row_time(rows[:len(times)], times, row)
+            
             f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
-            f.write(filename+','+str(row)+','+str(col)+',?,'+time_str+'\n')
+            f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
             f.close()
             return
         
         
-    lr_func = linear_regression_function(rows, times)
-    estimated_time = lr_func(row)
+    estimated_time = predict_row_time(rows, times, row)
     
     time_str = ",".join(str(x) for x in times)
     f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
@@ -89,16 +97,88 @@ def runfile(file, filename, algo, mode, system):
     f.close()
         
         
-def linear_regression_function(X, Y):
+def predict_row_time(X, Y, row):
     X = np.array(X)
     Y = np.array(Y)
 
-    m, b = np.polyfit(X, Y, deg=1)
+    x = X.reshape(-1, 1)
+    y = Y.reshape(-1, 1)
+    
+    d = 2
 
-    function = lambda x: m * x + b
-
-    return function        
+    poly_features = PolynomialFeatures(degree=d)
+    x_poly = poly_features.fit_transform(x)
+    
+    model = LinearRegression()
+    model.fit(x_poly, y)
+    
+    x_test_poly = poly_features.transform(np.array([[row]]))
+    prediction = model.predict(x_test_poly)[0][0]
+    
+    return prediction
         
+def linRegresCalculate(algo, mode, system):
+    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
+    
+    
+    estimation_df = pd.DataFrame(columns=times.columns)
+    
+    
+    for index, row in times.iterrows():
+        data = row[4:].dropna()
+        
+        x = data.index.values.reshape(-1, 1) 
+        x = np.array([list(map(float, item)) for item in x])
+
+        y = data.values.reshape(-1, 1) 
+        
+        d = 2
+
+        poly_features = PolynomialFeatures(degree=d)
+        x_poly = poly_features.fit_transform(x)
+        
+        model = LinearRegression()
+        model.fit(x_poly, y)
+        
+        y_pred = model.predict(x_poly)
+
+        # mse = mean_squared_error(y, y_pred)
+        # r2 = r2_score(y, y_pred)
+
+        # print(f"MSE: {mse}")
+        # print(f"R2: {r2}")
+        
+        
+        plt.scatter(x, y, label="Data")
+        
+        plt.plot(x, y_pred, color='red', label=f"Regression Line")
+        plt.title(row["Filename"])
+        
+        plt.legend()
+        
+        plt.show()
+        
+        x_test_poly = poly_features.transform(np.array([[row["Row"]]]))
+        prediction = model.predict(x_test_poly)[0][0]
+        print(row["Filename"], row["Row"], ":", prediction)
+    
+        
+        # y = y.flatten()
+        # print(y)
+        # plt.scatter(x, y, label="Data Points")
+        # best_degree_poly_features = PolynomialFeatures(degree=d)
+        # time_best_degree_poly = best_degree_poly_features.fit_transform(x)
+        # best_degree_model = LinearRegression()
+        # best_degree_model.fit(time_best_degree_poly, y)
+        # cost_pred_best_degree = best_degree_model.predict(time_best_degree_poly)
+        # plt.plot(x, cost_pred_best_degree, color='red', label="Regression Line")
+        # plt.xlabel("Time")
+        # plt.ylabel("Cost")
+        # plt.legend()
+        # plt.title("Polynomial Regression")
+        # plt.show()    
+        
+    
 
 # algo = sys.argv[1]
 # mode = sys.argv[2]
@@ -106,7 +186,7 @@ def linear_regression_function(X, Y):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("AP", "Default", "Jimmy_")
+TimeCalc("AP", "Default", "Jimmy__")
 
-
+# linRegresCalculate("AP", "Default", "Jimmy__")
 
