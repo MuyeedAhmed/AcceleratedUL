@@ -31,12 +31,11 @@ def TimeCalc(algo, mode, system):
     FileList = pd.read_csv("MemoryStats/FileList.csv")
     FileList = FileList["Filename"].to_numpy()
     
-    master_files = [value for value in master_files if value in FileList]
-    
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
-        
+        if filename not in FileList:
+            continue
         if filename in done_files:
             print("Already done", filename)
             continue
@@ -50,6 +49,7 @@ def runfile(file, filename, algo, mode, system):
     col = df.shape[1]
 
     if row < 50000 or row > 200000:
+        print("Row:", row)
         return
     
     
