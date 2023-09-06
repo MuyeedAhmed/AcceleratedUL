@@ -4,6 +4,7 @@ import numpy as np
 import time
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import SpectralClustering
+from sklearn.cluster import DBSCAN
 import sys
 import glob
 
@@ -55,7 +56,7 @@ def runfile(file, filename, algo, mode, system):
     row = df.shape[0]
     col = df.shape[1]
 
-    if row < 30000 or row > 200000:
+    if row < 30000:
         print("Row:", row)
         return
     
@@ -72,6 +73,8 @@ def runfile(file, filename, algo, mode, system):
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
             clustering = SpectralClustering().fit(X)
+        elif algo == "DBSCAN":
+            clustering = DBSCAN().fit(X)
         else:
             print("Wrong Algo")
             return
@@ -186,7 +189,7 @@ def linRegresCalculate(algo, mode, system):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("AP", "Default", "Jimmy__")
+TimeCalc("AP", "Default", "Jimmy_")
 
 # linRegresCalculate("AP", "Default", "Jimmy__")
 
