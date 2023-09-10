@@ -23,7 +23,8 @@ def TimeCalc(algo, mode, system):
         if os.path.isdir("Stats/Time/" + algo + "/") == 0:    
             os.mkdir("Stats/Time/" + algo + "/")
         f=open("Stats/Time/" + algo + "/"+ system + ".csv", "w")
-        f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
+        # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
+        f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000\n')
         f.close()
     else:
         done_files = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
@@ -55,13 +56,15 @@ def runfile(file, filename, algo, mode, system):
     df = df.drop(columns=["class"])
     row = df.shape[0]
     col = df.shape[1]
-
-    if row < 30000:
-        print("Row:", row)
+    
+    if row > 110000:
         return
+    # if row < 30000:
+    #     print("Row:", row)
+    #     return
     
-    
-    rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
+    rows = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
     # rows = [300,600,900,1200,1500,1800]
     times = []
     for r in rows:
@@ -72,7 +75,7 @@ def runfile(file, filename, algo, mode, system):
         if algo == "AP":
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
-            clustering = SpectralClustering().fit(X)
+            clustering = SpectralClustering(eigen_solver="amg").fit(X)
         elif algo == "DBSCAN":
             clustering = DBSCAN().fit(X)
         else:
@@ -121,11 +124,7 @@ def predict_row_time(X, Y, row):
     return prediction
         
 def linRegresCalculate(algo, mode, system):
-    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
-    
-    
-    estimation_df = pd.DataFrame(columns=times.columns)
-    
+    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
     
     for index, row in times.iterrows():
         data = row[4:].dropna()
@@ -181,6 +180,10 @@ def linRegresCalculate(algo, mode, system):
         # plt.title("Polynomial Regression")
         # plt.show()    
         
+def NN(algo, mode, system):
+    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
+    data = times.drop(columns=["Estimated_Time", "Row", "Filename", "9000", "12000", "15000", "20000"])
+    print(data.head())
     
 
 # algo = sys.argv[1]
@@ -189,7 +192,10 @@ def linRegresCalculate(algo, mode, system):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("AP", "Default", "Jimmy_")
+TimeCalc("SC", "Default", "Louise")
 
-# linRegresCalculate("AP", "Default", "Jimmy__")
+# linRegresCalculate("AP", "Default", "Jimmy_")
+
+# NN("AP", "Default", "Jimmy_")
+
 
