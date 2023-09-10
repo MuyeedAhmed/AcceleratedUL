@@ -75,7 +75,7 @@ def runfile(file, filename, algo, mode, system):
         if algo == "AP":
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
-            clustering = SpectralClustering(eigen_solver="amg").fit(X)
+            clustering = SpectralClustering(eigen_solver="lobpcg").fit(X)
         elif algo == "DBSCAN":
             clustering = DBSCAN().fit(X)
         else:
