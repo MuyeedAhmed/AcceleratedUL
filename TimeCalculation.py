@@ -75,7 +75,7 @@ def runfile(file, filename, algo, mode, system):
         if algo == "AP":
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
-            clustering = SpectralClustering(eigen_solver="lobpcg").fit(X)
+            clustering = SpectralClustering().fit(X)
         elif algo == "DBSCAN":
             clustering = DBSCAN().fit(X)
         else:
@@ -178,7 +178,7 @@ def linRegresCalculate(algo, mode, system):
         # plt.ylabel("Cost")
         # plt.legend()
         # plt.title("Polynomial Regression")
-        # plt.show()    
+        # plt.show()
         
 def NN(algo, mode, system):
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
@@ -192,7 +192,7 @@ def NN(algo, mode, system):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("SC", "Default", "Jimmy")
+TimeCalc("SC", "Default", "Jimmy_def")
 
 # linRegresCalculate("AP", "Default", "Jimmy_")
 
