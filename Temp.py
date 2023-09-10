@@ -23,6 +23,7 @@ files = ["numerai28.6_OpenML", "Diabetes130US_OpenML", "BNG(vote)_OpenML", "BNG(
 for filename in files:
 
     df = pd.read_csv(folderpath+filename+".csv")
+    df = df[:50000]
     print(filename, df.shape)    
     
     r = df.shape[0]
