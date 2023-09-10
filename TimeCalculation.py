@@ -192,7 +192,7 @@ def NN(algo, mode, system):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("SC", "Default", "Louise")
+TimeCalc("SC", "Default", "Jimmy")
 
 # linRegresCalculate("AP", "Default", "Jimmy_")
 
