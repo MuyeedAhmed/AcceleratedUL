@@ -36,15 +36,14 @@ def TimeCalc(algo, mode, system):
     FileList = pd.read_csv("MemoryStats/FileList.csv")
     FileList = FileList["Filename"].to_numpy()
     
-    temp_files = ["2dplanes_OpenML", "mv_OpenML", "nomao_OpenML"]
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
-        if filename not in temp_files:
+        if filename not in FileList:
             continue
-        # if filename in done_files:
-        #     print("Already done", filename)
-        #     continue
+        if filename in done_files:
+            print("Already done", filename)
+            continue
         runfile(file, filename, algo, mode, system)
         
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
@@ -222,7 +221,7 @@ def NN(algo, mode, system):
 
 # TimeCalc("SC", "Default", "Louise")
 
-# linRegresCalculate("AP", "Default", "Jimmy_")
+linRegresCalculate("AP", "Default", "Jimmy_")
 # DecisionTree("SC", "Default", "Jimmy")
 
 

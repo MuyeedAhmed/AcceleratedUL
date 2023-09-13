@@ -157,7 +157,7 @@ def boxPlot(algo):
     # plt.yscale('log')
     fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
     
-boxPlot("DBSCAN")
+# boxPlot("DBSCAN")
 
 
 
@@ -281,3 +281,18 @@ def MemoryConsumptionCalculation(algo, mode, system):
 
 # MemoryConsumptionCalculation("DBSCAN", "Default", "M2")
 
+def EstimatedTimeFilter():
+    df_est = pd.read_csv("Stats/Time/AP/M2.csv")
+    df_dataset_list = pd.read_csv("MemoryStats/FileList.csv")
+    
+    data_list = df_dataset_list["Filename"].to_numpy()
+    
+    df_est = df_est[df_est['Filename'].isin(data_list)]
+    
+    f = df_est[df_est["Row"] < 84000]
+    
+    print(f["Estimated_Time"])
+EstimatedTimeFilter()
+    
+    
+    
