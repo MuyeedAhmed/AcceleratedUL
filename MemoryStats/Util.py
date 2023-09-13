@@ -181,7 +181,7 @@ def memoryUsageGraph(algo, mode, system):
         plt.xlim([0, 30000])
 
 def RunStatusDefault(algo, mode, system):
-    time = pd.read_csv("Time_" + algo + "_" + mode + "_" + system + ".csv") 
+    time = pd.read_csv(algo+"/Time_" + algo + "_" + mode + "_" + system + ".csv") 
     
     count = time['Completed'].value_counts()
     print(count)
@@ -203,7 +203,8 @@ def RunStatusDefault(algo, mode, system):
     done = 0
     for sf in ss_files:
         df = time[time["Filename"] == sf]
-        
+        if df.shape[0] == 0:
+            continue
         if (df["Completed"] == 1).any():
             done+=1
         elif (df["Completed"] == -23).any():
@@ -236,7 +237,7 @@ def RunStatusDefault(algo, mode, system):
 
 # drawBoxPlot("DBSCAN")    
     
-RunStatusDefault("DBSCAN", "Default", "M2")
+RunStatusDefault("DBSCAN", "Default", "Thelma")
     
 
 
