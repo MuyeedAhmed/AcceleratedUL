@@ -36,14 +36,15 @@ def TimeCalc(algo, mode, system):
     FileList = pd.read_csv("MemoryStats/FileList.csv")
     FileList = FileList["Filename"].to_numpy()
     
+    temp_files = ["2dplanes_OpenML", "mv_OpenML", "nomao_OpenML"]
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
-        if filename not in FileList:
+        if filename not in temp_files:
             continue
-        if filename in done_files:
-            print("Already done", filename)
-            continue
+        # if filename in done_files:
+        #     print("Already done", filename)
+        #     continue
         runfile(file, filename, algo, mode, system)
         
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
@@ -122,33 +123,43 @@ def predict_row_time(X, Y, row):
     prediction = model.predict(x_test_poly)[0][0]
     
     return prediction
-        
+    
+
+    
 def linRegresCalculate(algo, mode, system):
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
     
+    fl = ["nomao_OpenML", "OnlineNewsPopularity_OpenML", "2dplanes_OpenML", "mv_OpenML", "numerai28.6_OpenML", "Diabetes130US_OpenML", "BNG(vote)_OpenML", "BNG(2dplanes)_OpenML"]
     for index, row in times.iterrows():
-        data = row[4:].dropna()
         
+        data = row[4:18].dropna()
+        if row["Filename"] not in fl:
+            continue
         x = data.index.values.reshape(-1, 1) 
         x = np.array([list(map(float, item)) for item in x])
 
         y = data.values.reshape(-1, 1) 
-        
+        # y_s = y
         d = 2
 
         poly_features = PolynomialFeatures(degree=d)
         x_poly = poly_features.fit_transform(x)
         
-        model = LinearRegression()
+        model = LinearRegression(fit_intercept=False)
         model.fit(x_poly, y)
         
         y_pred = model.predict(x_poly)
+        
+        # y_corrected = np.copy(y)
+        
+        # if (y_pred[-2][0]-y[-2][0])/y[-2][0] > 0.1:
+        #     y_corrected[-1] *= 1-(y_pred[-2][0]-y[-2][0])/y[-2][0]
+        #     # y_corrected[-1] *= 1+(y_pred[-1][0]-y[-1][0])/y[-1][0]
 
-        # mse = mean_squared_error(y, y_pred)
-        # r2 = r2_score(y, y_pred)
-
-        # print(f"MSE: {mse}")
-        # print(f"R2: {r2}")
+        #     model.fit(x_poly, y_corrected)
+    
+        #     y_pred = model.predict(x_poly)
+            
         
         
         plt.scatter(x, y, label="Data")
@@ -162,24 +173,41 @@ def linRegresCalculate(algo, mode, system):
         
         x_test_poly = poly_features.transform(np.array([[row["Row"]]]))
         prediction = model.predict(x_test_poly)[0][0]
-        print(row["Filename"], row["Row"], ":", prediction)
+        print(row["Filename"], row["Row"], ":", round(prediction, 2))
     
         
-        # y = y.flatten()
-        # print(y)
-        # plt.scatter(x, y, label="Data Points")
-        # best_degree_poly_features = PolynomialFeatures(degree=d)
-        # time_best_degree_poly = best_degree_poly_features.fit_transform(x)
-        # best_degree_model = LinearRegression()
-        # best_degree_model.fit(time_best_degree_poly, y)
-        # cost_pred_best_degree = best_degree_model.predict(time_best_degree_poly)
-        # plt.plot(x, cost_pred_best_degree, color='red', label="Regression Line")
-        # plt.xlabel("Time")
-        # plt.ylabel("Cost")
-        # plt.legend()
-        # plt.title("Polynomial Regression")
-        # plt.show()    
-        
+
+
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
+
+
+def DecisionTree(algo, mode, system):
+    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + "_def.csv")    
+    gt = pd.read_csv("Stats/" + algo + "/"+ system + ".csv")
+    gt = gt[["Filename", "Time"]]
+    df = pd.merge(times, gt, on='Filename', how='outer')
+    
+    # print(df.head(1))
+    
+    ddf = df.dropna(subset=["Time"])
+    
+    X = ddf.drop(columns=["Time", "Estimated_Time", "Filename", "2000", "Row"])
+    y = ddf["2000"]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    
+    tree_regressor = DecisionTreeRegressor(random_state=42)
+    tree_regressor.fit(X_train, y_train)
+    
+    y_pred = tree_regressor.predict(X_test)
+
+    mse = mean_squared_error(y_test, y_pred)
+    print("Mean Squared Error:", mse)
+    print(y_test, y_pred)
+    
 def NN(algo, mode, system):
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
     data = times.drop(columns=["Estimated_Time", "Row", "Filename", "9000", "12000", "15000", "20000"])
@@ -192,9 +220,11 @@ def NN(algo, mode, system):
 
 # TimeCalc(algo, mode, system)
 
-TimeCalc("SC", "Default", "Louise")
+# TimeCalc("SC", "Default", "Louise")
 
 # linRegresCalculate("AP", "Default", "Jimmy_")
+# DecisionTree("SC", "Default", "Jimmy")
+
 
 # NN("AP", "Default", "Jimmy_")
 
