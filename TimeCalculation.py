@@ -107,7 +107,7 @@ def runfile(file, filename, algo, mode, system):
         #     return
         
         
-    # estimated_time = predict_row_time(rows, times, row)
+    estimated_time = predict_row_time(rows, times, row)
     
     time_str = ",".join(str(x) for x in times)
     f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
