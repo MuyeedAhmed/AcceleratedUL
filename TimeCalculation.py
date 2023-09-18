@@ -112,7 +112,7 @@ def runfile(file, filename, algo, mode, system):
     time_str = ",".join(str(x) for x in times)
     f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
     # f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
-    f.write(filename+','+str(row)+','+str(col)+','+time_str+','+ari+'\n')
+    f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
     f.close()
         
         
