@@ -26,8 +26,8 @@ def TimeCalc(algo, mode, system):
             os.mkdir("Stats/Time/" + algo + "/")
         f=open("Stats/Time/" + algo + "/"+ system + ".csv", "w")
         # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
-        f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\n')
-        # f.write('Filename,Row,Columm,Time,ARI\n')
+        # f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\n')
+        f.write('Filename,Row,Columm,Time,ARI\n')
 
         f.close()
     else:
@@ -69,7 +69,7 @@ def runfile(file, filename, algo, mode, system):
     #     print("Row:", row)
     #     return
     
-    rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
+    # rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
     # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
     # rows = [300,600,900,1200,1500,1800]
     # rows = [row]
@@ -85,9 +85,9 @@ def runfile(file, filename, algo, mode, system):
         if algo == "AP":
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
-            clustering = SpectralClustering(n_clusters=n_c,eigen_tol=0.001).fit(X)
-            # labels = clustering.labels_
-            # ari = adjusted_rand_score(gt, labels)
+            clustering = SpectralClustering(n_clusters=n_c,eigen_tol=0.00001).fit(X)
+            labels = clustering.labels_
+            ari = adjusted_rand_score(gt, labels)
         elif algo == "DBSCAN":
             clustering = DBSCAN().fit(X)
         else:
@@ -107,12 +107,12 @@ def runfile(file, filename, algo, mode, system):
         #     return
         
         
-    estimated_time = predict_row_time(rows, times, row)
+    # estimated_time = predict_row_time(rows, times, row)
     
     time_str = ",".join(str(x) for x in times)
     f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
-    f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
-    # f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
+    # f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
+    f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
     f.close()
         
         
