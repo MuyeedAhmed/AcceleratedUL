@@ -26,8 +26,8 @@ def TimeCalc(algo, mode, system):
             os.mkdir("Stats/Time/" + algo + "/")
         f=open("Stats/Time/" + algo + "/"+ system + ".csv", "w")
         # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
-        f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\n')
-        # f.write('Filename,Row,Columm,Time,ARI\n')
+        # f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\n')
+        f.write('Filename,Row,Columm,Time,ARI\n')
 
         f.close()
     else:
@@ -43,7 +43,8 @@ def TimeCalc(algo, mode, system):
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
-        if filename not in FileList or filename == "2dplanes_OpenML":
+        # if filename not in FileList or filename == "2dplanes_OpenML":
+        if filename not in FileList or filename != "OnlineNewsPopularity_OpenML" or filename != "PhishingWebsites_OpenML":
             continue
         if filename in done_files:
             print("Already done", filename)
@@ -72,7 +73,7 @@ def runfile(file, filename, algo, mode, system):
     rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
     # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
     # rows = [300,600,900,1200,1500,1800]
-    # rows = [row]
+    rows = [row]
     times = []
     # ari = -2
     for r in rows:
@@ -107,12 +108,12 @@ def runfile(file, filename, algo, mode, system):
         #     return
         
         
-    estimated_time = predict_row_time(rows, times, row)
+    # estimated_time = predict_row_time(rows, times, row)
     
     time_str = ",".join(str(x) for x in times)
     f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
-    f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
-    # f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
+    # f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
+    f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
     f.close()
         
         
