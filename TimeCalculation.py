@@ -40,14 +40,18 @@ def TimeCalc(algo, mode, system):
     FileList = pd.read_csv("MemoryStats/FileList.csv")
     FileList = FileList["Filename"].to_numpy()
     
+    support_files = ["eye_movements_OpenML", "gas-drift-different-concentrations_OpenML", "gas-drift_OpenML", "sylva_prior_OpenML", "fried_OpenML", "mnist_784_OpenML", "numerai28.6_OpenML", "Diabetes130US_OpenML"]
+    
     for file in master_files:
         filename = file.split("/")[-1]
         filename = filename[:-4]
         # if filename not in FileList or filename == "2dplanes_OpenML":
-        if filename not in FileList or filename != "OnlineNewsPopularity_OpenML" or filename != "PhishingWebsites_OpenML":
+        if filename not in FileList:
             continue
         if filename in done_files:
             print("Already done", filename)
+            continue
+        if filename not in support_files:
             continue
         runfile(file, filename, algo, mode, system)
         
