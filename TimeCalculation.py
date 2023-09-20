@@ -91,8 +91,8 @@ def runfile(file, filename, algo, mode, system):
             clustering = AffinityPropagation().fit(X)
         elif algo == "SC":
             clustering = SpectralClustering(n_clusters=n_c).fit(X)
-            # labels = clustering.labels_
-            # ari = adjusted_rand_score(gt, labels)
+            labels = clustering.labels_
+            ari = adjusted_rand_score(gt, labels)
         elif algo == "DBSCAN":
             clustering = DBSCAN().fit(X)
         else:
