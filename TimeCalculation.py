@@ -9,6 +9,8 @@ import sys
 import glob
 from sklearn.metrics.cluster import adjusted_rand_score
 
+from SS_Clustering import SS_Clustering
+
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
@@ -21,17 +23,18 @@ def TimeCalc(algo, mode, system):
     folderpath = '../Openml/'
     
     done_files = []
-    if os.path.exists("Stats/Time/" + algo + "/"+ system + ".csv") == 0:
+    if os.path.exists("Stats/Time/" + algo + "/"+ system + "_" + mode + ".csv") == 0:
         if os.path.isdir("Stats/Time/" + algo + "/") == 0:    
             os.mkdir("Stats/Time/" + algo + "/")
-        f=open("Stats/Time/" + algo + "/"+ system + ".csv", "w")
+        f=open("Stats/Time/" + algo + "/"+ system + "_" + mode + ".csv", "w")
         # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
-        f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000\n')
+        f.write('Filename,Row,Columm,Estimated_Time,1000,2000,3000,6000,9000,12000,15000,20000,50000,65000\n')
+        # f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000\n')
         # f.write('Filename,Row,Columm,Time,ARI\n')
 
         f.close()
     else:
-        done_files = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
+        done_files = pd.read_csv("Stats/Time/" + algo + "/"+ system + "_" + mode +".csv")
         done_files = done_files["Filename"].to_numpy()
 
     
@@ -47,6 +50,8 @@ def TimeCalc(algo, mode, system):
             continue
         if filename in done_files:
             print("Already done", filename)
+            continue
+        if filename != "numerai28.6_OpenML":
             continue
         runfile(file, filename, algo, mode, system)
         
@@ -69,8 +74,9 @@ def runfile(file, filename, algo, mode, system):
     #     print("Row:", row)
     #     return
     
-    rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
+    # rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
     # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
+    rows = [1000,2000,3000,6000,9000,12000,15000,20000,50000,65000]
     # rows = [300,600,900,1200,1500,1800]
     # rows = [row]
     times = []
@@ -82,18 +88,25 @@ def runfile(file, filename, algo, mode, system):
         
         
         t0 = time.time()
-        if algo == "AP":
-            clustering = AffinityPropagation().fit(X)
-        elif algo == "SC":
-            clustering = SpectralClustering(n_clusters=n_c).fit(X)
-            if r == row:
-                labels = clustering.labels_
-                ari = adjusted_rand_score(gt, labels)
-        elif algo == "DBSCAN":
-            clustering = DBSCAN().fit(X)
+        if mode == "SS":
+            clustering = SS_Clustering(algoName=algo)
+            clustering.X = X
+            clustering.y = gt
+            ari, time_ = clustering.run()
+            clustering.destroy()
         else:
-            print("Wrong Algo")
-            return
+            if algo == "AP":    
+                clustering = AffinityPropagation().fit(X)
+            elif algo == "SC":
+                clustering = SpectralClustering(n_clusters=n_c).fit(X)
+                if r == row:
+                    labels = clustering.labels_
+                    ari = adjusted_rand_score(gt, labels)
+            elif algo == "DBSCAN":
+                clustering = DBSCAN().fit(X)
+            else:
+                print("Wrong Algo")
+                return
         time_ = time.time()-t0
         print(time_)
         times.append(time_)
@@ -111,7 +124,7 @@ def runfile(file, filename, algo, mode, system):
     estimated_time = predict_row_time(rows, times, row)
     
     time_str = ",".join(str(x) for x in times)
-    f=open("Stats/Time/" + algo + "/"+ system + ".csv", "a")
+    f=open("Stats/Time/" + algo + "/"+ system +"_" + mode +".csv", "a")
     f.write(filename+','+str(row)+','+str(col)+','+str(estimated_time)+','+time_str+'\n')
     # f.write(filename+','+str(row)+','+str(col)+','+time_str+','+str(ari)+'\n')
     f.close()
@@ -243,12 +256,13 @@ def NN(algo, mode, system):
     data = times.drop(columns=["Estimated_Time", "Row", "Filename", "9000", "12000", "15000", "20000"])
     print(data.head())
     
+TimeCalc("AP", "SS", "M2")
 
-algo = sys.argv[1]
-mode = sys.argv[2]
-system = sys.argv[3]
+# algo = sys.argv[1]
+# mode = sys.argv[2]
+# system = sys.argv[3]
 
-TimeCalc(algo, mode, system)
+# TimeCalc(algo, mode, system)
 
 # TimeCalc("SC", "Default", "Louise_test")
 
