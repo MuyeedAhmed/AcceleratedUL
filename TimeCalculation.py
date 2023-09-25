@@ -28,7 +28,8 @@ def TimeCalc(algo, mode, system):
             os.mkdir("Stats/Time/" + algo + "/")
         f=open("Stats/Time/" + algo + "/"+ system + "_" + mode + ".csv", "w")
         # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
-        f.write('Filename,Row,Columm,Estimated_Time,1000,2000,3000,6000,9000,12000,15000,20000,50000,65000\n')
+        # f.write('Filename,Row,Columm,Estimated_Time,1000,2000,3000,6000,9000,12000,15000,20000,50000,65000\n')
+        f.write('Filename,Row,Columm,Estimated_Time,5000,7000,8000,10000,11000,13000,14000,17000,19000\n')
         # f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000\n')
         # f.write('Filename,Row,Columm,Time,ARI\n')
 
@@ -51,7 +52,8 @@ def TimeCalc(algo, mode, system):
         if filename in done_files:
             print("Already done", filename)
             continue
-        if filename != "numerai28.6_OpenML":
+        
+        if filename != "nomao_OpenML" and filename != "BNG(Australian)_OpenML" and filename != "BNG(satellite_image)_OpenML":
             continue
         runfile(file, filename, algo, mode, system)
         
@@ -76,7 +78,7 @@ def runfile(file, filename, algo, mode, system):
     
     # rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
     # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
-    rows = [1000,2000,3000,6000,9000,12000,15000,20000,50000,65000]
+    rows = [5000,7000,8000,10000,11000,13000,14000,17000,19000]
     # rows = [300,600,900,1200,1500,1800]
     # rows = [row]
     times = []
@@ -154,19 +156,19 @@ def predict_row_time(X, Y, row):
     
 def linRegresCalculate(algo, mode, system):
     times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
-    
-    fl = ["nomao_OpenML", "OnlineNewsPopularity_OpenML", "2dplanes_OpenML", "mv_OpenML", "numerai28.6_OpenML", "Diabetes130US_OpenML", "BNG(vote)_OpenML", "BNG(2dplanes)_OpenML"]
+    r2s = []
+    fl = ["mnist_784_OpenML", "nomao_OpenML", "OnlineNewsPopularity_OpenML", "2dplanes_OpenML", "mv_OpenML", "numerai28.6_OpenML", "Diabetes130US_OpenML", "BNG(vote)_OpenML", "BNG(2dplanes)_OpenML"]
     for index, row in times.iterrows():
         
-        data = row[4:].dropna()
+        data = row[11:].dropna()
         # if row["Filename"] not in fl:
         #     continue
         x = data.index.values.reshape(-1, 1) 
         x = np.array([list(map(float, item)) for item in x])
-
+        
         y = data.values.reshape(-1, 1) 
         # y_s = y
-        d = 1
+        d = 2
 
         poly_features = PolynomialFeatures(degree=d)
         x_poly = poly_features.fit_transform(x)
@@ -175,6 +177,8 @@ def linRegresCalculate(algo, mode, system):
         model.fit(x_poly, y)
         
         y_pred = model.predict(x_poly)
+        r2 = r2_score(y_pred, y)
+        r2s.append(r2)
         
         if algo == "AP":
             overestimation_indices = np.where(y_pred > y)[0]
@@ -201,25 +205,55 @@ def linRegresCalculate(algo, mode, system):
     
         #     y_pred = model.predict(x_poly)
             
+        if len(x) < 10:
+            continue
         
+        title = row["Filename"]
+        if row["Filename"] == "BNG(letter_COMMA_1000_COMMA_10)_OpenML":
+            title = "BNG(letter,1000,10)"
+        elif row["Filename"] == "nomao_OpenML":
+            title = "nomao"
+        elif row["Filename"] == "BNG(mfeat-fourier)_OpenML":
+            title = "BNG(mfeat-fourier)"
+        elif row["Filename"] == "BNG(Australian)_OpenML":
+            title = "BNG(Australian)"
+        elif row["Filename"] == "BNG(satellite_image)_OpenML":
+            title = "BNG(satellite_image)"
+        else:
+            continue
         
         plt.scatter(x, y, label="Data")
         
         plt.plot(x, y_pred, color='red', label=f"Regression Line")
-        plt.title(row["Filename"])
+        
+        
+        title += " - " + str(round(r2, 3))
+        plt.title(title)
         
         plt.legend()
-        
+        plt.xlabel("# Points")
+        plt.ylabel("Time (seconds)")
+        # if row["Filename"] == "nomao_OpenML":
+        plt.savefig('Figures/AP_Regres_'+row["Filename"]+'.pdf', bbox_inches='tight')
         plt.show()
         
         x_test_poly = poly_features.transform(np.array([[row["Row"]]]))
         prediction = model.predict(x_test_poly)[0][0]
-        print(round(prediction, 0), "\t", row["Filename"], row["Row"], ":")
+        print(round(prediction, 0), "\t", row["Filename"], row["Row"], ":", r2)
     
         times.at[index, "Estimated_Time"] = prediction
         
     # times.to_csv("Stats/Time/" + algo + "/"+ system + "_Est.csv", index=False)
-    
+    print(min(r2s))
+    print(max(r2s))
+    import statistics
+    print(statistics.stdev(r2s))
+    print(np.median(r2s))
+    print(np.mean(r2s))    
+    print(sum(i < 0.9 for i in r2s))
+    print(sum(i >= 0.9 for i in r2s))
+
+    return r2s
     
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -256,7 +290,7 @@ def NN(algo, mode, system):
     data = times.drop(columns=["Estimated_Time", "Row", "Filename", "9000", "12000", "15000", "20000"])
     print(data.head())
     
-TimeCalc("AP", "SS", "M2")
+# TimeCalc("AP", "SS", "M2")
 
 # algo = sys.argv[1]
 # mode = sys.argv[2]
@@ -266,7 +300,7 @@ TimeCalc("AP", "SS", "M2")
 
 # TimeCalc("SC", "Default", "Louise_test")
 
-# linRegresCalculate("SC", "Default", "Jimmy_def")
+r2s = linRegresCalculate("AP", "Default", "Jimmy_")
 # DecisionTree("SC", "Default", "Jimmy")
 
 
