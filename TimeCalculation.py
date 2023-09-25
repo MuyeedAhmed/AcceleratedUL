@@ -29,7 +29,7 @@ def TimeCalc(algo, mode, system):
         f=open("Stats/Time/" + algo + "/"+ system + "_" + mode + ".csv", "w")
         # f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000\n')
         # f.write('Filename,Row,Columm,Estimated_Time,1000,2000,3000,6000,9000,12000,15000,20000,50000,65000\n')
-        f.write('Filename,Row,Columm,Estimated_Time,5000,7000,8000,10000,11000,13000,14000,17000,19000\n')
+        f.write('Filename,Row,Columm,Estimated_Time,100,200,300,400,500,600,700,800,900,1000,2000,3000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,17000,19000,20000\n')
         # f.write('Filename,Row,Columm,Estimated_Time,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000\n')
         # f.write('Filename,Row,Columm,Time,ARI\n')
 
@@ -53,12 +53,9 @@ def TimeCalc(algo, mode, system):
             print("Already done", filename)
             continue
         
-        if filename != "nomao_OpenML" and filename != "BNG(Australian)_OpenML" and filename != "BNG(satellite_image)_OpenML":
+        if filename != "BNG(satellite_image)_OpenML":
             continue
         runfile(file, filename, algo, mode, system)
-        
-    times = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")
-    
     
     
 def runfile(file, filename, algo, mode, system):
@@ -70,15 +67,16 @@ def runfile(file, filename, algo, mode, system):
     col = df.shape[1]
     
     
-    if row > 110000:
-        return
+    # if row > 110000:
+    #     return
     # if row < 30000:
     #     print("Row:", row)
     #     return
     
     # rows = [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000]
     # rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,6000,9000,12000,15000,20000]
-    rows = [5000,7000,8000,10000,11000,13000,14000,17000,19000]
+    # rows = [5000,7000,8000,10000,11000,13000,14000,17000,19000]
+    rows = [100,200,300,400,500,600,700,800,900,1000,2000,3000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,17000,19000,20000]
     # rows = [300,600,900,1200,1500,1800]
     # rows = [row]
     times = []
@@ -188,12 +186,12 @@ def linRegresCalculate(algo, mode, system):
     
             mse = round(mean_squared_error(overestimated_actual, overestimated_predicted), 1)
             
-            if mse > 50:        
-                y_s = y*0.92
-                model = LinearRegression(fit_intercept=False)
-                model.fit(x_poly, y_s)
+            # if mse > 50:        
+            #     y_s = y*0.92
+            #     model = LinearRegression(fit_intercept=False)
+            #     model.fit(x_poly, y_s)
                 
-                y_pred = model.predict(x_poly)
+            #     y_pred = model.predict(x_poly)
         
         # y_corrected = np.copy(y)
         
@@ -234,7 +232,7 @@ def linRegresCalculate(algo, mode, system):
         plt.xlabel("# Points")
         plt.ylabel("Time (seconds)")
         # if row["Filename"] == "nomao_OpenML":
-        plt.savefig('Figures/AP_Regres_'+row["Filename"]+'.pdf', bbox_inches='tight')
+        # plt.savefig('Figures/AP_Regres_'+row["Filename"]+'.pdf', bbox_inches='tight')
         plt.show()
         
         x_test_poly = poly_features.transform(np.array([[row["Row"]]]))
@@ -292,15 +290,15 @@ def NN(algo, mode, system):
     
 # TimeCalc("AP", "SS", "M2")
 
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
 
-# TimeCalc(algo, mode, system)
+TimeCalc(algo, mode, system)
 
 # TimeCalc("SC", "Default", "Louise_test")
 
-r2s = linRegresCalculate("AP", "Default", "Jimmy_")
+# r2s = linRegresCalculate("AP", "Default", "Jimmy_")
 # DecisionTree("SC", "Default", "Jimmy")
 
 
