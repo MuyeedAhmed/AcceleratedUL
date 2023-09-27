@@ -34,7 +34,7 @@ def draw_AP_time(algo, mode, system):
         if filename != "numerai28.6_OpenML":
             continue
         
-        data_def = row[4:21].dropna()
+        data_def = row[4:30].dropna()
         x = data_def.index.values.reshape(-1, 1) 
         x_def = np.array([list(map(float, item)) for item in x])
         y_def = data_def.values.reshape(-1, 1) 
@@ -57,7 +57,7 @@ def draw_AP_time(algo, mode, system):
         plt.grid(False)
         plt.xlabel("# Points")
         plt.ylabel("Time (seconds)")
-        plt.title("Affinity Propagation - numer.ai")
+        plt.title("Affinity Propagation")
         # plt.title(row["Filename"])
         plt.legend()
         plt.savefig('Figures/Time_AP_Intro.pdf', bbox_inches='tight')
@@ -66,9 +66,14 @@ def draw_AP_time(algo, mode, system):
 def draw_sc_memory():
     rows = [i for i in range(10000,1000001,10000)]       
     # memory_d = (np.square(rows)*4*4)/1000000000
-    memory_d = [((x**2)*4*4)/1000000000  for x in rows]
-    memory_s = [(((x/100)**2)*4*4*10)/1000000000  for x in rows]
+    memory_d = [((x**2)*4*8)/1000000000  for x in rows]
+    memory_s = [(((x/100)**2)*4*8*10)/1000000000  for x in rows]
     
+    
+    # print(memory_d[0])
+    # print(memory_d[-1])
+    # print(memory_s[0])
+    # print(memory_s[-1])
     
     plt.plot(rows, memory_d, label="Default")
     plt.plot(rows, memory_s, label="SAC")
@@ -78,6 +83,15 @@ def draw_sc_memory():
     plt.title("Spectral Clustering")
     # plt.title(row["Filename"])
     plt.legend()
+    
+    import matplotlib.ticker as ticker    
+    def format_with_commas(x, pos):
+        return "{:,}".format(int(x))
+    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(format_with_commas))
+    plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(format_with_commas))
+
+    # plt.gca().xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+
     plt.savefig('Figures/Memory_SC_Intro.pdf', bbox_inches='tight')
     plt.show()
     
@@ -168,5 +182,5 @@ def draw_SC(algo, mode, system):
     
         # times.at[index, "Estimated_Time"] = prediction
 
-draw_sc_memory()
-draw_AP_time("AP", "Default", "Jimmy_")
+# draw_sc_memory()
+draw_AP_time("AP", "Default", "Jimmy_EST")
