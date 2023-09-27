@@ -225,14 +225,14 @@ def linRegresCalculate(algo, mode, system):
         plt.plot(x, y_pred, color='red', label=f"Regression Line")
         
         
-        title += " - " + str(round(r2, 3))
+        # title += " - " + str(round(r2, 3))
         plt.title(title)
         
         plt.legend()
         plt.xlabel("# Points")
         plt.ylabel("Time (seconds)")
         # if row["Filename"] == "nomao_OpenML":
-        # plt.savefig('Figures/AP_Regres_'+row["Filename"]+'.pdf', bbox_inches='tight')
+        plt.savefig('Figures/AP_Regres_'+row["Filename"]+'.pdf', bbox_inches='tight')
         plt.show()
         
         x_test_poly = poly_features.transform(np.array([[row["Row"]]]))
@@ -290,15 +290,15 @@ def NN(algo, mode, system):
     
 # TimeCalc("AP", "SS", "M2")
 
-algo = sys.argv[1]
-mode = sys.argv[2]
-system = sys.argv[3]
+# algo = sys.argv[1]
+# mode = sys.argv[2]
+# system = sys.argv[3]
 
-TimeCalc(algo, mode, system)
+# TimeCalc(algo, mode, system)
 
 # TimeCalc("SC", "Default", "Louise_test")
 
-# r2s = linRegresCalculate("AP", "Default", "Jimmy_")
+r2s = linRegresCalculate("AP", "Default", "Jimmy_EST")
 # DecisionTree("SC", "Default", "Jimmy")
 
 
