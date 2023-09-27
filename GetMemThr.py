@@ -289,7 +289,7 @@ def draw(df_d, df_s, tm, algo, system):
     plt.axvline(x = 80000, color='cyan', linestyle = '--') # Louise 180
     
     # SC
-    # row = math.sqrt((memory_size * 10**9)/ (4 * 8)) ## SC each value 8 bytes
+    # row = math.sqrt((memory_size * 10**9)/ (8 * 4)) ## SC each value 8 bytes
     # plt.axvline(x = 158000, color='red', linestyle = '-') # Jimmy 800
     # plt.axvline(x = 103000, color='orange',linestyle = '--') # Thelma 340
     # plt.axvline(x = 79000, color='purple',linestyle = '--') # M2 200
@@ -299,7 +299,7 @@ def draw(df_d, df_s, tm, algo, system):
     # HAC
     # plt.axvline(x = 315000, color='red', linestyle = '-') # Jimmy 800
     # plt.axvline(x = 223442, color='orange',linestyle = '--') # Thelma 340
-    # plt.axvline(x = 112834, color='purple',linestyle = '--') # M2 200
+    # plt.axvline(x = 171000, color='purple',linestyle = '--') # M2 200
     # plt.axvline(x = 157000, color='cyan', linestyle = '--') # Louise 180
     
     

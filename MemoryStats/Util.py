@@ -8,8 +8,8 @@ import seaborn as sns
 
 def MemoryConsumptionCalculation(algo, mode, system):
 
-    memory = pd.read_csv("Memory_" + algo + "_" + mode + "_" + system + ".csv")
-    time = pd.read_csv("Time_" + algo + "_" + mode + "_" + system + ".csv") 
+    memory = pd.read_csv(algo + "/Memory_" + algo + "_" + mode + "_" + system + ".csv")
+    time = pd.read_csv(algo + "/Time_" + algo + "_" + mode + "_" + system + ".csv") 
     
     time = time[time["Completed"] != -1]
     
@@ -54,8 +54,17 @@ def MemoryConsumptionCalculation(algo, mode, system):
         time.loc[index, "Memory_Physical_Max"] = mp_max
         time.loc[index, "Memory_Virtual_Max"] = int(mv_max)
     
-    time.to_csv("Time_Memory_" + algo + "_" + mode + "_" + system + ".csv")
     
+    time.to_csv(algo + "/Time_Memory_" + algo + "_" + mode + "_" + system + "_All.csv", index = False)
+
+    time.drop_duplicates(subset='Filename', keep='first', inplace=True)
+    
+    df_SS = pd.read_csv("FileList.csv")
+    ss_files = df_SS["Filename"].to_numpy()
+    
+    filtered_df = time[time['Filename'].isin(ss_files)]
+    filtered_df.to_csv(algo + "/Time_Memory_" + algo + "_" + mode + "_" + system + ".csv", index = False)
+        
     # table = time.pivot(index='Row', columns='Columm', values='Memory_Max')
     # table.to_csv("Max_Memory_Usage_" + algo + "_" + mode + "_" + system + ".csv")
 
@@ -81,7 +90,7 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
         
     plt.grid(True)
-    plt.legend(["Default", "Subsampling"])
+    plt.legend(["Default", "SAC"])
     plt.xlabel("Points (Rows)")
 
     if tm == "Memory_Virtual_Max":
@@ -96,7 +105,7 @@ def draw(df_d, df_s, tm, algo, system):
 
 
 def drawBoxPlot(algo):
-    systems = ["M2", "Louise", "Jimmy"]
+    systems = ["M2", "Louise", "Jimmy", "Thelma"]
     modes = ["Default", "SS"]
     
     df_merged = pd.DataFrame()
@@ -104,31 +113,44 @@ def drawBoxPlot(algo):
     
     for s in systems:
         for m in modes:            
-            df = pd.read_csv("Time_Memory_" + algo + "_" + m + "_" + s + ".csv")
+            df = pd.read_csv(algo + "/Time_Memory_" + algo + "_" + m + "_" + s + ".csv")
             df["System"] = s
             df["Mode"] = m
             df_merged = pd.concat([df_merged, df], axis=0)
     df_merged = df_merged.reset_index(drop=True)
     
-    sns.boxplot(x = df_merged['System'],
+    f1 = plt.figure()
+    f1 = sns.boxplot(x = df_merged['System'],
             y = df_merged['TotalTime'],
             hue = df_merged['Mode'])
             # showfliers=False)
     plt.yscale('log')
     
+    plt.xlabel("")
+    plt.ylabel("Time")
+    f1.legend().texts[0].set_text("Default")
+    f1.legend().texts[1].set_text("SAC")
+    f1.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"])
     plt.savefig('Figures/Time_' + algo +'.pdf', bbox_inches='tight')
     
-    plt.figure()
-    sns.boxplot(x = df_merged['System'],
+    
+    f2 = plt.figure()
+    f2 = sns.boxplot(x = df_merged['System'],
             y = df_merged['Memory_Virtual_Max'],
             hue = df_merged['Mode'])
             # showfliers=False)
     plt.yscale('log')
     
+    plt.xlabel("")
+    plt.ylabel("Maximum Memory Usage")
+    f2.legend().texts[0].set_text("Default")
+    f2.legend().texts[1].set_text("SAC")
+    f2.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"])
+    # plt.legend(["Default", "SAC"])
     plt.savefig('Figures/Memory_' + algo +'.pdf', bbox_inches='tight')
 
 def memoryUsageGraph(algo, mode, system):
-    memory = pd.read_csv("Memory_" + algo + "_" + mode + "_" + system + ".csv")
+    memory = pd.read_csv(algo +"/Memory_" + algo + "_" + mode + "_" + system + ".csv")
     Filenames = memory["Filename"].to_numpy()
     files = set(Filenames)
     # np.set_printoptions(threshold=1000000)
@@ -157,23 +179,65 @@ def memoryUsageGraph(algo, mode, system):
         plt.axvline(x = 7200, color = 'r', linestyle = '-')
         plt.axvline(x = 1800, color = 'b', linestyle = '-')
         plt.xlim([0, 30000])
-        
-algo = "AP"
-system = "Jimmy"
+
+def RunStatusDefault(algo, mode, system):
+    time = pd.read_csv(algo+"/Time_" + algo + "_" + mode + "_" + system + ".csv") 
+    
+    count = time['Completed'].value_counts()
+    print(count)
+    
+    time = time[time["Completed"] != -1]
+    
+    
+    
+    df_SS = pd.read_csv("FileList.csv")
+    ss_files = df_SS["Filename"].to_numpy()
+    
+    filtered_time = time[time['Filename'].isin(ss_files)]
+    
+    count = filtered_time['Completed'].value_counts()
+    print(count)
+    
+    time_out = 0
+    mem_out = 0
+    done = 0
+    for sf in ss_files:
+        df = time[time["Filename"] == sf]
+        if df.shape[0] == 0:
+            continue
+        if (df["Completed"] == 1).any():
+            done+=1
+        elif (df["Completed"] == -23).any():
+            time_out+=1
+        else:
+            mem_out+=1
+    print(done, mem_out, time_out)
+# algo = "DBSCAN"
+# system = "Thelma"
 
 # mode = "SS"
 # MemoryConsumptionCalculation(algo, mode, system)
 # mode = "Default"
 # MemoryConsumptionCalculation(algo, mode, system)
 
+# MemoryConsumptionCalculation("DBSCAN", "SS", "M2")
+# MemoryConsumptionCalculation("DBSCAN", "SS", "Jimmy")
+# MemoryConsumptionCalculation("DBSCAN", "SS", "Thelma")
+# MemoryConsumptionCalculation("DBSCAN", "SS", "Louise")
+
+# MemoryConsumptionCalculation("DBSCAN", "Default", "M2")
+# MemoryConsumptionCalculation("DBSCAN", "Default", "Jimmy")
+# MemoryConsumptionCalculation("DBSCAN", "Default", "Thelma")
+# MemoryConsumptionCalculation("DBSCAN", "Default", "Louise")
+
 
 # drawGraph(algo, system)
 
-memoryUsageGraph(algo, "Default", system)
+# memoryUsageGraph(algo, "Default", system)
 
 # drawBoxPlot("DBSCAN")    
     
+RunStatusDefault("DBSCAN", "Default", "Thelma")
     
-    
-    
+
 
