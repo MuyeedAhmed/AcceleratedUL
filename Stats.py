@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from scipy.stats import ttest_ind
 
-
+import seaborn as sns
 
 
 
@@ -126,38 +126,58 @@ def MergeDefault_OuterJoin():
 def boxPlot(algo):
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
     df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
-
+    df_Default = df_Default.dropna(subset=["ARI_"+algo])
+    
+    
+    df_SS_filtered = df_SS.copy()
+    for index, row in df_SS_filtered.iterrows():
+        if row['Filename'] not in df_Default['Filename'].values:
+            df_SS_filtered.drop(index, inplace=True)
+    
+    
     ss = df_SS["ARI_"+algo].to_numpy()
     default = df_Default["ARI_"+algo].to_numpy()
+    ss_filtered = df_SS_filtered["ARI_"+algo].to_numpy()
+
     default = [x for x in default if str(x) != 'nan']
-    
-    
-    # Determine the longer and shorter lists
+    ss_filtered = [x for x in ss_filtered if str(x) != 'nan']
+
     longer_list = ss if len(ss) > len(default) else default
     shorter_list = ss if len(ss) <= len(default) else default
     
-    # Fill the shorter list with NaN values to match the length of the longer list
+
     num_missing = len(longer_list) - len(shorter_list)
     shorter_list += [np.nan] * num_missing
     
-    my_dict = {'Default': default, 'SAC': ss}
+    ss_filtered += [np.nan] * num_missing
+    
+    if algo == "SC":
+        df_001 = pd.read_csv("Stats/Time/SC/Jimmy_0.001_ARI.csv")
+        def_001 = df_001["ARI"].to_numpy()
+        def_001 = [x for x in def_001 if str(x) != 'nan']
+        num_missing_def_001 = len(longer_list) - len(def_001)
+        def_001 += [np.nan] * num_missing_def_001
+        
+        my_dict = {'Default (R)': default, 'Tol:0.001': def_001, 'SAC (R)':ss_filtered, 'SAC (All Datasets)': ss}
+        
+        
+    else:
+        my_dict = {'Default (R)': default, 'SAC (R)':ss_filtered, 'SAC (All Datasets)': ss}
+    
     
     df = pd.DataFrame(my_dict)
     
-    import seaborn as sns
     fig, ax = plt.subplots()
     # ax.boxplot(my_dict.values())
     # ax.set_xticklabels(my_dict.keys())
-    
-    # fig.savefig('Figures/'+algo+'_ARI.pdf', bbox_inches='tight')
-    
+        
     
     sns.boxplot(data=df)
     plt.ylabel('ARI')
     # plt.yscale('log')
     fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
     
-# boxPlot("DBSCAN")
+boxPlot("HAC")
 
 
 
@@ -292,7 +312,31 @@ def EstimatedTimeFilter():
     f = df_est[df_est["Row"] < 84000]
     
     print(f["Estimated_Time"])
-EstimatedTimeFilter()
+# EstimatedTimeFilter()
     
+
+def ari_stats(algo):
+    df_SS = pd.read_csv("Stats/Merged_SS.csv")
+    df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
     
+    ss = df_SS[["Filename", "ARI_"+algo]]
+    default = df_Default[["Filename", "ARI_"+algo]]
     
+    ss.rename(columns={"ARI_"+algo: 'ss'}, inplace=True)
+    default.rename(columns={"ARI_"+algo: 'default'}, inplace=True)
+    
+    ss = ss.dropna()
+    default = default.dropna()
+    
+    merged_df = ss.merge(default, on='Filename')
+
+    merged_df['Winner'] = 'None'  # Initialize with 'None'
+    merged_df.loc[merged_df['ss'] > merged_df['default'], 'Winner'] = 'ss'
+    merged_df.loc[merged_df['default'] > merged_df['ss'], 'Winner'] = 'default'
+
+    win_counts = merged_df['Winner'].value_counts()
+
+    
+    print(win_counts)
+
+# ari_stats("HAC")
