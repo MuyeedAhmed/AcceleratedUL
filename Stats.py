@@ -141,6 +141,11 @@ def boxPlot(algo):
 
     default = [x for x in default if str(x) != 'nan']
     ss_filtered = [x for x in ss_filtered if str(x) != 'nan']
+    
+    print("Mean, Median")
+    print(np.mean(default), np.median(default))
+    print(np.mean(ss_filtered), np.median(ss_filtered))
+    print(np.mean(ss), np.median(ss))
 
     longer_list = ss if len(ss) > len(default) else default
     shorter_list = ss if len(ss) <= len(default) else default
@@ -175,9 +180,9 @@ def boxPlot(algo):
     sns.boxplot(data=df)
     plt.ylabel('ARI')
     # plt.yscale('log')
-    fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
+    # fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
     
-boxPlot("HAC")
+boxPlot("SC")
 
 
 
@@ -339,4 +344,4 @@ def ari_stats(algo):
     
     print(win_counts)
 
-# ari_stats("HAC")
+ari_stats("SC")
