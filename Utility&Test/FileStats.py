@@ -41,21 +41,21 @@ if __name__ == '__main__':
         master_files[i] = Path(master_files[i]).stem
     master_files.sort()
     
-    print(master_files)
-    filelist = pd.read_csv("MemoryStats/FileList.csv")
+    filelist = pd.read_csv("MemoryStats/FileList.csv")["Filename"].to_numpy()
+    
+    master_files = [x for x in master_files if x in filelist]
     
     
     
+    if os.path.exists("Stats/FileStats_OpenML.csv") == 0:
+        f=open("Stats/FileStats_OpenML.csv", "w")
+        f.write('Filename,Shape_R,Shape_C,Unique\n')
+        f.close()
     
-    # if os.path.exists("Stats/FileStats_OpenML.csv") == 0:
-    #     f=open("Stats/FileStats_OpenML.csv", "w")
-    #     f.write('Filename,Shape_R,Shape_C,Unique\n')
-    #     f.close()
-    
-    # remaining = len(master_files)
-    # for file in master_files:
+    remaining = len(master_files)
+    for file in master_files:
         
-    #     readData(file)
+        readData(file)
         
-    #     print(remaining)
-    #     remaining-=1
+        print(remaining)
+        remaining-=1
