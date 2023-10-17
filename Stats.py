@@ -7,26 +7,6 @@ import seaborn as sns
 
 
 
-
-def plot_time(df_default, df_ss):
-    diff = []
-    x = []
-    y = []
-    t = []
-    for index, row in df_default.iterrows():
-        ss_ari = df_ss[df_ss["Filename"] == row["Filename"]]
-        if ss_ari.empty:
-            print(row["Filename"], " not there in SS")
-            continue
-        x.append(row["Row"])
-        y.append(row["Columm"])
-        t.append(row["Time"])
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    # ax.view_init(elev=60, azim=270, roll=0)
-    ax.scatter(x, y, t)
-        
 def calculate_ari_diff(df_default, df_ss):
     diff = []
     row = []
@@ -88,7 +68,6 @@ def MergeSS():
     
     merged_df = pd.merge(merged_df1, merged_df2, on=["Filename","Row","Columm","Mode"])
     merged_df.to_csv("Stats/Merged_SS.csv", index=False)
-    # print(merged_df)
     
 # MergeSS()
 
@@ -172,15 +151,28 @@ def boxPlot(algo):
     
     df = pd.DataFrame(my_dict)
     
-    fig, ax = plt.subplots()
-    # ax.boxplot(my_dict.values())
-    # ax.set_xticklabels(my_dict.keys())
+    if algo == "SC":
+        fig, ax1 = plt.subplots(figsize=(8, 6))
+        ax2 = fig.add_axes([0.21, 0.4, 0.4, 0.4])
+        data_subset = df[['Default (R)', 'Tol:0.001', 'SAC (R)']]
+
         
-    
-    sns.boxplot(data=df)
-    plt.ylabel('ARI')
-    # plt.yscale('log')
-    # fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
+        sns.boxplot(data=df, ax=ax1)
+        sns.boxplot(data=data_subset, ax=ax2)
+
+        ax1.set_ylabel('ARI', fontsize=12)
+        ax1.tick_params(axis='both', labelsize=12)
+        ax2.tick_params(axis='both', labelsize=12)
+
+    else:        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        # ax.boxplot(my_dict.values())
+        # ax.set_xticklabels(my_dict.keys())
+        
+        sns.boxplot(data=df)
+        plt.ylabel('ARI')
+        # plt.yscale('log')
+    fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
     
 boxPlot("SC")
 
