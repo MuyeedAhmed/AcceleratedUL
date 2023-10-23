@@ -158,7 +158,7 @@ def boxPlot_algo(algo):
     
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    sns.boxplot(data=df)
+    sns.boxplot(data=df,flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 5})
     plt.ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
@@ -189,7 +189,10 @@ def boxPlot_algo(algo):
     plt.show()
     
     
-# boxPlot_algo("DBSCAN")
+boxPlot_algo("AP")
+boxPlot_algo("DBSCAN")
+boxPlot_algo("HAC")
+boxPlot_algo("SC")
     
 def boxplot_sac():
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
