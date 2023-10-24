@@ -143,7 +143,7 @@ def drawBoxPlot(algo):
             y = df_merged['TotalTime'],
             hue = df_merged['Mode'],
             # palette="Blues",
-            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 5})
+            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
             # showfliers=False)
     plt.yscale('log')
     
@@ -161,7 +161,7 @@ def drawBoxPlot(algo):
     f2 = sns.boxplot(x = df_merged['System'],
             y = df_merged['Memory_Virtual_Max'],
             hue = df_merged['Mode'],
-            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 5})
+            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
             # showfliers=False)
     plt.yscale('log')
     

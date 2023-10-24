@@ -158,7 +158,7 @@ def boxPlot_algo(algo):
     
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    sns.boxplot(data=df,flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 5})
+    sns.boxplot(data=df,flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
     plt.ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
