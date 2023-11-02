@@ -179,7 +179,7 @@ def boxPlot_algo(algo):
     for patch, color in zip(box_plot['boxes'], colors):
         patch.set_facecolor(color)
 
-    ax.set_xticklabels(['Default\n(R:'+str(default_count)+' Datasets)', 'SAC (All Datasets)'], fontsize=14)
+    ax.set_xticklabels(['Default\n(R: '+str(default_count)+' Datasets)', 'SAC\n(All: 164 Datasets)'], fontsize=14)
     ax.set_ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
