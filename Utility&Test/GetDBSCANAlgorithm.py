@@ -25,4 +25,18 @@ def getAlgo():
             pass
 
         
-getAlgo()
+def mergeWithARI():
+    algo_list = pd.read_csv("Stats/DBSCAN_Algo_Choice.csv")
+    fileList = pd.read_csv("../MemoryStats/FileList.csv")
+    aris = pd.read_csv("../Stats/Merged_Default_Filtered.csv")
+    aris = aris.loc[:, ['Filename', 'ARI_DBSCAN']]
+    
+    algo_list = algo_list[algo_list['Filename'].isin(fileList['Filename'])]
+
+    merged_df = pd.merge(algo_list, aris, on='Filename', how='outer')
+    merged_df.to_csv("Stats/DBSCAN_Algo_Choice.csv",index=False)
+    # print(merged_df)
+    
+mergeWithARI()
+
+# getAlgo()
