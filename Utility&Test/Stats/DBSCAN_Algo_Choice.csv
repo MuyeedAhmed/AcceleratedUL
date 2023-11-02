@@ -200,3 +200,4 @@ pokerhand_OpenML, kd_tree
 pol_OpenML, brute
 spoken-arabic-digit_OpenML, kd_tree
 sylva_prior_OpenML, brute
+Ailerons_OpenML, brute
