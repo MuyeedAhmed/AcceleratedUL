@@ -19,21 +19,7 @@ import subprocess
 
 
 def MemTest(algo, mode, system):
-    if system == "M2":
-        folderpath = '../Openml/'
-    elif system == "Jimmy":
-        folderpath = '/jimmy/hdd/ma234/Openml/'
-    elif system == "Louise":
-        folderpath = '/louise/hdd/ma234/Openml/'
-    elif system == "3070":
-        folderpath = '../Openml/'
-    elif system == "2060":
-        folderpath = '../Openml/'
-    elif system == "Thelma":
-        folderpath = "/thelma/hdd/ma234/Openml/"
-    else:
-        print("System name doesn't exist")
-        return
+    folderpath = '../Openml/'
     
     
     

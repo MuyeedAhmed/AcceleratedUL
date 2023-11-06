@@ -25,6 +25,8 @@ filename = sys.argv[4]
 
 def MTest_Run(algo, mode, system, filename):
     instances_to = 2000000000
+    folderpath = '../Openml/'
+    
     if system == "M2":
         if algo == "AP":
             instances_to = 84000
@@ -33,7 +35,7 @@ def MTest_Run(algo, mode, system, filename):
         elif algo == "HAC":
             instances_to = 120000 ###
             
-        folderpath = '../Openml/'
+        
         
     elif system == "Jimmy":
         if algo == "AP":
@@ -42,9 +44,7 @@ def MTest_Run(algo, mode, system, filename):
             instances_to = 158000
         elif algo == "HAC":
             instances_to = 315000
-            
-        folderpath = '/jimmy/hdd/ma234/Openml/'
-        
+                    
     elif system == "Louise":
         if algo == "AP":
             instances_to = 80000
@@ -53,7 +53,6 @@ def MTest_Run(algo, mode, system, filename):
         elif algo == "HAC":
             instances_to = 157000
             
-        folderpath = '/louise/hdd/ma234/Openml/'
         
     elif system == "3070":
         folderpath = '../Openml/'
@@ -67,10 +66,9 @@ def MTest_Run(algo, mode, system, filename):
         elif algo == "HAC":
             instances_to = 220000
         
-        folderpath = "/thelma/hdd/ma234/Openml/"
-    else:
-        print("System name doesn't exist")
-        return
+    # else:
+    #     print("System name doesn't exist")
+    #     return
     
 
     df = pd.read_csv(folderpath+filename+".csv")
