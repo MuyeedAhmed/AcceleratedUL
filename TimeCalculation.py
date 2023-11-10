@@ -5,6 +5,8 @@ import time
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import SpectralClustering
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import AgglomerativeClustering
+
 import sys
 import glob
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -104,6 +106,8 @@ def runfile(file, filename, algo, mode, system):
                     ari = adjusted_rand_score(gt, labels)
             elif algo == "DBSCAN":
                 clustering = DBSCAN().fit(X)
+            elif algo == "HAC":
+                clustering = AgglomerativeClustering().fit(X)
             else:
                 print("Wrong Algo")
                 return
@@ -290,15 +294,15 @@ def NN(algo, mode, system):
     
 # TimeCalc("AP", "SS", "M2")
 
-# algo = sys.argv[1]
-# mode = sys.argv[2]
-# system = sys.argv[3]
+algo = sys.argv[1]
+mode = sys.argv[2]
+system = sys.argv[3]
 
-# TimeCalc(algo, mode, system)
+TimeCalc(algo, mode, system)
 
 # TimeCalc("SC", "Default", "Louise_test")
 
-r2s = linRegresCalculate("AP", "Default", "Jimmy_EST")
+# r2s = linRegresCalculate("AP", "Default", "Jimmy_EST")
 # DecisionTree("SC", "Default", "Jimmy")
 
 

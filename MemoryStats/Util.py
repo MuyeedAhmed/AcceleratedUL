@@ -100,8 +100,9 @@ def draw(df_d, df_s, tm, algo, system):
         plt.ylabel("Time (in Seconds)")
         plt.title(algo + " Execution Time in " + system)
     
-    plt.savefig('Figures/'+tm+'_' + algo + '_' + system +'.pdf', bbox_inches='tight')
+    # plt.savefig('Figures/'+tm+'_' + algo + '_' + system +'.pdf', bbox_inches='tight')
     plt.show()
+
 
 
 def drawBoxPlot(algo):
@@ -113,41 +114,66 @@ def drawBoxPlot(algo):
     
     for s in systems:
         for m in modes:            
-            df = pd.read_csv(algo + "/Time_Memory_" + algo + "_" + m + "_" + s + ".csv")
+            df = pd.read_csv(algo + "/Time_Memory_" + algo + "_" + m + "_" + s + "_All.csv")
+            df = df.dropna()
+
             df["System"] = s
             df["Mode"] = m
+            if df_merged.empty == 0:
+                
+                common_names = set(df_merged['Filename']).intersection(df['Filename'])
+                print(len(common_names))
+                df = df[df['Filename'].isin(common_names)]
+                df_merged = df_merged[df_merged['Filename'].isin(common_names)]
             df_merged = pd.concat([df_merged, df], axis=0)
     df_merged = df_merged.reset_index(drop=True)
     
-    f1 = plt.figure()
+    df_merged['Mode'] = df_merged['Mode'].replace('SS', 'SAC')
+    
+    ''' Grouped Results'''    
+    grouped = df_merged.groupby(['System', 'Mode'])
+    result = grouped['TotalTime'].agg(['min', 'mean', 'max', 'median'])
+    print(result)
+    
+    '''Plot Time '''
+    
+    f1 = plt.figure(figsize=(8, 6))
+
     f1 = sns.boxplot(x = df_merged['System'],
             y = df_merged['TotalTime'],
-            hue = df_merged['Mode'])
+            hue = df_merged['Mode'],
+            # palette="Blues",
+            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
             # showfliers=False)
     plt.yscale('log')
     
+    
+    
     plt.xlabel("")
-    plt.ylabel("Time")
-    f1.legend().texts[0].set_text("Default")
-    f1.legend().texts[1].set_text("SAC")
-    f1.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"])
+    plt.ylabel("Time (seconds)", fontsize=14)
+    plt.yticks(fontsize=14)
+    f1.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"], fontsize=14)
+    f1.legend(fontsize=14)
     plt.savefig('Figures/Time_' + algo +'.pdf', bbox_inches='tight')
     
-    
-    f2 = plt.figure()
+    '''Plot Memory'''
+    f2 = plt.figure(figsize=(8, 6))
     f2 = sns.boxplot(x = df_merged['System'],
             y = df_merged['Memory_Virtual_Max'],
-            hue = df_merged['Mode'])
+            hue = df_merged['Mode'],
+            flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
             # showfliers=False)
     plt.yscale('log')
     
     plt.xlabel("")
-    plt.ylabel("Maximum Memory Usage")
-    f2.legend().texts[0].set_text("Default")
-    f2.legend().texts[1].set_text("SAC")
-    f2.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"])
-    # plt.legend(["Default", "SAC"])
+    plt.ylabel("Maximum Memory Usage (MB)", fontsize=14)
+    plt.yticks(fontsize=14)
+    f2.legend(fontsize=14)
+
+    f2.set_xticklabels(["Sys1","Sys2", "Sys3", "Sys4"], fontsize=14)
+    
     plt.savefig('Figures/Memory_' + algo +'.pdf', bbox_inches='tight')
+    
 
 def memoryUsageGraph(algo, mode, system):
     memory = pd.read_csv(algo +"/Memory_" + algo + "_" + mode + "_" + system + ".csv")
@@ -235,9 +261,9 @@ def RunStatusDefault(algo, mode, system):
 
 # memoryUsageGraph(algo, "Default", system)
 
-# drawBoxPlot("DBSCAN")    
+drawBoxPlot("DBSCAN")    
     
-RunStatusDefault("DBSCAN", "Default", "Thelma")
+# RunStatusDefault("DBSCAN", "Default", "Thelma")
     
 
 

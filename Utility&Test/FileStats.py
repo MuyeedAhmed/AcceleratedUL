@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 from pathlib import Path
 
-datasetFolderDir = '/Users/muyeedahmed/Desktop/Research/Dataset/'
+datasetFolderDir = '../Openml/'
 
 
 def readData(filename):
@@ -25,7 +25,7 @@ def readData(filename):
 
     u = len(set(y))
     
-    f=open("Stats/FileStats.csv", "a")
+    f=open("Stats/FileStats_OpenML.csv", "a")
     f.write(filename+","+str(row)+","+str(col)+","+str(u)+"\n")
     f.close()
 
@@ -40,12 +40,15 @@ if __name__ == '__main__':
         # master_files[i] = master_files[i].split("/")[-1].split(".")[0]
         master_files[i] = Path(master_files[i]).stem
     master_files.sort()
-
+    
+    filelist = pd.read_csv("MemoryStats/FileList.csv")["Filename"].to_numpy()
+    
+    master_files = [x for x in master_files if x in filelist]
     
     
     
-    if os.path.exists("Stats/FileStats.csv") == 0:
-        f=open("Stats/FileStats.csv", "w")
+    if os.path.exists("Stats/FileStats_OpenML.csv") == 0:
+        f=open("Stats/FileStats_OpenML.csv", "w")
         f.write('Filename,Shape_R,Shape_C,Unique\n')
         f.close()
     

@@ -19,21 +19,7 @@ import subprocess
 
 
 def MemTest(algo, mode, system):
-    if system == "M2":
-        folderpath = '../Openml/'
-    elif system == "Jimmy":
-        folderpath = '/jimmy/hdd/ma234/Openml/'
-    elif system == "Louise":
-        folderpath = '/louise/hdd/ma234/Openml/'
-    elif system == "3070":
-        folderpath = '../Openml/'
-    elif system == "2060":
-        folderpath = '../Openml/'
-    elif system == "Thelma":
-        folderpath = "/thelma/hdd/ma234/Openml/"
-    else:
-        print("System name doesn't exist")
-        return
+    folderpath = '../Openml/'
     
     
     
@@ -65,7 +51,9 @@ def MemTest(algo, mode, system):
         master_files[i] = master_files[i][:-4]
     master_files = [x for x in master_files if x not in done_files] 
     master_files.sort()
-    
+
+    fileList = pd.read_csv("MemoryStats/FileList.csv")
+    fileList = fileList["Filename"].to_numpy()
     ## For AP and SC Default
     if (algo == "AP" or algo == "SC") and mode == "Default":
         algoTime = pd.read_csv("Stats/Time/"+algo+"/"+system+".csv")
@@ -76,6 +64,8 @@ def MemTest(algo, mode, system):
                     master_files.remove(filename)
     
     for filename in master_files:
+        if filename not in fileList:
+            continue
         print(filename)
     
         """
