@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.ticker as ticker
 
 
 
@@ -48,13 +49,14 @@ def draw_AP_time(algo, mode, system):
         x_ss = [1000,2000,3000,6000,9000,12000,15000,20000]
         
 
-        
-        plt.plot(x_def, y_def, label="Default")
-        plt.plot(x_ss, y_ss, label="SAC")
+        plt.plot(x_ss, y_ss, label="SAC", color='darkorange')
+        plt.plot(x_def, y_def, label="Default", color='steelblue')
 
         
         # plt.plot(x, y_pred, color='red', label=f"Regression Line")
         plt.grid(False)
+        plt.gca().xaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.0f}"))
+
         plt.xlabel("# Points")
         plt.ylabel("Time (seconds)")
         plt.title("Affinity Propagation")
@@ -65,18 +67,23 @@ def draw_AP_time(algo, mode, system):
 
 def draw_sc_memory():
     rows = [i for i in range(10000,1000001,10000)]       
+    rows_observed = [i for i in range(10000,150001,10000)]
+    rows_predicted = [i for i in range(150000,1000001,10000)]
     # memory_d = (np.square(rows)*4*4)/1000000000
+    
     memory_d = [((x**2)*4*8)/1000000000  for x in rows]
     memory_s = [(((x/100)**2)*4*8*10)/1000000000  for x in rows]
-    
-    
+    memory_obs = [((x**2)*4*8)/1000000000  for x in rows_observed]
+    memory_pred = [((x**2)*4*8)/1000000000  for x in rows_predicted]
     # print(memory_d[0])
     # print(memory_d[-1])
     # print(memory_s[0])
     # print(memory_s[-1])
     
-    plt.plot(rows, memory_d, label="Default")
-    plt.plot(rows, memory_s, label="SAC")
+    # plt.plot(rows, memory_d, label="Default")
+    plt.plot(rows, memory_s, label="SAC", color='darkorange')
+    plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
+    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='steelblue', linestyle='--')
     plt.grid(False)
     plt.xlabel("# Points")
     plt.ylabel("Memory (GB)")
@@ -95,7 +102,6 @@ def draw_sc_memory():
     plt.savefig('Figures/Memory_SC_Intro.pdf', bbox_inches='tight')
     plt.show()
     
-    plt.show()
 
 def draw_SC(algo, mode, system):
     times_def = pd.read_csv("Stats/Time/" + algo + "/"+ system + "_def.csv")    
@@ -182,5 +188,5 @@ def draw_SC(algo, mode, system):
     
         # times.at[index, "Estimated_Time"] = prediction
 
-# draw_sc_memory()
+draw_sc_memory()
 draw_AP_time("AP", "Default", "Jimmy_EST")
