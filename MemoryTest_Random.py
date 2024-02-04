@@ -13,7 +13,7 @@ import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 import sys
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 from sklearn.mixture import GaussianMixture
 
 
@@ -40,7 +40,7 @@ def MemTest(algo, mode, system):
                     elif algo == "GMM":
                         clustering = GaussianMixture(n_components=2).fit(df)
                 else:
-                    clustering = SS_Clustering(algoName=algo)
+                    clustering = PAU_Clustering(algoName=algo)
                     clustering.X = df
                     clustering.y = [0] * r
                     clustering.run()

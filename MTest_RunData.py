@@ -9,7 +9,7 @@ from sklearn.cluster import SpectralClustering
 from sklearn.mixture import GaussianMixture
 
 import sys
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 # from sklearn.decomposition import PCA
 import psutil
 import threading
@@ -136,7 +136,7 @@ def runFile(file, df, algo, mode, system):
             time_ = time.time()-t0    
             
         else:
-            clustering = SS_Clustering(algoName=algo)
+            clustering = PAU_Clustering(algoName=algo)
             clustering.X = X
             clustering.y = y
             ari, time_ = clustering.run()

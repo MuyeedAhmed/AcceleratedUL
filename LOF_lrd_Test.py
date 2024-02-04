@@ -7,7 +7,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 import sys
 from sklearn.neighbors import LocalOutlierFactor
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 from sklearn.mixture import GaussianMixture
 from pathlib import Path
 import glob
