@@ -28,17 +28,26 @@ def getAlgo():
 def mergeWithARI():
     algo_list = pd.read_csv("Stats/DBSCAN_Algo_Choice.csv")
     fileList = pd.read_csv("../MemoryStats/FileList.csv")
-    aris = pd.read_csv("../Stats/Merged_Default_Filtered.csv")
-    aris = aris.loc[:, ['Filename', 'ARI_DBSCAN','Time_DBSCAN']]
     algo_list = algo_list[algo_list['Filename'].isin(fileList['Filename'])]
     
-    # print(fileList[fileList["Filename"]=="Ailerons_OpenML"])
+    aris_def = pd.read_csv("../Stats/Merged_SS.csv")
+    aris_def = aris_def.loc[:, ['Filename', "Row", "Columm",'ARI_DBSCAN','Time_DBSCAN']]
     
-    # print(algo_list[algo_list["Filename"]=="Ailerons_OpenML"])
-    # print(aris[aris["Filename"]=="Ailerons_OpenML"])
+    algo_ari = pd.merge(algo_list, aris_def, on='Filename', how='outer')
+
     
-    merged_df = pd.merge(algo_list, aris, on='Filename', how='outer')
-    merged_df.to_csv("Stats/DBSCAN_Algo_Choice_With_ARI.csv",index=False)
+    time_def = pd.read_csv("../MemoryStats/DBSCAN/Time_Memory_DBSCAN_Default_Jimmy_All.csv")
+    time_ss =  pd.read_csv("../MemoryStats/DBSCAN/Time_Memory_DBSCAN_SS_Jimmy_All.csv")
+    time_def = time_def.loc[:, ['Filename', 'TotalTime']]
+    time_ss = time_ss.loc[:, ['Filename', 'TotalTime']]
+    time_ = pd.merge(time_def, time_ss, on='Filename', how='outer',suffixes=('_Default', '_SAC'))
+    
+    # print(time_)
+    
+    
+    algo_ari_time = pd.merge(algo_ari, time_, on='Filename', how='outer')
+    
+    algo_ari_time.to_csv("Stats/DBSCAN_Algo_Choice_With_ARI.csv",index=False)
     # print(merged_df)
     
 mergeWithARI()
