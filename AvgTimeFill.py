@@ -1,6 +1,6 @@
 import pandas as pd
 import time
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import AgglomerativeClustering
@@ -47,7 +47,7 @@ def AvgTime(algo, mode):
             time_ = time.time()-t0    
             
         else:
-            clustering = SS_Clustering(algoName=algo)
+            clustering = PAU_Clustering(algoName=algo)
             clustering.X = X
             clustering.y = y
             ari, time_ = clustering.run()

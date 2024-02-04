@@ -6,7 +6,7 @@ import time
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AffinityPropagation
 import sys
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 from sklearn.mixture import GaussianMixture
 from pathlib import Path
 import glob
@@ -172,7 +172,7 @@ def runFile(file, df, algo, mode, system):
             #         clustering = GaussianMixture(n_components=2).fit(X)
             print("*Done*")
         else:
-            clustering = SS_Clustering(algoName=algo)
+            clustering = PAU_Clustering(algoName=algo)
             clustering.X = X
             clustering.y = y
             clustering.run()

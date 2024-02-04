@@ -30,7 +30,7 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 
-class SS_Clustering:
+class PAU_Clustering:
     def __init__(self, algoName, parameters=None, fileName="_", n_cluster=2):
         self.algoName = algoName
         if parameters == None:

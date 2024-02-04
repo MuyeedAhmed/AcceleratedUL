@@ -11,7 +11,7 @@ import sys
 import glob
 from sklearn.metrics.cluster import adjusted_rand_score
 
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 
 
 from sklearn.linear_model import LinearRegression
@@ -91,7 +91,7 @@ def runfile(file, filename, algo, mode, system):
         
         t0 = time.time()
         if mode == "SS":
-            clustering = SS_Clustering(algoName=algo)
+            clustering = PAU_Clustering(algoName=algo)
             clustering.X = X
             clustering.y = gt
             ari, time_ = clustering.run()

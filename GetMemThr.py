@@ -9,7 +9,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import SpectralClustering
 import sys
-from SS_Clustering import SS_Clustering
+from PAU.PAU_Clustering import PAU_Clustering
 
 from pathlib import Path
 import glob
@@ -149,7 +149,7 @@ def worker(d, algo, mode, system, row, c, file, done):
                 clustering = AgglomerativeClustering().fit(d)
                 # print(clustering.labels_)
         else:
-            clustering = SS_Clustering(algoName=algo)
+            clustering = PAU_Clustering(algoName=algo)
             clustering.X = d
             clustering.y = [0]*d.shape[0]
             clustering.run()
