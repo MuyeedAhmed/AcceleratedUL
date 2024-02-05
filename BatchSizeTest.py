@@ -4,7 +4,7 @@ import sys
 import glob
 import pandas as pd
 import time
-
+import numpy as np
 
 folderpath = '../Openml/'
 
@@ -33,34 +33,43 @@ def runFile(file, df, algo):
         clustering = PAU_Clustering(algoName=algo, batch_count=BatchCount)
         clustering.X = X
         clustering.y = y
-        # ari, time_ = clustering.run()
-        ari1, time_1 = clustering.run()
-        ari2, time_2 = clustering.run()
+        aris=[]
+        times=[]
+        for i in range(10):
+            ari, time_ = clustering.run()
+            aris.append(ari)
+            times.append(time_)
         clustering.destroy()
-        
-        ari = (ari1+ari2)/2
-        time_ = (time_1+time_2)/2
+        ari = np.mean(aris)
+        time_ = np.mean(times)
         
         f=open("Utility&Test/Stats/BatchSizeTest_" + algo + ".csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
         f.close()
 
-if __name__ == '__main__':
-    master_files = glob.glob(folderpath+"*.csv")
-    algo = "HAC"
-    
+def InitStatsFile(algo):
     if os.path.exists("Utility&Test/Stats/BatchSizeTest_" + algo + ".csv") == 0:
         f=open("Utility&Test/Stats/BatchSizeTest_" + algo + ".csv", "a")
         f.write('Filename,Row,Column,Time,ARI,BatchCount,BatchSize\n')
         f.close()
 
+if __name__ == '__main__':
+    master_files = glob.glob(folderpath+"*.csv")
+
+    InitStatsFile("HAC")
+    InitStatsFile("AP")
+    InitStatsFile("DBSCAN")
+    # InitStatsFile("SC")
+    
+
     for file in master_files:
-        if "BNG(labor" not in file:
+        if "BNG(vote)_OpenML" not in file:
             continue
         df = pd.read_csv(file)
         
-        runFile(file, df, algo)
+        runFile(file, df, "HAC")
         runFile(file, df, "AP")
+        runFile(file, df, "DBSCAN")
         
     
     
