@@ -196,9 +196,9 @@ class PAU_Clustering:
             
             # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
-            if df["Time"].iloc[h_r] > 10:
-                print("Subsampling timeout")
-                raise Exception('')
+            # if df["Time"].iloc[h_r] > 10:
+            #     print("Subsampling timeout")
+            #     raise Exception('')
         self.bestParams = [p[1] for p in self.parameters]
 
     def worker_determineParam(self, parameter, X, y, batch_index, parameter_index):        

@@ -27,8 +27,9 @@ def runFile(file, df, algo):
         X = df
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
         
-    for BatchCount in range(50,501,50):
-        BatchSize = int(r/BatchCount)
+    for BatchSize in range(100,1501,100):
+        BatchCount = int(r/BatchSize)
+        # BatchSize = int(r/BatchCount)
         clustering = PAU_Clustering(algoName=algo, batch_count=BatchCount)
         clustering.X = X
         clustering.y = y
@@ -48,10 +49,10 @@ if __name__ == '__main__':
         f=open("Utility&Test/Stats/BatchSizeTest_" + algo + ".csv", "a")
         f.write('Filename,Row,Column,Time,ARI,BatchCount,BatchSize\n')
         f.close()
-    count = 0
+
     for file in master_files:
-        print(count)
-        count+=1
+        if "solar-flare" not in file:
+            continue
         df = pd.read_csv(file)
         
         runFile(file, df, algo)
