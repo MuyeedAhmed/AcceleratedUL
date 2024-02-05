@@ -33,10 +33,14 @@ def runFile(file, df, algo):
         clustering = PAU_Clustering(algoName=algo, batch_count=BatchCount)
         clustering.X = X
         clustering.y = y
-        ari, time_ = clustering.run()
+        # ari, time_ = clustering.run()
+        ari1, time_1 = clustering.run()
+        ari2, time_2 = clustering.run()
         clustering.destroy()
         
-    
+        ari = (ari1+ari2)/2
+        time_ = (time_1+time_2)/2
+        
         f=open("Utility&Test/Stats/BatchSizeTest_" + algo + ".csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
         f.close()
@@ -51,11 +55,13 @@ if __name__ == '__main__':
         f.close()
 
     for file in master_files:
-        if "solar-flare" not in file:
+        if "BNG(labor" not in file:
             continue
         df = pd.read_csv(file)
         
         runFile(file, df, algo)
+        runFile(file, df, "AP")
+        
     
     
 
