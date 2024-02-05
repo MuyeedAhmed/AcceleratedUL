@@ -31,7 +31,7 @@ from sklearn.mixture import GaussianMixture
 
 
 class PAU_Clustering:
-    def __init__(self, algoName, parameters=None, fileName="_", n_cluster=2):
+    def __init__(self, algoName, parameters=None, fileName="_", n_cluster=2, batch_count = 0):
         self.algoName = algoName
         if parameters == None:
             self.parameters = self.algo_parameters(algoName)
@@ -49,7 +49,7 @@ class PAU_Clustering:
         self.models = []
         
         self.n_cluster = n_cluster
-        self.batch_count = 100
+        self.batch_count = batch_count
         self.determine_param_mode = "ARI"
         self.determine_param_clustering_algo = "KM"
         self.rerun_mode = "A"
@@ -673,19 +673,19 @@ class PAU_Clustering:
     
     def run(self):
         t0 = time.time()
-        if self.X.shape[0] < 10000:    
-            self.batch_count = 20
-        elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
-            self.batch_count = 100
-        else:
-            self.batch_count = int(self.X.shape[0]/100000)*100
+        if self.batch_count == 0:
+            if self.X.shape[0] < 10000:    
+                self.batch_count = 20
+            elif self.X.shape[0] > 10000 and self.X.shape[0] < 100000:    
+                self.batch_count = 100
+            else:
+                self.batch_count = int(self.X.shape[0]/100000)*100
         
         self.subSample()
         if self.algoName == "DBSCAN":
             self.set_DBSCAN_param()
         # print("Determine Parameters", end=' - ')
         self.determineParam()
-        # self.batch_count = 100
         self.subSample()
         # print("Rerun")
         self.rerun()
