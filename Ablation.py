@@ -141,7 +141,8 @@ def InitStatsFile(algo, test):
     
 if __name__ == '__main__':
     algo = sys.argv[1]
-    test = "Referee"
+    test = sys.argv[2]
+    # test = "Referee"
     
     master_files = glob.glob(folderpath+"*.csv")
     
