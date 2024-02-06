@@ -77,6 +77,32 @@ def TestRefereeClAlgo(algo, X, y, filename):
         f.write(filename+','+str(params_cl_algo)+','+str(time_)+','+str(ari)+'\n')
         f.close()
 
+
+def TestMode(algo, X, y, filename):
+    print(filename, end=" ")
+    modes = ["A", "B"]
+    for mode in modes:
+        print(mode)
+        clustering = PAU_Clustering(algoName=algo)
+        clustering.X = X
+        clustering.y = y
+        clustering.rerun_mode = mode
+        
+        aris=[]
+        times=[]
+        for i in range(5):
+            ari, time_ = clustering.run()
+            aris.append(ari)
+            times.append(time_)
+        clustering.destroy()
+        ari = np.mean(aris)
+        time_ = np.mean(times)
+        
+        f=open("Stats/Ablation/Ablation_Mode_" + algo + ".csv", "a")
+        f.write(filename+','+str(mode)+','+str(time_)+','+str(ari)+'\n')
+        f.close()
+    
+
 def InitStatsFile(algo, test):
     done_files = []
     if os.path.isdir("Stats/Ablation/") == 0:
@@ -140,7 +166,8 @@ if __name__ == '__main__':
             TestRefereeClAlgo(algo, X, y, file)
         elif test == "Batch":
             TestBatchSize(algo, X, y, file)
-    
+        elif test == "Mode":
+            TestMode(algo, X, y, file)
     
 
 
