@@ -137,7 +137,7 @@ def InitStatsFile(algo, test):
             done_files = done_files["Filename"].to_numpy()
             return done_files
             
-    return None  
+    return None
     
 if __name__ == '__main__':
     algo = sys.argv[1]
