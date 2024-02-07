@@ -57,6 +57,8 @@ def TestRefereeClAlgo(algo, X, y, filename):
     print(filename, end=" ")
     params_cl_algos = ["AP", "KM", "DBS", "HAC", "INERTIA"]
     for params_cl_algo in params_cl_algos:
+        if params_cl_algo == algo:
+            continue
         print(params_cl_algo)
         clustering = PAU_Clustering(algoName=algo)
         clustering.X = X
@@ -65,7 +67,7 @@ def TestRefereeClAlgo(algo, X, y, filename):
         
         aris=[]
         times=[]
-        for i in range(5):
+        for i in range(3):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
