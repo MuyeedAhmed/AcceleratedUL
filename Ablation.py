@@ -67,7 +67,7 @@ def TestRefereeClAlgo(algo, X, y, filename):
         
         aris=[]
         times=[]
-        for i in range(3):
+        for i in range(1):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
