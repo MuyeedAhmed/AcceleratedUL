@@ -60,7 +60,11 @@ def TestRefereeClAlgo(algo, X, y, filename):
         if params_cl_algo == algo:
             continue
         print(params_cl_algo)
-        clustering = PAU_Clustering(algoName=algo)
+        if algo == "AP":
+            bc = int(X.shape[0]/100)
+        
+        
+        clustering = PAU_Clustering(algoName=algo, batch_count=bc)
         clustering.X = X
         clustering.y = y
         clustering.determine_param_clustering_algo = params_cl_algo
