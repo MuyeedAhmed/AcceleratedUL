@@ -41,7 +41,7 @@ def TestBatchSize(algo, X, y, filename):
         clustering.y = y
         aris=[]
         times=[]
-        for i in range(10):
+        for i in range(3):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
