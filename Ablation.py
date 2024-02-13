@@ -37,7 +37,7 @@ def TestBatchSize(algo, X, y, filename):
     if algo == "AP" and r > 200000:
         r_iteration = 1
         return
-    for BatchSize in range(1600,2501,100):
+    for BatchSize in range(100,1501,100):
         BatchCount = int(r/BatchSize)
         # BatchSize = int(r/BatchCount)
         clustering = PAU_Clustering(algoName=algo, batch_count=BatchCount)
@@ -164,8 +164,7 @@ if __name__ == '__main__':
     done_files = InitStatsFile(algo, test)
     datasets_of_interest = pd.read_csv("Stats/Merged_SS.csv")["Filename"].to_numpy()
     if done_files is not None:
-        master_files = [x for x in master_files if x in done_files] ###
-        # master_files = [x for x in master_files if x not in done_files] ###
+        master_files = [x for x in master_files if x not in done_files]
     master_files = [x for x in master_files if x in datasets_of_interest] 
     
     master_files.sort()
