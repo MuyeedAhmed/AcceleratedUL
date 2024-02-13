@@ -33,6 +33,10 @@ def ReadFile(file):
 def TestBatchSize(algo, X, y, filename):
     r = X.shape[0]
     c = X.shape[1]
+    r_iteration = 3
+    if algo == "AP" and r > 200000:
+        r_iteration = 1
+        return
     for BatchSize in range(100,1501,100):
         BatchCount = int(r/BatchSize)
         # BatchSize = int(r/BatchCount)
@@ -41,7 +45,7 @@ def TestBatchSize(algo, X, y, filename):
         clustering.y = y
         aris=[]
         times=[]
-        for i in range(3):
+        for i in range(r_iteration):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
