@@ -34,9 +34,15 @@ def TestBatchSize(algo, X, y, filename):
     r = X.shape[0]
     c = X.shape[1]
     r_iteration = 3
-    if algo == "AP" and r > 200000:
+    if algo == "AP":
+        if r > 200000:
+            return
         r_iteration = 1
-        return
+        
+    if algo == "SC": 
+        if r > 200000:
+            return
+        r_iteration = 3
     for BatchSize in range(100,1501,100):
         BatchCount = int(r/BatchSize)
         # BatchSize = int(r/BatchCount)
