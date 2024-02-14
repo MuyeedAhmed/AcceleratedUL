@@ -82,8 +82,9 @@ def draw_sc_memory():
     
     # plt.plot(rows, memory_d, label="Default")
     plt.plot(rows, memory_s, label="SAC", color='darkorange')
+    plt.axvline(x = 150001, color = 'black', linestyle = ':') 
     plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
-    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='steelblue', linestyle='--')
+    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='#949494', linestyle='--')
     plt.grid(False)
     plt.xlabel("# Points")
     plt.ylabel("Memory (GB)")
