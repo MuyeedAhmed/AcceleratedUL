@@ -7,6 +7,7 @@ import time
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
+from scipy.stats import gmean
 
 import matplotlib.pyplot as plt
 
@@ -214,11 +215,70 @@ def Batch(algo):
     plt.ylabel('ARI')
     # plt.legend()
     plt.show()
+
+
+def BatchAvgPlot(algo, Y):
+    df = pd.read_csv("Stats/Ablation/BatchSizeTest_"+algo+".csv")
+
+    grouppedByFilename = []
+
+    for filename, group in df.groupby('Filename'):
+        if Y == "Time":
+            max_time = group['Time'].max()
+            group_y = group['Time'] / max_time
+        else:
+            group_y = group['ARI']
+        grouppedByFilename.append((group['BatchSize'], group_y, filename))
+        
+    batch_dict = {}
+    for batch_sizes, y, filename in grouppedByFilename:
+        for i in batch_sizes.index:
+            if batch_sizes[i] not in batch_dict:
+                batch_dict[batch_sizes[i]] = []
+            batch_dict[batch_sizes[i]].append(y[i])
+    ys = []
+    xs = []
+    for k, l in batch_dict.items():
+        avg = np.mean(l)
+        ys.append(avg)
+        xs.append(k)
+    drawPolyFit(xs, ys, algo, 'Batch Size', Y)
     
+def drawPolyFit(x, y, algo, x_label, y_label):
+    degree = 2
+    coefficients = np.polyfit(x, y, degree)
+    poly_function = np.poly1d(coefficients)
+    # x_fit = np.linspace(min(x), 2500, 100)
+    x_fit = np.linspace(min(x), max(x), 100)
+    y_fit = poly_function(x_fit)
+    plt.plot(x, y, "^", label=f'{algo}')
+    plt.plot(x_fit, y_fit, label=f'Polyfit {algo}')
+
+    # plt.title(algo)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    # plt.show() # Remove this comment for separate plots
+
+def BatchTest():
+    BatchAvgPlot("DBSCAN", "Time")
+    BatchAvgPlot("AP", "Time")
+    BatchAvgPlot("HAC", "Time")
+    BatchAvgPlot("SC", "Time")
+    plt.savefig('Figures/Ablation_Batch_Time.pdf', bbox_inches='tight')
+    plt.show()
+    BatchAvgPlot("DBSCAN", "ARI")
+    BatchAvgPlot("AP", "ARI")
+    BatchAvgPlot("HAC", "ARI")
+    BatchAvgPlot("SC", "ARI")
+    plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
+    plt.show()
+    
+BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
-Batch("HAC")
+
 # Batch("SC")
 # RefereeARIvsTime()
 
