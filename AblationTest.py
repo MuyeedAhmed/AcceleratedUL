@@ -54,7 +54,7 @@ def BoxPlotReferee():
     plt.ylabel('Time(s)')
     plt.show()
 
-def RefereeARIvsTime():
+def RefereeARIvsTime_old():
     df = pd.read_csv("Utility&Test/Stats/DBSCAN_Ablation_NoAnomaly.csv")
 
     comp_algos = ["AP", "KM", "DBS", "HAC", "AVG"] 
@@ -94,7 +94,49 @@ def RefereeARIvsTime():
     plt.ylabel('ARI x Time')
     plt.show()
     
-RefereeARIvsTime()
+def RefereeARIvsTime():
+    algo = "AP"
+    df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
+    # sns.boxplot(x='Referee', y='Time', data=df)
+    # plt.title(algo + ' - Time')
+    # plt.xlabel('Referee')
+    # plt.ylabel('Time')
+    # plt.show()
+    
+    # sns.violinplot(x='Referee', y='Time', data=df)
+    # plt.title(algo + ' - Time')
+    # plt.xlabel('Referee')
+    # plt.ylabel('Time')
+    # plt.show()
+
+    # sns.boxplot(x='Referee', y='ARI', data=df)
+    # plt.title(algo + ' - ARI')
+    # plt.xlabel('Referee')
+    # plt.ylabel('ARI')
+    # plt.show()
+    
+    # sns.violinplot(x='Referee', y='ARI', data=df)
+    # plt.title(algo + ' - ARI')
+    # plt.xlabel('Referee')
+    # plt.ylabel('ARI')
+    # plt.show()
+    # Initialize lists to store normalized values
+    
+    scaler = MinMaxScaler(feature_range=(0, 1)) 
+    df["ARI"] = scaler.fit_transform(df[["ARI"]])
+
+    
+    df["ARI"] = -np.log(df[["ARI"]])
+    grouped = df.groupby('Referee')
+
+    df['Normalized_Time'] = df.groupby('Referee')['Time'].transform(lambda x: (x/x.max()))
+    df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
+
+    sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
+    plt.title(algo + ' - ARI_Normalized_Time')
+    plt.xlabel('Referee')
+    # plt.ylabel('ARI')
+    plt.show()
 
 def ScatterReferee():
     df = pd.read_csv("Utility&Test/Stats/DBSCAN_Ablation_NoAnomaly.csv")
@@ -124,34 +166,60 @@ def ScatterReferee():
     plt.show()
 
 def Batch(algo):
-    df = pd.read_csv("Utility&Test/Stats/BatchSizeTest_"+algo+".csv")
     # df = pd.read_csv("Utility&Test/Stats/BatchSizeTest_"+algo+".csv")
+    # df = pd.read_csv("Utility&Test/Stats/BatchSizeTest_"+algo+".csv")
+    df = pd.read_csv("Stats/Ablation/BatchSizeTest_"+algo+".csv")
+
+    all_normalized_time = []
 
     for filename, group in df.groupby('Filename'):
-        # if "vote" not in filename:
-        #     continue
-        plt.plot(group['BatchSize'], group['Time'], label=filename)
+        max_time = group['Time'].max()
+        normalized_time = group['Time'] / max_time
+        all_normalized_time.append((group['BatchSize'], normalized_time, filename))
+
+        # plt.plot(group['BatchSize'], normalized_time, label=filename)
+
+        # # plt.plot(group['BatchSize'], group['Time'], label=filename)
         
-        plt.title(algo+filename)
-        plt.xlabel('Batch Size')
-        plt.ylabel('Time')
-        # plt.legend()
-        plt.show()
+        # plt.title(algo+filename)
+        # plt.xlabel('Batch Size')
+        # plt.ylabel('Time')
+        # # plt.legend()
+        # plt.show()
     
+    for batch_sizes, normalized_times, filename in all_normalized_time:
+        plt.plot(batch_sizes, normalized_times, label=filename)
+    plt.title(algo + " - Time")
+    plt.xlabel('Batch Size')
+    plt.ylabel('Normalized Time')
+    # plt.legend()
+    plt.show()
+
+    all_normalized_ari = []
     for filename, group in df.groupby('Filename'):
-        # if "vote" not in filename:
-        #     continue
-        plt.plot(group['BatchSize'], group['ARI'], label=filename)
+        all_normalized_ari.append((group['BatchSize'], group['ARI'], filename))
+
+        # plt.plot(group['BatchSize'], group['ARI'], label=filename)
         
-        plt.title(filename)
-        plt.xlabel('Batch Size')
-        plt.ylabel('ARI')
-        # plt.legend()
-        plt.show()
-
-
+        # plt.title(filename)
+        # plt.xlabel('Batch Size')
+        # plt.ylabel('ARI')
+        # # plt.legend()
+        # plt.show()
+    
+    for batch_sizes, ari, filename in all_normalized_ari:
+        plt.plot(batch_sizes, ari, label=filename)
+    plt.title(algo + " - ARI")
+    plt.xlabel('Batch Size')
+    plt.ylabel('ARI')
+    # plt.legend()
+    plt.show()
+    
 # BoxPlotReferee()
 # BoxPlotMode()
-# Batch("HAC")
+# Batch("DBSCAN")
+Batch("HAC")
+# Batch("SC")
+# RefereeARIvsTime()
 
 # ScatterReferee()
