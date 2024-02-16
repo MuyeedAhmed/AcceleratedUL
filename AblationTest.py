@@ -217,7 +217,7 @@ def Batch(algo):
     plt.show()
 
 
-def BatchAvgPlot(algo, Y):
+def BatchAvgPlot(algo, Y, color):
     df = pd.read_csv("Stats/Ablation/BatchSizeTest_"+algo+".csv")
 
     grouppedByFilename = []
@@ -242,17 +242,17 @@ def BatchAvgPlot(algo, Y):
         avg = np.mean(l)
         ys.append(avg)
         xs.append(k)
-    drawPolyFit(xs, ys, algo, 'Batch Size', Y)
+    drawPolyFit(xs, ys, algo, 'Batch Size', Y, color)
     
-def drawPolyFit(x, y, algo, x_label, y_label):
+def drawPolyFit(x, y, algo, x_label, y_label, color):
     degree = 2
     coefficients = np.polyfit(x, y, degree)
     poly_function = np.poly1d(coefficients)
     # x_fit = np.linspace(min(x), 2500, 100)
     x_fit = np.linspace(min(x), max(x), 100)
     y_fit = poly_function(x_fit)
-    plt.plot(x, y, "^", label=f'{algo}')
-    plt.plot(x_fit, y_fit, label=f'Polyfit {algo}')
+    plt.plot(x, y, "o", label=f'{algo}', color=color)
+    plt.plot(x_fit, y_fit, '--', label=f'Polyfit {algo}', color=color)
 
     # plt.title(algo)
     plt.xlabel(x_label)
@@ -261,16 +261,16 @@ def drawPolyFit(x, y, algo, x_label, y_label):
     # plt.show() # Remove this comment for separate plots
 
 def BatchTest():
-    BatchAvgPlot("DBSCAN", "Time")
-    BatchAvgPlot("AP", "Time")
-    BatchAvgPlot("HAC", "Time")
-    BatchAvgPlot("SC", "Time")
+    BatchAvgPlot("DBSCAN", "Time", "#FFA500")
+    BatchAvgPlot("AP", "Time", "#6F00FF")
+    BatchAvgPlot("HAC", "Time", "#32CD32")
+    BatchAvgPlot("SC", "Time", "#FF00FF")
     plt.savefig('Figures/Ablation_Batch_Time.pdf', bbox_inches='tight')
     plt.show()
-    BatchAvgPlot("DBSCAN", "ARI")
-    BatchAvgPlot("AP", "ARI")
-    BatchAvgPlot("HAC", "ARI")
-    BatchAvgPlot("SC", "ARI")
+    BatchAvgPlot("DBSCAN", "ARI", "#FFA500")
+    BatchAvgPlot("AP", "ARI", "#6F00FF")
+    BatchAvgPlot("HAC", "ARI", "#32CD32")
+    BatchAvgPlot("SC", "ARI", "#FF00FF")
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
