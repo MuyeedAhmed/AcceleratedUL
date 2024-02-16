@@ -8,10 +8,6 @@ import numpy as np
 
 folderpath = '../Openml/'
 
-
-        
-        
-    
 def ReadFile(file):
     df = pd.read_csv(folderpath+file+".csv")
     r = df.shape[0]
@@ -59,7 +55,7 @@ def TestBatchSize(algo, X, y, filename):
         ari = np.mean(aris)
         time_ = np.mean(times)
         
-        f=open("Stats/Ablation/BatchSizeTest_" + algo + ".csv", "a")
+        f=open("Stats/Ablation/BatchSizeTest_" + algo + "_New.csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
         f.close()
 
@@ -158,9 +154,7 @@ def InitStatsFile(algo, test):
     
 if __name__ == '__main__':
     algo = sys.argv[1]
-    test = sys.argv[2]
-    # test = "Referee"
-    
+    test = sys.argv[2]    
     master_files = glob.glob(folderpath+"*.csv")
     
     for i in range(len(master_files)):
@@ -176,8 +170,6 @@ if __name__ == '__main__':
     master_files.sort()
     
     for file in master_files:
-        # if "BNG(vote)_OpenML" not in file:
-        #     continue
         X, y = ReadFile(file)
         
         if test == "Referee":
