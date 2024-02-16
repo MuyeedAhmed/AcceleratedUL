@@ -134,9 +134,9 @@ def RefereeARIvsTime():
     df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
 
     sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
-    plt.title(algo + ' - ARI_Normalized_Time')
+    plt.title(algo)
     plt.xlabel('Referee')
-    # plt.ylabel('ARI')
+    plt.ylabel('-log(Normalized ARI) * Normalized Time')
     plt.show()
 
 def ScatterReferee():
@@ -245,6 +245,8 @@ def BatchAvgPlot(algo, Y, color):
     drawPolyFit(xs, ys, algo, 'Batch Size', Y, color)
     
 def drawPolyFit(x, y, algo, x_label, y_label, color):
+    if algo == "SC":
+        algo = "SpecC"
     degree = 2
     coefficients = np.polyfit(x, y, degree)
     poly_function = np.poly1d(coefficients)
@@ -256,7 +258,7 @@ def drawPolyFit(x, y, algo, x_label, y_label, color):
 
     # plt.title(algo)
     plt.xlabel(x_label)
-    plt.ylabel(y_label)
+    plt.ylabel((y_label if y_label is not "Time" else "Normalized Time"))
     plt.legend()
     # plt.show() # Remove this comment for separate plots
 
@@ -280,6 +282,6 @@ BatchTest()
 # Batch("DBSCAN")
 
 # Batch("SC")
-# RefereeARIvsTime()
+RefereeARIvsTime()
 
 # ScatterReferee()
