@@ -165,7 +165,8 @@ class PAU_Clustering:
         p50 = np.percentile(distance_values, 50)
         eps = np.linspace(p5, p50, 10)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
-    
+        print("self.parameters[0][2]", self.parameters[0][2])
+        
     def determineParam(self):
         batch_index = 0
         for params in self.parameters:
@@ -174,7 +175,10 @@ class PAU_Clustering:
             f.write("Batch,ParameterIndex,Compare,Time\n")
             f.close()
             start_index = batch_index
+            print("len(params[2])", len(params[2]))
+            print("p_v_i")
             for p_v_i in range(len(params[2])):
+                print("\t", p_v_i)
                 params[1] = params[2][p_v_i]
                 parameters_to_send = [p[1] for p in self.parameters]
                 t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, p_v_i))
@@ -680,7 +684,7 @@ class PAU_Clustering:
                 self.batch_count = 100
             else:
                 self.batch_count = int(self.X.shape[0]/100000)*100
-        
+        print(self.batch_count)
         self.subSample()
         if self.algoName == "DBSCAN":
             self.set_DBSCAN_param()
