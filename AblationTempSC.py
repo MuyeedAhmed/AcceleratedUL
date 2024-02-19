@@ -175,10 +175,10 @@ if __name__ == '__main__':
     
     master_files.sort()
     
-    fastfiles = ["numerai28.6_OpenML",
-                 "bank-marketing_OpenML", 
-                 "BNG(vote)_OpenML", 
-                 "fried_OpenML"]
+    fastfiles = ["BNG(2dplanes)_OpenML",
+                 "Diabetes130US_OpenML", 
+                 "spoken-arabic-digit_OpenML", 
+                 "BNG(pwLinear)_OpenML"]
     
     for file in master_files:
         if file not in fastfiles:

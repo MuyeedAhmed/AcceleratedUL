@@ -55,7 +55,7 @@ def TestBatchSize(algo, X, y, filename):
         ari = np.mean(aris)
         time_ = np.mean(times)
         
-        f=open("Stats/Ablation/BatchSizeTest_" + algo + "_New.csv", "a")
+        f=open("Stats/Ablation/BatchSizeTest_" + algo + ".csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
         f.close()
 
@@ -78,14 +78,17 @@ def TestRefereeClAlgo(algo, X, y, filename):
         
         aris=[]
         times=[]
-        for i in range(1):
-            ari, time_ = clustering.run()
-            aris.append(ari)
-            times.append(time_)
-        clustering.destroy()
-        ari = np.mean(aris)
-        time_ = np.mean(times)
-        
+        try:
+            for i in range(1):
+                ari, time_ = clustering.run()
+                aris.append(ari)
+                times.append(time_)
+            clustering.destroy()
+            ari = np.mean(aris)
+            time_ = np.mean(times)
+        except:
+            print(params_cl_algo, " failed for ", filename)
+            continue
         f=open("Stats/Ablation/Ablation_RefereeClAlgo_" + algo + ".csv", "a")
         f.write(filename+','+str(params_cl_algo)+','+str(time_)+','+str(ari)+'\n')
         f.close()
