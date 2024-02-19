@@ -95,8 +95,7 @@ def RefereeARIvsTime_old():
     plt.ylabel('ARI x Time')
     plt.show()
     
-def RefereeARIvsTime():
-    algo = "AP"
+def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
     # sns.boxplot(x='Referee', y='Time', data=df)
     # plt.title(algo + ' - Time')
@@ -137,6 +136,7 @@ def RefereeARIvsTime():
     plt.title(algo)
     plt.xlabel('Referee')
     plt.ylabel('-log(Normalized ARI) * Normalized Time')
+    plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
     plt.show()
 
 def ScatterReferee():
@@ -282,6 +282,6 @@ BatchTest()
 # Batch("DBSCAN")
 
 # Batch("SC")
-RefereeARIvsTime()
+RefereeARIvsTime("HAC")
 
 # ScatterReferee()
