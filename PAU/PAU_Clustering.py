@@ -142,7 +142,7 @@ class PAU_Clustering:
     def set_DBSCAN_param(self):
         #min_samples
         batch_size = int(len(self.X)/self.batch_count)
-        min_samples = np.linspace(2, int(np.sqrt(batch_size)), 10)
+        min_samples = np.linspace(2, int(np.sqrt(batch_size)), 5)
         #eps
         distance_values = []
         for _ in range(3):
@@ -163,7 +163,7 @@ class PAU_Clustering:
                 print("45th Percentile of distance is: ", p5)
                 raise Exception('Stopped: Percentile Issue')
         p50 = np.percentile(distance_values, 50)
-        eps = np.linspace(p5, p50, 10)
+        eps = np.linspace(p5, p50, 5)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
         print("self.parameters[0][2]", self.parameters[0][2])
         
@@ -176,9 +176,7 @@ class PAU_Clustering:
             f.close()
             start_index = batch_index
             print("len(params[2])", len(params[2]))
-            print("p_v_i")
             for p_v_i in range(len(params[2])):
-                print("\t", p_v_i)
                 params[1] = params[2][p_v_i]
                 parameters_to_send = [p[1] for p in self.parameters]
                 t = threading.Thread(target=self.worker_determineParam, args=(parameters_to_send,self.X_batches[batch_index], self.y_batches[batch_index], batch_index, p_v_i))
@@ -233,10 +231,12 @@ class PAU_Clustering:
         elif self.algoName == "DBSCAN":
             c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
             l = c.labels_
+            
         t1 = time.time()
         cost = t1-t0
         ari_comp = self.getARI_Comp(X, l)
         saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(cost)+"\n"    
+        print("saveStr", saveStr)
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
