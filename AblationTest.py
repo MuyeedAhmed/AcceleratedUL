@@ -276,7 +276,7 @@ def BatchTest():
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
-BatchTest()
+# BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
