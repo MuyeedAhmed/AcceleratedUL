@@ -53,6 +53,7 @@ def TestBatchSize(algo, X, y, filename):
         times=[]
         for i in range(r_iteration):
             ari, time_ = clustering.run()
+            
             aris.append(ari)
             times.append(time_)
         clustering.destroy()
@@ -64,10 +65,10 @@ def TestBatchSize(algo, X, y, filename):
         f.close()
 
 def TestRefereeClAlgo(algo, X, y, filename):
-    print(filename, end=" ")
+    print(filename, X.shape[0])
     params_cl_algos = ["AP", "KM", "DBS", "HAC", "INERTIA"]
     for params_cl_algo in params_cl_algos:
-        if params_cl_algo == algo:
+        if params_cl_algo == algo or (params_cl_algo == "DBS" and algo == "DBSCAN"):
             continue
         print(params_cl_algo)
         if algo == "AP":
@@ -82,13 +83,18 @@ def TestRefereeClAlgo(algo, X, y, filename):
         
         aris=[]
         times=[]
-        for i in range(1):
-            ari, time_ = clustering.run()
-            aris.append(ari)
-            times.append(time_)
-        clustering.destroy()
-        ari = np.mean(aris)
-        time_ = np.mean(times)
+        try:
+            for i in range(1):
+                ari, time_ = clustering.run()
+                print("done")
+                aris.append(ari)
+                times.append(time_)
+            clustering.destroy()
+            ari = np.mean(aris)
+            time_ = np.mean(times)
+        except:
+            print(params_cl_algo, " failed for ", filename)
+            continue
         
         f=open("Stats/Ablation/Ablation_RefereeClAlgo_" + algo + ".csv", "a")
         f.write(filename+','+str(params_cl_algo)+','+str(time_)+','+str(ari)+'\n')
