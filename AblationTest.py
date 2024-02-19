@@ -135,7 +135,7 @@ def RefereeARIvsTime(algo):
     sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
     plt.title(algo)
     plt.xlabel('Referee')
-    plt.ylabel('-log(Normalized ARI) * Normalized Time')
+    plt.ylabel('$C_{A\times T}$')
     plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
     plt.show()
 
@@ -276,12 +276,13 @@ def BatchTest():
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
-BatchTest()
+# BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
 
 # Batch("SC")
-# RefereeARIvsTime("HAC")
+RefereeARIvsTime("HAC")
+RefereeARIvsTime("AP")
 
 # ScatterReferee()
