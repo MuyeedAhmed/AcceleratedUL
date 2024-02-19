@@ -49,7 +49,7 @@ def draw_AP_time(algo, mode, system):
         x_ss = [1000,2000,3000,6000,9000,12000,15000,20000]
         
 
-        plt.plot(x_ss, y_ss, label="SAC", color='darkorange')
+        plt.plot(x_ss, y_ss, label="ACE", color='darkorange')
         plt.plot(x_def, y_def, label="Default", color='steelblue')
 
         
@@ -81,8 +81,11 @@ def draw_sc_memory():
     # print(memory_s[-1])
     
     # plt.plot(rows, memory_d, label="Default")
-    plt.plot(rows, memory_s, label="SAC", color='darkorange')
-    plt.axvline(x = 150001, color = 'black', linestyle = ':') 
+    plt.plot(rows, memory_s, label="ACE", color='darkorange')
+    plt.axvline(x = 150001, color = 'black', linestyle = ':')
+    plt.text(190001, 7500, 'Maximum observed memory requirement due to resource limitation', 
+         color = 'black', rotation = 90, 
+         rotation_mode = 'anchor')
     plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
     plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='#949494', linestyle='--')
     plt.grid(False)
@@ -190,4 +193,4 @@ def draw_SC(algo, mode, system):
         # times.at[index, "Estimated_Time"] = prediction
 
 draw_sc_memory()
-draw_AP_time("AP", "Default", "Jimmy_EST")
+# draw_AP_time("AP", "Default", "Jimmy_EST")

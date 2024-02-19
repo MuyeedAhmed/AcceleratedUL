@@ -145,14 +145,14 @@ def boxPlot_algo(algo):
         num_missing_def_001 = len(longer_list) - len(def_001)
         def_001 += [np.nan] * num_missing_def_001
         
-        # my_dict = {'Default (R)': default, 'Tol:0.001': def_001, 'SAC (R)':ss_filtered, 'SAC (All Datasets)': ss}
-        my_dict = {'Default': default, 'Tol:0.001': def_001, 'SAC':ss_filtered}
-        my_dict_width = {'Default (R)': default, 'SAC (All Datasets)': ss}
+        # my_dict = {'Default (R)': default, 'Tol:0.001': def_001, 'ACE (R)':ss_filtered, 'ACE (All Datasets)': ss}
+        my_dict = {'Default': default, 'Tol:0.001': def_001, 'ACE':ss_filtered}
+        my_dict_width = {'Default (R)': default, 'ACE (All Datasets)': ss}
         
     else:
-        # my_dict = {'Default (R)': default, 'SAC (R)':ss_filtered, 'SAC (All Datasets)': ss}
-        my_dict = {'Default': default, 'SAC':ss_filtered}
-        my_dict_width = {'Default (R)': default, 'SAC (All Datasets)': ss}
+        # my_dict = {'Default (R)': default, 'ACE (R)':ss_filtered, 'ACE (All Datasets)': ss}
+        my_dict = {'Default': default, 'ACE':ss_filtered}
+        my_dict_width = {'Default (R)': default, 'ACE (All Datasets)': ss}
     
     df = pd.DataFrame(my_dict)
     
@@ -179,7 +179,7 @@ def boxPlot_algo(algo):
     for patch, color in zip(box_plot['boxes'], colors):
         patch.set_facecolor(color)
 
-    ax.set_xticklabels(['Default\n(R: '+str(default_count)+' Datasets)', 'SAC\n(All: 164 Datasets)'], fontsize=14)
+    ax.set_xticklabels(['Default\n(R: '+str(default_count)+' Datasets)', 'ACE\n(All: 164 Datasets)'], fontsize=14)
     ax.set_ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
@@ -211,7 +211,7 @@ def boxplot_sac():
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
     # plt.yscale('log')
-    fig.savefig('Figures/ARI_SAC.pdf', bbox_inches='tight')
+    fig.savefig('Figures/ARI_ACE.pdf', bbox_inches='tight')
     
 # boxplot_sac()    
     
