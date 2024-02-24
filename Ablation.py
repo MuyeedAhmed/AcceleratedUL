@@ -171,6 +171,15 @@ def InitStatsFile(algo, test):
             done_files = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_" + algo + ".csv")
             done_files = done_files["Filename"].to_numpy()
             return done_files
+    elif test == "NoRef":
+        if os.path.exists("Stats/Ablation/Ablation_NoRef_" + algo + ".csv") == 0:
+            f=open("Stats/Ablation/Ablation_NoRef_" + algo + ".csv", "w")
+            f.write('Filename,Time,ARI\n')
+            f.close()
+        else:
+            done_files = pd.read_csv("Stats/Ablation/Ablation_NoRef_" + algo + ".csv")
+            done_files = done_files["Filename"].to_numpy()
+            return done_files
     elif test == "Mode":
         if os.path.exists("Stats/Ablation/Ablation_Mode_" + algo + ".csv") == 0:
             f=open("Stats/Ablation/Ablation_Mode_" + algo + ".csv", "w")

@@ -274,9 +274,6 @@ class PAU_Clustering:
             
     
     def rerun(self):
-        if self.bestParams == []:
-            print("Determine best parameters before this step.")
-            return
         
         threads = []
         batch_index = 0
@@ -305,25 +302,20 @@ class PAU_Clustering:
     def worker_rerun(self, parameter, X, y, batch_index):
         if self.rerun_mode == "A":
             if self.algoName == "AP":
-                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+                c = AffinityPropagation().fit(X)
                 l = c.labels_
             elif self.algoName == "SC":
-                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
-                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
-                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
-                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+                c = SpectralClustering().fit(X)
                 l = c.labels_
             elif self.algoName == "GMM":
-                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
-                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
-                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
+                c = GaussianMixture().fit(X)
             
                 l = c.predict(X)
             elif self.algoName == "HAC":
-                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
+                c = AgglomerativeClustering().fit(X)
                 l = c.labels_
             elif self.algoName == "DBSCAN":
-                c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
+                c = DBSCAN().fit(X)
                 l = c.labels_    
             X["y"] = y
             X["l"] = l
@@ -335,17 +327,11 @@ class PAU_Clustering:
                 ll.append(c.predict(X))
 
             if self.algoName == "AP":
-                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
-            
+                c = AffinityPropagation().fit(X)
             elif self.algoName == "SC":
-                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
-                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
-                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
-                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
+                c = SpectralClustering().fit(X)
             elif self.algoName == "GMM":
-                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
-                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
-                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
+                c = GaussianMixture().fit(X)
             
             l = c.predict(X)
             ll.append(l)
