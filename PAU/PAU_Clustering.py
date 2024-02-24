@@ -393,7 +393,9 @@ class PAU_Clustering:
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         csv_files.sort()
         while len(csv_files) > 1:
+            print("len(csv_files)", len(csv_files))
             for i in range(0, len(csv_files)-1, 2):
+                print("Start")
                 file1 = csv_files[i]
                 file2 = csv_files[i+1]
                 df1 = pd.read_csv(file1)
@@ -417,6 +419,7 @@ class PAU_Clustering:
                 
                 global_centers = []
                 global_centers_frequency = []
+                print("Start global_centers_frequency.append")
 
                 global_centers_count = len(unique_labels1)
                 for i in unique_labels1:
@@ -424,6 +427,7 @@ class PAU_Clustering:
                     global_centers_frequency.append(len(X_1[labels1 == i]))
                 
                 df2["ll"] = -2
+                print("Start nearest_cluster")
                 
                 for i in unique_labels2:
                     c = X_2[labels2 == i].mean(axis=0)
@@ -432,7 +436,8 @@ class PAU_Clustering:
                     df2.loc[df2['l'] == i, 'll'] = nearest_cluster
                 df2 = df2.drop("l", axis=1)
                 df2 = df2.rename(columns={'ll': 'l'})
-                
+                print("Done nearest_cluster")
+        
                 df = pd.concat([df1, df2])
                 df.to_csv(file2, index=False)
             
