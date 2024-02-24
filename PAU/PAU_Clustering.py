@@ -291,6 +291,8 @@ class PAU_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
+        print("Before Merge")
+
         if self.mergeStyle == "Distance":
             self.constantKMerge()
         elif self.mergeStyle == "DistanceRatio":
@@ -300,6 +302,7 @@ class PAU_Clustering:
         
         
     def worker_rerun(self, parameter, X, y, batch_index):
+        print("batch_index:", batch_index, end=' ')
         if self.rerun_mode == "A":
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(X)
@@ -666,9 +669,11 @@ class PAU_Clustering:
                 self.batch_count = 100
             else:
                 self.batch_count = int(self.X.shape[0]/100000)*100
-        
         self.subSample()
+        print("subSample")
         self.rerun()
+        print("rerun")
+
         t1 = time.time()
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
