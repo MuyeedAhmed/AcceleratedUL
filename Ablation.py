@@ -206,7 +206,7 @@ if __name__ == '__main__':
         if test == "Referee":
             TestRefereeClAlgo(algo, X, y, file)
         elif test == "NoRef":
-            TestNoRef(algo, X, y, filename)
+            TestNoRef(algo, X, y, file)
         elif test == "Batch":
             TestBatchSize(algo, X, y, file)
         elif test == "Mode":
