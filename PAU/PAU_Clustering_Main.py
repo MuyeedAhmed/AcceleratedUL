@@ -682,6 +682,12 @@ class PAU_Clustering:
                 self.batch_count = int(self.X.shape[0]/100000)*100
         
         self.subSample()
+        if self.algoName == "DBSCAN":
+            self.set_DBSCAN_param()
+        # print("Determine Parameters", end=' - ')
+        self.determineParam()
+        self.subSample()
+        # print("Rerun")
         self.rerun()
         t1 = time.time()
         ari_ss = self.AUL_ARI()

@@ -93,6 +93,34 @@ def TestRefereeClAlgo(algo, X, y, filename):
         f.write(filename+','+str(params_cl_algo)+','+str(time_)+','+str(ari)+'\n')
         f.close()
 
+def TestNoRef(algo, X, y, filename):
+    print(filename)
+    if algo == "AP":
+        bc = int(X.shape[0]/100)
+    else:
+        bc = 0
+        
+    clustering = PAU_Clustering(algoName=algo, batch_count=bc)
+    clustering.X = X
+    clustering.y = y
+
+    
+    aris=[]
+    times=[]
+    try:
+        for i in range(1):
+            ari, time_ = clustering.run()
+            aris.append(ari)
+            times.append(time_)
+        clustering.destroy()
+        ari = np.mean(aris)
+        time_ = np.mean(times)
+    except:
+        return
+    f=open("Stats/Ablation/Ablation_NoRef_" + algo + ".csv", "a")
+    f.write(filename+','+str(time_)+','+str(ari)+'\n')
+    f.close()
+
 
 def TestMode(algo, X, y, filename):
     print(filename, end=" ")
@@ -177,6 +205,8 @@ if __name__ == '__main__':
         
         if test == "Referee":
             TestRefereeClAlgo(algo, X, y, file)
+        elif test == "NoRef":
+            TestNoRef(algo, X, y, filename)
         elif test == "Batch":
             TestBatchSize(algo, X, y, file)
         elif test == "Mode":
