@@ -134,8 +134,8 @@ def RefereeARIvsTime(algo):
 
     sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
     plt.title(algo)
-    plt.xlabel('Referee')
-    plt.ylabel('$C_{A\times T}$')
+    plt.xlabel('Validator')
+    plt.ylabel('$C_{AxT}$', fontsize=14)
     plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
     plt.show()
 
@@ -242,7 +242,7 @@ def BatchAvgPlot(algo, Y, color):
         avg = np.mean(l)
         ys.append(avg)
         xs.append(k)
-    drawPolyFit(xs, ys, algo, 'Batch Size', Y, color)
+    drawPolyFit(xs, ys, algo, 'Partition Size', Y, color)
     
 def drawPolyFit(x, y, algo, x_label, y_label, color):
     if algo == "SC":
@@ -254,7 +254,7 @@ def drawPolyFit(x, y, algo, x_label, y_label, color):
     x_fit = np.linspace(min(x), max(x), 100)
     y_fit = poly_function(x_fit)
     plt.plot(x, y, "o", label=f'{algo}', color=color)
-    plt.plot(x_fit, y_fit, '--', label=f'Polyfit {algo}', color=color)
+    plt.plot(x_fit, y_fit, '--', label='', color=color)
 
     # plt.title(algo)
     plt.xlabel(x_label)
@@ -276,7 +276,7 @@ def BatchTest():
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
-# BatchTest()
+BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
