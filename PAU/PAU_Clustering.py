@@ -666,6 +666,10 @@ class PAU_Clustering:
         return ari
     
     def run(self):
+        if self.X.shape[1] > 50:
+            return -2,-2
+        if self.X.shape[0] > 250000:
+            return -2, -2
         t0 = time.time()
         if self.batch_count == 0:
             if self.X.shape[0] < 10000:    
