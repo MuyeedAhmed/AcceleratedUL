@@ -110,6 +110,8 @@ def TestNoRef(algo, X, y, filename):
     try:
         for i in range(1):
             ari, time_ = clustering.run()
+            if ari == -2:
+                return
             aris.append(ari)
             times.append(time_)
         clustering.destroy()
@@ -117,7 +119,7 @@ def TestNoRef(algo, X, y, filename):
         time_ = np.mean(times)
     except:
         return
-    f=open("Stats/Ablation/Ablation_NoRef_" + algo + ".csv", "a")
+    f=open("Stats/Ablation/Ablation_NoRef_" + algo + "_MergePar.csv", "a")
     f.write(filename+','+str(time_)+','+str(ari)+'\n')
     f.close()
 

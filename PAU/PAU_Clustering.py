@@ -388,66 +388,130 @@ class PAU_Clustering:
                 new_numbers.append(number)
         return new_numbers
     
-    
     def constantKMerge(self):
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         csv_files.sort()
-        while len(csv_files) > 1:
-            # print("len(csv_files)", len(csv_files))
-            for i in range(0, len(csv_files)-1, 2):
-                # print("Start")
-                file1 = csv_files[i]
-                file2 = csv_files[i+1]
-                df1 = pd.read_csv(file1)
-                df2 = pd.read_csv(file2)
-                
-                os.remove(file1)
-                os.remove(file2)
-                
-                X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
-                labels1 = df1["l"].to_numpy()
-                unique_labels1 = set(df1["l"])
-                X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
-                labels2 = df2["l"].to_numpy()
-                unique_labels2 = set(df2["l"])
-                
-                
-                if len(unique_labels1) == 1 and len(unique_labels2) == 1:
-                    df = pd.concat([df1, df2])
-                    df.to_csv(file2, index=False)
-                    continue
-                
-                global_centers = []
-                global_centers_frequency = []
-                # print("Start global_centers_frequency.append")
 
-                global_centers_count = len(unique_labels1)
-                for i in unique_labels1:
-                    global_centers.append(X_1[labels1 == i].mean(axis=0))
-                    global_centers_frequency.append(len(X_1[labels1 == i]))
-                
-                df2["ll"] = -2
-                # print("Start nearest_cluster")
-                
-                for i in unique_labels2:
-                    c = X_2[labels2 == i].mean(axis=0)
-                    distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
-                    nearest_cluster = distances.index(min(distances))
-                    df2.loc[df2['l'] == i, 'll'] = nearest_cluster
-                df2 = df2.drop("l", axis=1)
-                df2 = df2.rename(columns={'ll': 'l'})
-                # print("Done nearest_cluster")
-        
-                df = pd.concat([df1, df2])
-                df.to_csv(file2, index=False)
-            
+        while len(csv_files) > 1:
+            print("len(csv_files)", len(csv_files))
+            threads = []
+
+            for i in range(0, len(csv_files)-1, 2):
+                t = threading.Thread(target=self.process_files, args=(csv_files[i], csv_files[i+1]))
+                threads.append(t)
+                t.start()
+
+            for thread in threads:
+                thread.join()
+
             csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
             csv_files.sort()
-            
+
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         df = pd.read_csv(csv_files[0])
-        
+
         df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
+
+    def process_files(self, file1, file2):
+        df1 = pd.read_csv(file1)
+        df2 = pd.read_csv(file2)
+
+        os.remove(file1)
+        os.remove(file2)
+
+        X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
+        labels1 = df1["l"].to_numpy()
+        unique_labels1 = set(df1["l"])
+        X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
+        labels2 = df2["l"].to_numpy()
+        unique_labels2 = set(df2["l"])
+
+        if len(unique_labels1) == 1 and len(unique_labels2) == 1:
+            df = pd.concat([df1, df2])
+            df.to_csv(file2, index=False)
+            return
+
+        global_centers = []
+        global_centers_frequency = []
+
+        global_centers_count = len(unique_labels1)
+        for i in unique_labels1:
+            global_centers.append(X_1[labels1 == i].mean(axis=0))
+            global_centers_frequency.append(len(X_1[labels1 == i]))
+
+        df2["ll"] = -2
+
+        for i in unique_labels2:
+            c = X_2[labels2 == i].mean(axis=0)
+            distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
+            nearest_cluster = distances.index(min(distances))
+            df2.loc[df2['l'] == i, 'll'] = nearest_cluster
+        df2 = df2.drop("l", axis=1)
+        df2 = df2.rename(columns={'ll': 'l'})
+
+        df = pd.concat([df1, df2])
+        df.to_csv(file2, index=False)
+
+
+    # def constantKMerge(self):
+    #     csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+    #     csv_files.sort()
+    #     while len(csv_files) > 1:
+    #         # print("len(csv_files)", len(csv_files))
+    #         for i in range(0, len(csv_files)-1, 2):
+    #             # print("Start")
+    #             file1 = csv_files[i]
+    #             file2 = csv_files[i+1]
+    #             df1 = pd.read_csv(file1)
+    #             df2 = pd.read_csv(file2)
+                
+    #             os.remove(file1)
+    #             os.remove(file2)
+                
+    #             X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
+    #             labels1 = df1["l"].to_numpy()
+    #             unique_labels1 = set(df1["l"])
+    #             X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
+    #             labels2 = df2["l"].to_numpy()
+    #             unique_labels2 = set(df2["l"])
+                
+                
+    #             if len(unique_labels1) == 1 and len(unique_labels2) == 1:
+    #                 df = pd.concat([df1, df2])
+    #                 df.to_csv(file2, index=False)
+    #                 continue
+                
+    #             global_centers = []
+    #             global_centers_frequency = []
+    #             # print("Start global_centers_frequency.append")
+
+    #             global_centers_count = len(unique_labels1)
+    #             for i in unique_labels1:
+    #                 global_centers.append(X_1[labels1 == i].mean(axis=0))
+    #                 global_centers_frequency.append(len(X_1[labels1 == i]))
+                
+    #             df2["ll"] = -2
+    #             # print("Start nearest_cluster")
+                
+    #             for i in unique_labels2:
+    #                 c = X_2[labels2 == i].mean(axis=0)
+    #                 distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
+    #                 nearest_cluster = distances.index(min(distances))
+    #                 df2.loc[df2['l'] == i, 'll'] = nearest_cluster
+    #             df2 = df2.drop("l", axis=1)
+    #             df2 = df2.rename(columns={'ll': 'l'})
+    #             # print("Done nearest_cluster")
+        
+    #             df = pd.concat([df1, df2])
+    #             df.to_csv(file2, index=False)
+            
+    #         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+    #         csv_files.sort()
+            
+    #     csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
+    #     df = pd.read_csv(csv_files[0])
+        
+    #     df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         
         
     def mergeClusteringOutputs_AD(self):
@@ -668,7 +732,7 @@ class PAU_Clustering:
     def run(self):
         if self.X.shape[1] > 50:
             return -2,-2
-        if self.X.shape[0] > 250000:
+        if self.X.shape[0] < 250000:
             return -2, -2
         t0 = time.time()
         if self.batch_count == 0:
