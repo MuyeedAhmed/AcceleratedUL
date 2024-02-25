@@ -100,7 +100,7 @@ def TestNoRef(algo, X, y, filename):
     else:
         bc = 0
         
-    clustering = PAU_Clustering(algoName=algo, batch_count=bc)
+    clustering = PAU_Clustering(algoName=algo, batch_count=bc, fileName=filename)
     clustering.X = X
     clustering.y = y
 
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     master_files = [x for x in master_files if x in datasets_of_interest] 
     
     master_files.sort()
-    
+    master_files = ["BNG(audiology_COMMA_5000_COMMA_5)_OpenML", "BNG(sonar)_OpenML", "BNG(mfeat-fourier)_OpenML", "BNG(audiology_COMMA_1000_COMMA_1)_OpenML"]
     for file in master_files:
         X, y = ReadFile(file)
         
