@@ -1,4 +1,5 @@
 from PAU.PAU_Clustering import PAU_Clustering
+from PAU.PAU_Clustering_NoRef import PAU_Clustering_NoRef
 import os
 import sys
 import glob
@@ -93,6 +94,36 @@ def TestRefereeClAlgo(algo, X, y, filename):
         f.write(filename+','+str(params_cl_algo)+','+str(time_)+','+str(ari)+'\n')
         f.close()
 
+def TestNoRef(algo, X, y, filename):
+    print(filename)
+    if algo == "AP":
+        bc = int(X.shape[0]/100)
+    else:
+        bc = 0
+        
+    clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=bc, fileName=filename)
+    clustering.X = X
+    clustering.y = y
+
+    
+    aris=[]
+    times=[]
+    try:
+        for i in range(1):
+            ari, time_ = clustering.run()
+            if ari == -2:
+                return
+            aris.append(ari)
+            times.append(time_)
+        clustering.destroy()
+        ari = np.mean(aris)
+        time_ = np.mean(times)
+    except:
+        return
+    f=open("Stats/Ablation/Ablation_NoRef_" + algo + "_MergePar.csv", "a")
+    f.write(filename+','+str(time_)+','+str(ari)+'\n')
+    f.close()
+
 
 def TestMode(algo, X, y, filename):
     print(filename, end=" ")
@@ -143,6 +174,15 @@ def InitStatsFile(algo, test):
             done_files = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_" + algo + ".csv")
             done_files = done_files["Filename"].to_numpy()
             return done_files
+    elif test == "NoRef":
+        if os.path.exists("Stats/Ablation/Ablation_NoRef_" + algo + ".csv") == 0:
+            f=open("Stats/Ablation/Ablation_NoRef_" + algo + ".csv", "w")
+            f.write('Filename,Time,ARI\n')
+            f.close()
+        else:
+            done_files = pd.read_csv("Stats/Ablation/Ablation_NoRef_" + algo + ".csv")
+            done_files = done_files["Filename"].to_numpy()
+            return done_files
     elif test == "Mode":
         if os.path.exists("Stats/Ablation/Ablation_Mode_" + algo + ".csv") == 0:
             f=open("Stats/Ablation/Ablation_Mode_" + algo + ".csv", "w")
@@ -171,12 +211,14 @@ if __name__ == '__main__':
     master_files = [x for x in master_files if x in datasets_of_interest] 
     
     master_files.sort()
-    
+    # master_files = ["BNG(audiology_COMMA_5000_COMMA_5)_OpenML", "BNG(sonar)_OpenML", "BNG(mfeat-fourier)_OpenML", "BNG(audiology_COMMA_1000_COMMA_1)_OpenML"]
     for file in master_files:
         X, y = ReadFile(file)
         
         if test == "Referee":
             TestRefereeClAlgo(algo, X, y, file)
+        elif test == "NoRef":
+            TestNoRef(algo, X, y, file)
         elif test == "Batch":
             TestBatchSize(algo, X, y, file)
         elif test == "Mode":

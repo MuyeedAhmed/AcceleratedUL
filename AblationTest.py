@@ -94,7 +94,28 @@ def RefereeARIvsTime_old():
     plt.xlabel('Algorithms')
     plt.ylabel('ARI x Time')
     plt.show()
+
+def NoRefTest(algo):
+    df_n = pd.read_csv("Stats/Ablation/Ablation_NoRef_"+algo+".csv")
+    df_ace = pd.read_csv("Stats/Merged_SS.csv")
     
+    df = pd.merge(df_ace, df_n, on='Filename', how='inner')
+    df = df.loc[df["ARI"]!=-2]
+
+    df_selected = df[['ARI', 'ARI_'+algo]]
+    df_selected = df_selected.rename(columns={'ARI': 'Default', 'ARI_'+algo: 'With Validator'})
+
+    df_melted = df_selected.melt(var_name='Column', value_name='Value')
+    
+    sns.violinplot(x='Column', y='Value', data=df_melted)
+    plt.xlabel('')
+    plt.ylabel('ARI')
+    plt.title(algo)
+
+    plt.show()
+
+    
+
 def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
     # sns.boxplot(x='Referee', y='Time', data=df)
@@ -276,13 +297,22 @@ def BatchTest():
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
-BatchTest()
+    
+
+# BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# Batch("SC")
-RefereeARIvsTime("HAC")
-RefereeARIvsTime("AP")
+# # Batch("SC")
+# RefereeARIvsTime("HAC")
+# RefereeARIvsTime("AP")
 
 # ScatterReferee()
+
+NoRefTest("AP")
+NoRefTest("HAC")
+NoRefTest("DBSCAN")
+# NoRefTest("SC")
+
+
