@@ -292,7 +292,11 @@ class PAU_Clustering:
             for t in threads:
                 t.join()
         # print("Before Merge")
-
+        
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before Merge,'+str(time.time())+'\n')
+        f.close()
+        
         if self.mergeStyle == "Distance":
             self.constantKMerge()
         elif self.mergeStyle == "DistanceRatio":
@@ -719,14 +723,22 @@ class PAU_Clustering:
         
         indexes_to_delete = [index for index, element in enumerate(ll) if element == -1]
         if len(indexes_to_delete) != 0:
+            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+            f.write(self.fileName+',Before reassignAnomalies,'+str(time.time())+'\n')
+            f.close()
             ll = self.reassignAnomalies(df)
         else:
             return old_ari
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before deleteAnomalies,'+str(time.time())+'\n')
+        f.close()
         if deleteAnomalies:
             ll = [value for index, value in enumerate(ll) if index not in indexes_to_delete]
             yy = [value for index, value in enumerate(yy) if index not in indexes_to_delete]
         ari = adjusted_rand_score(yy, ll)
-        
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before done,'+str(time.time())+'\n')
+        f.close()
         return ari
     
     def run(self):
@@ -742,13 +754,26 @@ class PAU_Clustering:
                 self.batch_count = 100
             else:
                 self.batch_count = int(self.X.shape[0]/100000)*100
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before Partitioning,'+str(time.time())+'\n')
+        f.close()
         self.subSample()
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before Rerunning,'+str(time.time())+'\n')
+        f.close()
         # print("subSample")
         self.rerun()
         # print("rerun")
 
         t1 = time.time()
+        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
+        f.write(self.fileName+',Before AUL_ARI,'+str(time.time())+'\n')
+        f.close()
         ari_ss = self.AUL_ARI()
+        if ari_ss > 1 or ari_ss < -1:
+            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
+            f.write(self.fileName+','+str(ari_ss)+'\n')
+            f.close()
         time_ss = t1-t0 
         # print("\tTime: ", time_ss)
         return ari_ss, time_ss
