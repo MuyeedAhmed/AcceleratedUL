@@ -1,5 +1,7 @@
 from PAU.PAU_Clustering import PAU_Clustering
 from PAU.PAU_Clustering_NoRef import PAU_Clustering_NoRef
+from PAU.PAU_Clustering_TimeCalculation import PAU_Clustering_TimeCalculation
+
 import os
 import sys
 import glob
@@ -26,6 +28,35 @@ def ReadFile(file):
     X.fillna(X.mean(numeric_only=True).round(1), inplace=True)
     
     return X, y
+
+def TestBatchSizeModuleTime(algo, X, y, filename):
+    r = X.shape[0]
+    c = X.shape[1]
+    r_iteration = 3
+    
+    if r > 200000:
+        return
+    r_iteration = 1
+    
+    for BatchSize in range(100,1501,100):
+        BatchCount = int(r/BatchSize)
+        # BatchSize = int(r/BatchCount)
+        clustering = PAU_Clustering_TimeCalculation(algoName=algo,batch_count=BatchCount, fileName=filename)
+        clustering.X = X
+        clustering.y = y
+        aris=[]
+        times=[]
+        for i in range(r_iteration):
+            ari, time_ = clustering.run()
+            aris.append(ari)
+            times.append(time_)
+        clustering.destroy()
+        ari = np.mean(aris)
+        time_ = np.mean(times)
+        
+        f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + ".csv", "a")
+        f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
+        f.close()
 
 def TestBatchSize(algo, X, y, filename):
     r = X.shape[0]
@@ -223,6 +254,8 @@ if __name__ == '__main__':
             TestBatchSize(algo, X, y, file)
         elif test == "Mode":
             TestMode(algo, X, y, file)
+        elif test == "BT":
+            TestBatchSizeModuleTime(algo, X, y, file)
     
 
 
