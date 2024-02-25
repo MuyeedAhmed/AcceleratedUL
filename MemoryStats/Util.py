@@ -90,7 +90,7 @@ def draw(df_d, df_s, tm, algo, system):
     plt.plot(x_SS,y_SS, ".",color="blue")
         
     plt.grid(True)
-    plt.legend(["Default", "SAC"])
+    plt.legend(["Default", "ACE"])
     plt.xlabel("Points (Rows)")
 
     if tm == "Memory_Virtual_Max":
@@ -128,7 +128,7 @@ def drawBoxPlot(algo):
             df_merged = pd.concat([df_merged, df], axis=0)
     df_merged = df_merged.reset_index(drop=True)
     
-    df_merged['Mode'] = df_merged['Mode'].replace('SS', 'SAC')
+    df_merged['Mode'] = df_merged['Mode'].replace('SS', 'ACE')
     
     ''' Grouped Results'''    
     grouped = df_merged.groupby(['System', 'Mode'])

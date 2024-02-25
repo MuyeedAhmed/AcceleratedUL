@@ -94,9 +94,29 @@ def RefereeARIvsTime_old():
     plt.xlabel('Algorithms')
     plt.ylabel('ARI x Time')
     plt.show()
+
+def NoRefTest(algo):
+    df_n = pd.read_csv("Stats/Ablation/Ablation_NoRef_"+algo+".csv")
+    df_ace = pd.read_csv("Stats/Merged_SS.csv")
     
-def RefereeARIvsTime():
-    algo = "AP"
+    df = pd.merge(df_ace, df_n, on='Filename', how='inner')
+    df = df.loc[df["ARI"]!=-2]
+
+    df_selected = df[['ARI', 'ARI_'+algo]]
+    df_selected = df_selected.rename(columns={'ARI': 'Default', 'ARI_'+algo: 'With Validator'})
+
+    df_melted = df_selected.melt(var_name='Column', value_name='Value')
+    
+    sns.violinplot(x='Column', y='Value', data=df_melted)
+    plt.xlabel('')
+    plt.ylabel('ARI')
+    plt.title(algo)
+
+    plt.show()
+
+    
+
+def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
     # sns.boxplot(x='Referee', y='Time', data=df)
     # plt.title(algo + ' - Time')
@@ -135,8 +155,9 @@ def RefereeARIvsTime():
 
     sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
     plt.title(algo)
-    plt.xlabel('Referee')
-    plt.ylabel('-log(Normalized ARI) * Normalized Time')
+    plt.xlabel('Validator')
+    plt.ylabel('$C_{AxT}$', fontsize=14)
+    plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
     plt.show()
 
 def ScatterReferee():
@@ -242,7 +263,7 @@ def BatchAvgPlot(algo, Y, color):
         avg = np.mean(l)
         ys.append(avg)
         xs.append(k)
-    drawPolyFit(xs, ys, algo, 'Batch Size', Y, color)
+    drawPolyFit(xs, ys, algo, 'Partition Size', Y, color)
     
 def drawPolyFit(x, y, algo, x_label, y_label, color):
     if algo == "SC":
@@ -254,7 +275,7 @@ def drawPolyFit(x, y, algo, x_label, y_label, color):
     x_fit = np.linspace(min(x), max(x), 100)
     y_fit = poly_function(x_fit)
     plt.plot(x, y, "o", label=f'{algo}', color=color)
-    plt.plot(x_fit, y_fit, '--', label=f'Polyfit {algo}', color=color)
+    plt.plot(x_fit, y_fit, '--', label='', color=color)
 
     # plt.title(algo)
     plt.xlabel(x_label)
@@ -276,12 +297,22 @@ def BatchTest():
     plt.savefig('Figures/Ablation_Batch_ARI.pdf', bbox_inches='tight')
     plt.show()
     
-BatchTest()
+    
+
+# BatchTest()
 # BoxPlotReferee()
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# Batch("SC")
-RefereeARIvsTime()
+# # Batch("SC")
+# RefereeARIvsTime("HAC")
+# RefereeARIvsTime("AP")
 
 # ScatterReferee()
+
+NoRefTest("AP")
+NoRefTest("HAC")
+NoRefTest("DBSCAN")
+# NoRefTest("SC")
+
+

@@ -49,7 +49,7 @@ def draw_AP_time(algo, mode, system):
         x_ss = [1000,2000,3000,6000,9000,12000,15000,20000]
         
 
-        plt.plot(x_ss, y_ss, label="SAC", color='darkorange')
+        plt.plot(x_ss, y_ss, label="ACE", color='darkorange')
         plt.plot(x_def, y_def, label="Default", color='steelblue')
 
         
@@ -71,23 +71,25 @@ def draw_sc_memory():
     rows_predicted = [i for i in range(150000,1000001,10000)]
     # memory_d = (np.square(rows)*4*4)/1000000000
     
-    memory_d = [((x**2)*4*8)/1000000000  for x in rows]
-    memory_s = [(((x/100)**2)*4*8*10)/1000000000  for x in rows]
-    memory_obs = [((x**2)*4*8)/1000000000  for x in rows_observed]
-    memory_pred = [((x**2)*4*8)/1000000000  for x in rows_predicted]
+    memory_d = [((x**2)*4*8)/1000000000000  for x in rows]
+    memory_s = [(((x/100)**2)*4*8*10)/1000000000000  for x in rows]
+    memory_obs = [((x**2)*4*8)/1000000000000  for x in rows_observed]
+    memory_pred = [((x**2)*4*8)/1000000000000  for x in rows_predicted]
     # print(memory_d[0])
     # print(memory_d[-1])
     # print(memory_s[0])
     # print(memory_s[-1])
     
     # plt.plot(rows, memory_d, label="Default")
-    plt.plot(rows, memory_s, label="SAC", color='darkorange')
-    plt.axvline(x = 150001, color = 'black', linestyle = ':') 
+    plt.plot(rows, memory_s, label="ACE", color='darkorange')
+    plt.axvline(x = 150001, color = 'black', linestyle = ':')
+    plt.text(190001, 5, '#Points Limit on Our Systems', color = 'black', rotation = 90, rotation_mode = 'anchor')
+    # plt.text(220001, 7500, '(On our systems)', color = 'black', rotation = 90, rotation_mode = 'anchor')
     plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
     plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='#949494', linestyle='--')
     plt.grid(False)
     plt.xlabel("# Points")
-    plt.ylabel("Memory (GB)")
+    plt.ylabel("Memory (TB)")
     plt.title("Spectral Clustering")
     # plt.title(row["Filename"])
     plt.legend()
@@ -190,4 +192,4 @@ def draw_SC(algo, mode, system):
         # times.at[index, "Estimated_Time"] = prediction
 
 draw_sc_memory()
-draw_AP_time("AP", "Default", "Jimmy_EST")
+# draw_AP_time("AP", "Default", "Jimmy_EST")
