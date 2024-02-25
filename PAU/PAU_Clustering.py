@@ -720,7 +720,12 @@ class PAU_Clustering:
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         old_ari = adjusted_rand_score(yy, ll)
-        
+        if old_ari > 1 or old_ari < -1:
+            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
+            f.write(self.fileName+',old,'+str(old_ari)+'\n')
+            f.close()
+            df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
+            
         indexes_to_delete = [index for index, element in enumerate(ll) if element == -1]
         if len(indexes_to_delete) != 0:
             f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
@@ -739,11 +744,17 @@ class PAU_Clustering:
         f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
         f.write(self.fileName+',Before done,'+str(time.time())+'\n')
         f.close()
+        
+        if old_ari > 1 or old_ari < -1:
+            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
+            f.write(self.fileName+',new,'+str(old_ari)+'\n')
+            f.close()
+            df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         return ari
     
     def run(self):
-        if self.X.shape[1] > 50:
-            return -2,-2
+        # if self.X.shape[1] > 50:
+        #     return -2,-2
         # if self.X.shape[0] < 250000:
         #     return -2, -2
         t0 = time.time()
@@ -770,10 +781,7 @@ class PAU_Clustering:
         f.write(self.fileName+',Before AUL_ARI,'+str(time.time())+'\n')
         f.close()
         ari_ss = self.AUL_ARI()
-        if ari_ss > 1 or ari_ss < -1:
-            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
-            f.write(self.fileName+','+str(ari_ss)+'\n')
-            f.close()
+        
         time_ss = t1-t0 
         # print("\tTime: ", time_ss)
         return ari_ss, time_ss
