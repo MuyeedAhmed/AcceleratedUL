@@ -274,6 +274,9 @@ class PAU_Clustering:
             
     
     def rerun(self):
+        if self.bestParams == []:
+            print("Determine best parameters before this step.")
+            return
         
         threads = []
         batch_index = 0
@@ -291,12 +294,6 @@ class PAU_Clustering:
                 batch_index += 1
             for t in threads:
                 t.join()
-        # print("Before Merge")
-        
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before Merge,'+str(time.time())+'\n')
-        f.close()
-        
         if self.mergeStyle == "Distance":
             self.constantKMerge()
         elif self.mergeStyle == "DistanceRatio":
@@ -306,23 +303,27 @@ class PAU_Clustering:
         
         
     def worker_rerun(self, parameter, X, y, batch_index):
-        # print("batch_index:", batch_index, end=' ')
         if self.rerun_mode == "A":
             if self.algoName == "AP":
-                c = AffinityPropagation().fit(X)
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
                 l = c.labels_
             elif self.algoName == "SC":
-                c = SpectralClustering().fit(X)
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
                 l = c.labels_
             elif self.algoName == "GMM":
-                c = GaussianMixture().fit(X)
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
             
                 l = c.predict(X)
             elif self.algoName == "HAC":
-                c = AgglomerativeClustering().fit(X)
+                c = AgglomerativeClustering(n_clusters=self.n_cluster, metric=parameter[0], linkage=parameter[1]).fit(X)
                 l = c.labels_
             elif self.algoName == "DBSCAN":
-                c = DBSCAN().fit(X)
+                c = DBSCAN(eps=parameter[0][0], min_samples=int(parameter[0][1]), algorithm=parameter[1]).fit(X)
                 l = c.labels_    
             X["y"] = y
             X["l"] = l
@@ -334,11 +335,17 @@ class PAU_Clustering:
                 ll.append(c.predict(X))
 
             if self.algoName == "AP":
-                c = AffinityPropagation().fit(X)
+                c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
+            
             elif self.algoName == "SC":
-                c = SpectralClustering().fit(X)
+                c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+                                       n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
+                                       n_neighbors=parameter[5], assign_labels=parameter[6], 
+                                       degree=parameter[7], n_jobs=parameter[8]).fit(X)
             elif self.algoName == "GMM":
-                c = GaussianMixture().fit(X)
+                c = GaussianMixture(n_components=self.n_cluster, covariance_type=parameter[0], tol=parameter[1], 
+                                       reg_covar=parameter[2], max_iter=parameter[3], n_init=parameter[4], 
+                                       init_params=parameter[5], warm_start=parameter[6]).fit(X)
             
             l = c.predict(X)
             ll.append(l)
@@ -392,130 +399,61 @@ class PAU_Clustering:
                 new_numbers.append(number)
         return new_numbers
     
+    
     def constantKMerge(self):
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         csv_files.sort()
-
         while len(csv_files) > 1:
-            print("len(csv_files)", len(csv_files))
-            threads = []
-
             for i in range(0, len(csv_files)-1, 2):
-                t = threading.Thread(target=self.process_files, args=(csv_files[i], csv_files[i+1]))
-                threads.append(t)
-                t.start()
+                file1 = csv_files[i]
+                file2 = csv_files[i+1]
+                df1 = pd.read_csv(file1)
+                df2 = pd.read_csv(file2)
+                
+                os.remove(file1)
+                os.remove(file2)
+                
+                X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
+                labels1 = df1["l"].to_numpy()
+                unique_labels1 = set(df1["l"])
+                X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
+                labels2 = df2["l"].to_numpy()
+                unique_labels2 = set(df2["l"])
+                
+                
+                if len(unique_labels1) == 1 and len(unique_labels2) == 1:
+                    df = pd.concat([df1, df2])
+                    df.to_csv(file2, index=False)
+                    continue
+                
+                global_centers = []
+                global_centers_frequency = []
 
-            for thread in threads:
-                thread.join()
-
+                global_centers_count = len(unique_labels1)
+                for i in unique_labels1:
+                    global_centers.append(X_1[labels1 == i].mean(axis=0))
+                    global_centers_frequency.append(len(X_1[labels1 == i]))
+                
+                df2["ll"] = -2
+                
+                for i in unique_labels2:
+                    c = X_2[labels2 == i].mean(axis=0)
+                    distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
+                    nearest_cluster = distances.index(min(distances))
+                    df2.loc[df2['l'] == i, 'll'] = nearest_cluster
+                df2 = df2.drop("l", axis=1)
+                df2 = df2.rename(columns={'ll': 'l'})
+                
+                df = pd.concat([df1, df2])
+                df.to_csv(file2, index=False)
+            
             csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
             csv_files.sort()
-
+            
         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
         df = pd.read_csv(csv_files[0])
-
+        
         df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
-
-    def process_files(self, file1, file2):
-        df1 = pd.read_csv(file1)
-        df2 = pd.read_csv(file2)
-
-        os.remove(file1)
-        os.remove(file2)
-
-        X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
-        labels1 = df1["l"].to_numpy()
-        unique_labels1 = set(df1["l"])
-        X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
-        labels2 = df2["l"].to_numpy()
-        unique_labels2 = set(df2["l"])
-
-        if len(unique_labels1) == 1 and len(unique_labels2) == 1:
-            df = pd.concat([df1, df2])
-            df.to_csv(file2, index=False)
-            return
-
-        global_centers = []
-        global_centers_frequency = []
-
-        global_centers_count = len(unique_labels1)
-        for i in unique_labels1:
-            global_centers.append(X_1[labels1 == i].mean(axis=0))
-            global_centers_frequency.append(len(X_1[labels1 == i]))
-
-        df2["ll"] = -2
-
-        for i in unique_labels2:
-            c = X_2[labels2 == i].mean(axis=0)
-            distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
-            nearest_cluster = distances.index(min(distances))
-            df2.loc[df2['l'] == i, 'll'] = nearest_cluster
-        df2 = df2.drop("l", axis=1)
-        df2 = df2.rename(columns={'ll': 'l'})
-
-        df = pd.concat([df1, df2])
-        df.to_csv(file2, index=False)
-
-
-    # def constantKMerge(self):
-    #     csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
-    #     csv_files.sort()
-    #     while len(csv_files) > 1:
-    #         # print("len(csv_files)", len(csv_files))
-    #         for i in range(0, len(csv_files)-1, 2):
-    #             # print("Start")
-    #             file1 = csv_files[i]
-    #             file2 = csv_files[i+1]
-    #             df1 = pd.read_csv(file1)
-    #             df2 = pd.read_csv(file2)
-                
-    #             os.remove(file1)
-    #             os.remove(file2)
-                
-    #             X_1 = df1.drop(["y", "l"], axis=1).to_numpy()
-    #             labels1 = df1["l"].to_numpy()
-    #             unique_labels1 = set(df1["l"])
-    #             X_2 = df2.drop(["y", "l"], axis=1).to_numpy()
-    #             labels2 = df2["l"].to_numpy()
-    #             unique_labels2 = set(df2["l"])
-                
-                
-    #             if len(unique_labels1) == 1 and len(unique_labels2) == 1:
-    #                 df = pd.concat([df1, df2])
-    #                 df.to_csv(file2, index=False)
-    #                 continue
-                
-    #             global_centers = []
-    #             global_centers_frequency = []
-    #             # print("Start global_centers_frequency.append")
-
-    #             global_centers_count = len(unique_labels1)
-    #             for i in unique_labels1:
-    #                 global_centers.append(X_1[labels1 == i].mean(axis=0))
-    #                 global_centers_frequency.append(len(X_1[labels1 == i]))
-                
-    #             df2["ll"] = -2
-    #             # print("Start nearest_cluster")
-                
-    #             for i in unique_labels2:
-    #                 c = X_2[labels2 == i].mean(axis=0)
-    #                 distances = [np.linalg.norm(np.array(c) - np.array(z)) for z in global_centers]
-    #                 nearest_cluster = distances.index(min(distances))
-    #                 df2.loc[df2['l'] == i, 'll'] = nearest_cluster
-    #             df2 = df2.drop("l", axis=1)
-    #             df2 = df2.rename(columns={'ll': 'l'})
-    #             # print("Done nearest_cluster")
-        
-    #             df = pd.concat([df1, df2])
-    #             df.to_csv(file2, index=False)
-            
-    #         csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
-    #         csv_files.sort()
-            
-    #     csv_files = glob.glob('Output/Temp/*.{}'.format('csv'))
-    #     df = pd.read_csv(csv_files[0])
-        
-    #     df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         
         
     def mergeClusteringOutputs_AD(self):
@@ -720,43 +658,20 @@ class PAU_Clustering:
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         old_ari = adjusted_rand_score(yy, ll)
-        if old_ari > 1 or old_ari < -1:
-            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
-            f.write(self.fileName+',old,'+str(old_ari)+'\n')
-            f.close()
-            df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
-            
+        
         indexes_to_delete = [index for index, element in enumerate(ll) if element == -1]
         if len(indexes_to_delete) != 0:
-            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-            f.write(self.fileName+',Before reassignAnomalies,'+str(time.time())+'\n')
-            f.close()
             ll = self.reassignAnomalies(df)
         else:
             return old_ari
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before deleteAnomalies,'+str(time.time())+'\n')
-        f.close()
         if deleteAnomalies:
             ll = [value for index, value in enumerate(ll) if index not in indexes_to_delete]
             yy = [value for index, value in enumerate(yy) if index not in indexes_to_delete]
         ari = adjusted_rand_score(yy, ll)
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before done,'+str(time.time())+'\n')
-        f.close()
         
-        if old_ari > 1 or old_ari < -1:
-            f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_WeirdValue.csv", "a")
-            f.write(self.fileName+',new,'+str(old_ari)+'\n')
-            f.close()
-            df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         return ari
     
     def run(self):
-        # if self.X.shape[1] > 50:
-        #     return -2,-2
-        # if self.X.shape[0] < 250000:
-        #     return -2, -2
         t0 = time.time()
         if self.batch_count == 0:
             if self.X.shape[0] < 10000:    
@@ -765,23 +680,17 @@ class PAU_Clustering:
                 self.batch_count = 100
             else:
                 self.batch_count = int(self.X.shape[0]/100000)*100
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before Partitioning,'+str(time.time())+'\n')
-        f.close()
-        self.subSample()
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before Rerunning,'+str(time.time())+'\n')
-        f.close()
-        # print("subSample")
-        self.rerun()
-        # print("rerun")
-
-        t1 = time.time()
-        f=open("Stats/Ablation/Ablation_NoRef_" + self.algoName + "_Times.csv", "a")
-        f.write(self.fileName+',Before AUL_ARI,'+str(time.time())+'\n')
-        f.close()
-        ari_ss = self.AUL_ARI()
         
+        self.subSample()
+        if self.algoName == "DBSCAN":
+            self.set_DBSCAN_param()
+        # print("Determine Parameters", end=' - ')
+        self.determineParam()
+        self.subSample()
+        # print("Rerun")
+        self.rerun()
+        t1 = time.time()
+        ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
         # print("\tTime: ", time_ss)
         return ari_ss, time_ss

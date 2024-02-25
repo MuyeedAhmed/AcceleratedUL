@@ -1,4 +1,5 @@
 from PAU.PAU_Clustering import PAU_Clustering
+from PAU.PAU_Clustering_NoRef import PAU_Clustering_NoRef
 import os
 import sys
 import glob
@@ -100,7 +101,7 @@ def TestNoRef(algo, X, y, filename):
     else:
         bc = 0
         
-    clustering = PAU_Clustering(algoName=algo, batch_count=bc, fileName=filename)
+    clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=bc, fileName=filename)
     clustering.X = X
     clustering.y = y
 
