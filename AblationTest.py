@@ -11,6 +11,64 @@ from scipy.stats import gmean
 
 import matplotlib.pyplot as plt
 
+def ModuleWiseTimeDist(algo):
+    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+".csv")
+    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+".csv")
+
+    df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
+
+
+    df["TimePart"] = df["TimePart"] / df["Time_x"]
+    df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
+    df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
+    df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
+    
+    
+    TimePart = df.groupby('BatchSize')["TimePart"].mean()
+    TimeHAPV = df.groupby('BatchSize')["TimeHAPV"].mean()
+    TimeRerun = df.groupby('BatchSize')["TimeRerun"].mean()
+    TimeMerge = df.groupby('BatchSize')["TimeMerge"].mean()
+    
+    merged_df = pd.concat([TimePart, TimeHAPV, TimeRerun, TimeMerge], axis=1)
+    
+    Series = {}
+    for ind in merged_df.index:
+        Series[f"{ind}"] = merged_df.loc[ind].to_numpy()
+
+    fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
+    fig.savefig("Figures/TimeDist/"+algo+".pdf")
+
+
+def timeDist(results, category_names):
+    labels = list(results.keys())
+    data = np.array(list(results.values()))
+    data_cum = data.cumsum(axis=1)
+    category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.invert_yaxis()
+    ax.xaxis.set_visible(False)
+    ax.set_xlim(0, np.sum(data, axis=1).max())
+
+    for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+        widths = data[:, i]
+        starts = data_cum[:, i] - widths
+        rects = ax.barh(labels, widths, left=starts, height=0.5,
+                        label=colname, color=color)
+        # r, g, b, _ = color
+        # text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
+        # ax.bar_label(rects, label_type='center', color=text_color)
+    # ax.legend(ncols=len(category_names), bbox_to_anchor=(0, 1),
+    #           loc='lower left', fontsize='small')
+    legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1),
+                       loc='lower left', fontsize='small', title='')
+    # legend.get_title().set_alignment('left')  # Set legend title alignment to left
+
+
+    return fig, ax
+
+    
 def BoxPlotMode():
     df_A = pd.read_csv("Utility&Test/Stats/AP_Best_Subsample_Run_ModeA.csv")
     df_B = pd.read_csv("Utility&Test/Stats/AP_Best_Subsample_Run_ModeB.csv")
@@ -315,4 +373,7 @@ NoRefTest("HAC")
 NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-
+ModuleWiseTimeDist("AP")
+ModuleWiseTimeDist("DBSCAN")
+ModuleWiseTimeDist("HAC")
+ModuleWiseTimeDist("SC")
