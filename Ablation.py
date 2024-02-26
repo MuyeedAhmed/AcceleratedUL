@@ -255,7 +255,10 @@ if __name__ == '__main__':
         elif test == "Mode":
             TestMode(algo, X, y, file)
         elif test == "BT":
-            TestBatchSizeModuleTime(algo, X, y, file)
+            TestBatchSizeModuleTime("HAC", X, y, file)
+            TestBatchSizeModuleTime("DBSCAN", X, y, file)
+            TestBatchSizeModuleTime("AP", X, y, file)            
+            TestBatchSizeModuleTime("SC", X, y, file)
     
 
 

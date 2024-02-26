@@ -678,18 +678,18 @@ class PAU_Clustering_TimeCalculation:
         
         self.subSample()
         
-        t_part = time.time() - t0
+        t_part = time.time()
         if self.algoName == "DBSCAN":
             self.set_DBSCAN_param()
         self.determineParam()
         
-        t_havp = time.time()-t_part
+        t_havp = time.time()
         
         self.subSample()
         
         self.rerun()
         
-        t_rerun = time.time()-t_havp
+        t_rerun = time.time()
         
         if self.mergeStyle == "Distance":
             self.constantKMerge()
@@ -697,7 +697,7 @@ class PAU_Clustering_TimeCalculation:
             self.mergeClusteringOutputs_DistRatio()
         elif self.mergeStyle == "AD":
             self.mergeClusteringOutputs_AD()
-        t_merge = time.time()-t_rerun
+        t_merge = time.time()
         
         t1 = time.time()
         ari_ss = self.AUL_ARI()
@@ -705,7 +705,7 @@ class PAU_Clustering_TimeCalculation:
         
         if os.path.exists("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv"):
             f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv", "a")
-            f.write(self.fileName+','+str(self.batch_count)+','+str(time_ss)+','+str(t_part)+','+str(t_havp)+','+str(t_rerun)+','+str(t_merge)+'\n')
+            f.write(self.fileName+','+str(self.batch_count)+','+str(time_ss)+','+str(t_part-t0)+','+str(t_havp-t_part)+','+str(t_rerun-t_havp)+','+str(t_merge-t_rerun)+'\n')
             f.close()
         else:
             f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv", "w")
