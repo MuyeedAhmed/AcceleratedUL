@@ -54,12 +54,12 @@ def TestBatchSizeModuleTime(algo, X, y, filename):
         ari = np.mean(aris)
         time_ = np.mean(times)
         
-        if os.path.exists("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_Restart.csv"):            
-            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_Restart.csv", "a")
+        if os.path.exists("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv"):            
+            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "a")
             f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
             f.close()
         else:
-            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_Restart.csv", "w")
+            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "w")
             f.write("Filename,Row,Column,Time,ARI,BatchCount,BatchSize\n")
             f.close()
 
@@ -260,7 +260,7 @@ if __name__ == '__main__':
         elif test == "Mode":
             TestMode(algo, X, y, file)
         elif test == "BT":
-            if file != "BNG(credit-a_COMMA_nominal_COMMA_1000000)_OpenML":
+            if file != "BNG(2dplanes)_OpenML":
                 continue
             TestBatchSizeModuleTime("HAC", X, y, file)
             TestBatchSizeModuleTime("DBSCAN", X, y, file)
