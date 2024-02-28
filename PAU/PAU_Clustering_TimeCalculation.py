@@ -704,14 +704,13 @@ class PAU_Clustering_TimeCalculation:
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
         
-        if os.path.exists("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_Restart.csv"):
-            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_Restart.csv", "a")
-            f.write(self.fileName+','+str(self.batch_count)+','+str(self.batch_size)+','+str(time_ss)+','+str(t_part-t0)+','+str(t_havp-t_part)+','+str(t_rerun-t_havp)+','+str(t_merge-t_rerun)+'\n')
-            f.close()
-        else:
-            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_Restart.csv", "w")
+        if os.path.exists("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv") == 0:
+            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv", "w")
             f.write('Filename,BatchCount,BatchSize,Time,TimePart,TimeHAPV,TimeRerun,TimeMerge\n')
             f.close()
+        f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv", "a")
+        f.write(self.fileName+','+str(self.batch_count)+','+str(self.batch_size)+','+str(time_ss)+','+str(t_part-t0)+','+str(t_havp-t_part)+','+str(t_rerun-t_havp)+','+str(t_merge-t_rerun)+'\n')
+        f.close()
         
         return ari_ss, time_ss
         

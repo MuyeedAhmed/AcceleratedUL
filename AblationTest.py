@@ -196,7 +196,7 @@ def NoRefTest(algo):
 
     df_melted = df_selected.melt(var_name='Column', value_name='Value')
     
-    sns.violinplot(x='Column', y='Value', data=df_melted)
+    sns.boxplot(x='Column', y='Value', data=df_melted)
     plt.xlabel('')
     plt.ylabel('ARI')
     plt.title(algo)
@@ -399,12 +399,12 @@ def BatchTest():
 
 # ScatterReferee()
 
-# NoRefTest("AP")
-# NoRefTest("HAC")
-# NoRefTest("DBSCAN")
+NoRefTest("AP")
+NoRefTest("HAC")
+NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-ModuleWiseTimeDist("AP")
-ModuleWiseTimeDist("DBSCAN")
-ModuleWiseTimeDist("HAC")
-ModuleWiseTimeDist("SC")
+# ModuleWiseTimeDist("AP")
+# ModuleWiseTimeDist("DBSCAN")
+# ModuleWiseTimeDist("HAC")
+# ModuleWiseTimeDist("SC")
