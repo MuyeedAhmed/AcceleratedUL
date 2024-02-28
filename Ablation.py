@@ -39,6 +39,8 @@ def TestBatchSizeModuleTime(algo, X, y, filename):
     r_iteration = 5
     
     for BatchSize in range(100,1501,100):
+        if BatchSize != 100:
+            continue
         BatchCount = int(r/BatchSize)
         # BatchSize = int(r/BatchCount)
         clustering = PAU_Clustering_TimeCalculation(algoName=algo,batch_count=BatchCount, fileName=filename)
@@ -54,15 +56,16 @@ def TestBatchSizeModuleTime(algo, X, y, filename):
         ari = np.mean(aris)
         time_ = np.mean(times)
         
-        if os.path.exists("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv"):            
-            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "a")
-            f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
-            f.close()
-        else:
+        if os.path.exists("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv") == 0:            
             f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "w")
             f.write("Filename,Row,Column,Time,ARI,BatchCount,BatchSize\n")
             f.close()
 
+        f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "a")
+        f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
+        f.close()
+
+            
 def TestBatchSize(algo, X, y, filename):
     r = X.shape[0]
     c = X.shape[1]
