@@ -11,6 +11,95 @@ from scipy.stats import gmean
 
 import matplotlib.pyplot as plt
 
+def ModuleWiseTimeDist(algo):
+    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+".csv")
+    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+".csv")
+
+    df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
+
+
+    df["TimePart"] = df["TimePart"] / df["Time_x"]
+    df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
+    df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
+    df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
+    
+    
+    TimePart = df.groupby('BatchSize')["TimePart"].mean()
+    TimeHAPV = df.groupby('BatchSize')["TimeHAPV"].mean()
+    TimeRerun = df.groupby('BatchSize')["TimeRerun"].mean()
+    TimeMerge = df.groupby('BatchSize')["TimeMerge"].mean()
+    
+    merged_df = pd.concat([TimePart, TimeHAPV, TimeRerun, TimeMerge], axis=1)
+    
+    Series = {}
+    for ind in merged_df.index:
+        Series[f"{ind}"] = merged_df.loc[ind].to_numpy()
+
+    fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
+    # ax.set_xlabel("Time")
+    # ax.set_title(algo)
+    fig.savefig("Figures/TimeDist/"+algo+".pdf", bbox_inches='tight')
+
+
+
+# def timeDist(results, category_names):
+#     labels = list(results.keys())
+#     data = np.array(list(results.values()))
+#     data_cum = data.cumsum(axis=1)
+#     category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+
+#     fig, ax = plt.subplots(figsize=(5, 10))  # Adjust figsize to fit the rotated plot
+#     ax.xaxis.set_visible(True)
+#     ax.yaxis.set_visible(False)  # Make y-axis visible
+#     ax.set_ylim(0, np.sum(data, axis=1).max())  # Set y-axis limits
+
+#     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+#         widths = data[:, i]
+#         starts = data_cum[:, i] - widths
+#         rects = ax.bar(labels, widths, bottom=starts, width=0.5, 
+#                        label=colname, color=color, orientation='vertical')  # Rotate bars vertically
+
+#     legend = ax.legend(ncol=2, bbox_to_anchor=(0.5, 1.15),  # Move legend to top and center
+#                        loc='upper center', fontsize=10, title='', frameon=False)
+#     ax.xaxis.set_tick_params(rotation=90)  # Rotate x-axis labels by 90 degrees
+    
+#     return fig, ax
+
+
+def timeDist(results, category_names):
+    labels = list(results.keys())
+    data = np.array(list(results.values()))
+    data_cum = data.cumsum(axis=1)
+    category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.invert_yaxis()
+    # ax.xaxis.set_visible(False)
+    ax.set_xlim(0, np.sum(data, axis=1).max())
+
+    for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+        widths = data[:, i]
+        starts = data_cum[:, i] - widths
+        rects = ax.barh(labels, widths, left=starts, height=0.5,
+                        label=colname, color=color)
+        # r, g, b, _ = color
+        # text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
+        # ax.bar_label(rects, label_type='center', color=text_color)
+    # ax.legend(ncols=len(category_names), bbox_to_anchor=(0, 1),
+    #           loc='lower left', fontsize='small')
+    legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1),
+                        loc='lower left', fontsize=15, title='')
+    # legend.get_title().set_alignment('left')  # Set legend title alignment to left
+    ax.set_xlabel("Time", fontsize=16)
+    ax.set_ylabel("Partition Size", fontsize=16)
+    ax.set_xticks([])  
+    # ax.set_yticks(fontsize=15)
+    ax.tick_params(axis='both', labelsize=14)
+
+    return fig, ax
+
+    
 def BoxPlotMode():
     df_A = pd.read_csv("Utility&Test/Stats/AP_Best_Subsample_Run_ModeA.csv")
     df_B = pd.read_csv("Utility&Test/Stats/AP_Best_Subsample_Run_ModeB.csv")
@@ -310,9 +399,12 @@ def BatchTest():
 
 # ScatterReferee()
 
-NoRefTest("AP")
-NoRefTest("HAC")
-NoRefTest("DBSCAN")
+# NoRefTest("AP")
+# NoRefTest("HAC")
+# NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-
+ModuleWiseTimeDist("AP")
+ModuleWiseTimeDist("DBSCAN")
+ModuleWiseTimeDist("HAC")
+ModuleWiseTimeDist("SC")
