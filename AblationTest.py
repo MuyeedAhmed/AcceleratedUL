@@ -18,10 +18,10 @@ def ModuleWiseTimeDist(algo):
     df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
 
 
-    df["TimePart"] = df["TimePart"] / df["Time_x"]
-    df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
-    df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
-    df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
+    # df["TimePart"] = df["TimePart"] / df["Time_x"]
+    # df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
+    # df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
+    # df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
     
     
     TimePart = df.groupby('BatchSize')["TimePart"].mean()
@@ -93,7 +93,7 @@ def timeDist(results, category_names):
     # legend.get_title().set_alignment('left')  # Set legend title alignment to left
     ax.set_xlabel("Time", fontsize=16)
     ax.set_ylabel("Partition Size", fontsize=16)
-    ax.set_xticks([])  
+    # ax.set_xticks([])  
     # ax.set_yticks(fontsize=15)
     ax.tick_params(axis='both', labelsize=14)
 

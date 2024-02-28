@@ -84,5 +84,5 @@ def datareturn(algo):
     # print(df)
     return df
     
-scatter("HAC")
+# scatter("HAC")
 pf("HAC")
