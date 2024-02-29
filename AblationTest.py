@@ -212,19 +212,24 @@ def NoRefTest(algo):
 
 def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
+    
+    df = df[df["Referee"] != "INERTIA"]
+    # if "INERTIA" in df.columns:
+    #     df.drop(columns=['INERTIA'], inplace=True)
 
-    sns.boxplot(x='Referee', y='Time', data=df)
-    # sns.violinplot(x='Referee', y='Time', data=df)
-    plt.title(algo + ' - Time')
-    plt.xlabel('Referee')
-    plt.ylabel('Time')
-    plt.show()
+    # sns.boxplot(x='Referee', y='Time', data=df)
+    # # sns.violinplot(x='Referee', y='Time', data=df)
+    # plt.title(algo + ' - Time')
+    # plt.xlabel('Referee')
+    # plt.ylabel('Time')
+    # plt.show()
 
     sns.boxplot(x='Referee', y='ARI', data=df)
     # sns.violinplot(x='Referee', y='ARI', data=df)
-    plt.title(algo + ' - ARI')
-    plt.xlabel('Referee')
+    # plt.title(algo + ' - ARI')
+    plt.xlabel('Validator')
     plt.ylabel('ARI')
+    plt.savefig('Figures/Ablation_Ref_'+algo+'_ARI.pdf', bbox_inches='tight')
     plt.show()
 
     
@@ -389,15 +394,15 @@ def BatchTest():
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# # # Batch("SC")
-# RefereeARIvsTime("HAC")
-# RefereeARIvsTime("AP")
+# Batch("SC")
+RefereeARIvsTime("HAC")
+RefereeARIvsTime("AP")
 
 # ScatterReferee()
 
-NoRefTest("AP")
-NoRefTest("HAC")
-NoRefTest("DBSCAN")
+# NoRefTest("AP")
+# NoRefTest("HAC")
+# NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
 # ModuleWiseTimeDist("AP")
