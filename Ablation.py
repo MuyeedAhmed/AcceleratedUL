@@ -139,7 +139,8 @@ def TestNoRef(algo, X, y, filename):
         bc = int(X.shape[0]/100)
     else:
         bc = 0
-        
+    if X.shape[0] > 80000:
+        return
     clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=bc, fileName=filename)
     clustering.X = X
     clustering.y = y

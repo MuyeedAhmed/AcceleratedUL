@@ -8,12 +8,12 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
 from scipy.stats import gmean
-
+from scipy import stats
 import matplotlib.pyplot as plt
 
 def ModuleWiseTimeDist(algo):
-    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+".csv")
-    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+".csv")
+    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+"_RestartJ.csv")
+    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+"_RestartJ.csv")
 
     df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
 
@@ -24,10 +24,10 @@ def ModuleWiseTimeDist(algo):
     # df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
     
     
-    TimePart = df.groupby('BatchSize')["TimePart"].mean()
-    TimeHAPV = df.groupby('BatchSize')["TimeHAPV"].mean()
-    TimeRerun = df.groupby('BatchSize')["TimeRerun"].mean()
-    TimeMerge = df.groupby('BatchSize')["TimeMerge"].mean()
+    TimePart = df.groupby('BatchSize_y')["TimePart"].mean()
+    TimeHAPV = df.groupby('BatchSize_y')["TimeHAPV"].mean()
+    TimeRerun = df.groupby('BatchSize_y')["TimeRerun"].mean()
+    TimeMerge = df.groupby('BatchSize_y')["TimeMerge"].mean()
     
     merged_df = pd.concat([TimePart, TimeHAPV, TimeRerun, TimeMerge], axis=1)
     
@@ -193,7 +193,12 @@ def NoRefTest(algo):
 
     df_selected = df[['ARI', 'ARI_'+algo]]
     df_selected = df_selected.rename(columns={'ARI': 'Default', 'ARI_'+algo: 'With Validator'})
-
+    
+    gr1 = df_selected['Default'].to_numpy()
+    gr2 = df_selected['With Validator'].to_numpy()
+    
+    t_statistic, p_value = stats.ttest_ind(gr1, gr2, equal_var=False)
+    print(algo, t_statistic, p_value)
     df_melted = df_selected.melt(var_name='Column', value_name='Value')
     
     sns.boxplot(x='Column', y='Value', data=df_melted)
@@ -207,47 +212,38 @@ def NoRefTest(algo):
 
 def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
-    # sns.boxplot(x='Referee', y='Time', data=df)
-    # plt.title(algo + ' - Time')
-    # plt.xlabel('Referee')
-    # plt.ylabel('Time')
-    # plt.show()
-    
+
+    sns.boxplot(x='Referee', y='Time', data=df)
     # sns.violinplot(x='Referee', y='Time', data=df)
-    # plt.title(algo + ' - Time')
-    # plt.xlabel('Referee')
-    # plt.ylabel('Time')
-    # plt.show()
-
-    # sns.boxplot(x='Referee', y='ARI', data=df)
-    # plt.title(algo + ' - ARI')
-    # plt.xlabel('Referee')
-    # plt.ylabel('ARI')
-    # plt.show()
-    
-    # sns.violinplot(x='Referee', y='ARI', data=df)
-    # plt.title(algo + ' - ARI')
-    # plt.xlabel('Referee')
-    # plt.ylabel('ARI')
-    # plt.show()
-    # Initialize lists to store normalized values
-    
-    scaler = MinMaxScaler(feature_range=(0, 1)) 
-    df["ARI"] = scaler.fit_transform(df[["ARI"]])
-
-    
-    df["ARI"] = -np.log(df[["ARI"]])
-    grouped = df.groupby('Referee')
-
-    df['Normalized_Time'] = df.groupby('Referee')['Time'].transform(lambda x: (x/x.max()))
-    df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
-
-    sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
-    plt.title(algo)
-    plt.xlabel('Validator')
-    plt.ylabel('$C_{AxT}$', fontsize=14)
-    plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
+    plt.title(algo + ' - Time')
+    plt.xlabel('Referee')
+    plt.ylabel('Time')
     plt.show()
+
+    sns.boxplot(x='Referee', y='ARI', data=df)
+    # sns.violinplot(x='Referee', y='ARI', data=df)
+    plt.title(algo + ' - ARI')
+    plt.xlabel('Referee')
+    plt.ylabel('ARI')
+    plt.show()
+
+    
+    # scaler = MinMaxScaler(feature_range=(0, 1)) 
+    # df["ARI"] = scaler.fit_transform(df[["ARI"]])
+
+    
+    # df["ARI"] = -np.log(df[["ARI"]])
+    # grouped = df.groupby('Referee')
+
+    # df['Normalized_Time'] = df.groupby('Referee')['Time'].transform(lambda x: (x/x.max()))
+    # df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
+
+    # sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
+    # plt.title(algo)
+    # plt.xlabel('Validator')
+    # plt.ylabel('$C_{AxT}$', fontsize=14)
+    # plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
+    # plt.show()
 
 def ScatterReferee():
     df = pd.read_csv("Utility&Test/Stats/DBSCAN_Ablation_NoAnomaly.csv")
@@ -393,7 +389,7 @@ def BatchTest():
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# # Batch("SC")
+# # # Batch("SC")
 # RefereeARIvsTime("HAC")
 # RefereeARIvsTime("AP")
 
