@@ -12,8 +12,12 @@ from scipy import stats
 import matplotlib.pyplot as plt
 
 def ModuleWiseTimeDist(algo):
-    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+"_RestartJ.csv")
-    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+"_RestartJ.csv")
+    if algo == "DBSCAN" or algo =="HAC":
+        f = "_RestartJ"
+    else:
+        f = ""
+    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+f+".csv")
+    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+f+".csv")
 
     df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
 
@@ -23,11 +27,14 @@ def ModuleWiseTimeDist(algo):
     # df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
     # df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
     
-    
-    TimePart = df.groupby('BatchSize_y')["TimePart"].mean()
-    TimeHAPV = df.groupby('BatchSize_y')["TimeHAPV"].mean()
-    TimeRerun = df.groupby('BatchSize_y')["TimeRerun"].mean()
-    TimeMerge = df.groupby('BatchSize_y')["TimeMerge"].mean()
+    if algo == "DBSCAN" or algo =="HAC":
+        x = "BatchSize_y"
+    else:
+        x = "BatchSize"
+    TimePart = df.groupby(x)["TimePart"].mean()
+    TimeHAPV = df.groupby(x)["TimeHAPV"].mean()
+    TimeRerun = df.groupby(x)["TimeRerun"].mean()
+    TimeMerge = df.groupby(x)["TimeMerge"].mean()
     
     merged_df = pd.concat([TimePart, TimeHAPV, TimeRerun, TimeMerge], axis=1)
     
@@ -66,38 +73,66 @@ def ModuleWiseTimeDist(algo):
 #     return fig, ax
 
 
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 def timeDist(results, category_names):
     labels = list(results.keys())
     data = np.array(list(results.values()))
-    data_cum = data.cumsum(axis=1)
+    data_cum = data.cumsum(axis=1)  # Change axis from 0 to 1 for vertical plots
     category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
 
-
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10, 6))
     ax.invert_yaxis()
-    # ax.xaxis.set_visible(False)
-    ax.set_xlim(0, np.sum(data, axis=1).max())
+    ax.set_ylim(0, np.sum(data, axis=1).max())  # Adjust limit for vertical plot
 
     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
         widths = data[:, i]
         starts = data_cum[:, i] - widths
-        rects = ax.barh(labels, widths, left=starts, height=0.5,
-                        label=colname, color=color)
-        # r, g, b, _ = color
-        # text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
-        # ax.bar_label(rects, label_type='center', color=text_color)
-    # ax.legend(ncols=len(category_names), bbox_to_anchor=(0, 1),
-    #           loc='lower left', fontsize='small')
-    legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1),
-                        loc='lower left', fontsize=15, title='')
-    # legend.get_title().set_alignment('left')  # Set legend title alignment to left
-    ax.set_xlabel("Time", fontsize=16)
-    ax.set_ylabel("Partition Size", fontsize=16)
-    # ax.set_xticks([])  
-    # ax.set_yticks(fontsize=15)
+        ax.bar(labels, widths, bottom=starts, width=0.5, label=colname, color=color)  # Swap labels and widths
+
+    legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1), loc='lower left', fontsize=15, title='')
+    ax.set_xlabel("Partition Size", fontsize=16)  # Adjust labels for vertical plot
+    ax.set_ylabel("Time (s)", fontsize=16)  # Adjust labels for vertical plot
     ax.tick_params(axis='both', labelsize=14)
 
     return fig, ax
+
+
+
+# def timeDist(results, category_names):
+#     labels = list(results.keys())
+#     data = np.array(list(results.values()))
+#     data_cum = data.cumsum(axis=1)
+#     category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+
+
+#     fig, ax = plt.subplots(figsize=(10, 5))
+#     ax.invert_yaxis()
+#     # ax.xaxis.set_visible(False)
+#     ax.set_xlim(0, np.sum(data, axis=1).max())
+
+#     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+#         widths = data[:, i]
+#         starts = data_cum[:, i] - widths
+#         rects = ax.barh(labels, widths,left=starts, height=0.5,
+#                         label=colname, color=color)
+#         # r, g, b, _ = color
+#         # text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
+#         # ax.bar_label(rects, label_type='center', color=text_color)
+#     # ax.legend(ncols=len(category_names), bbox_to_anchor=(0, 1),
+#     #           loc='lower left', fontsize='small')
+#     legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1),
+#                         loc='lower left', fontsize=15, title='')
+#     # legend.get_title().set_alignment('left')  # Set legend title alignment to left
+#     ax.set_xlabel("Time", fontsize=16)
+#     ax.set_ylabel("Partition Size", fontsize=16)
+#     # ax.set_xticks([])  
+#     # ax.set_yticks(fontsize=15)
+#     ax.tick_params(axis='both', labelsize=14)
+
+#     return fig, ax
 
     
 def BoxPlotMode():
@@ -395,8 +430,8 @@ def BatchTest():
 # Batch("DBSCAN")
 
 # Batch("SC")
-RefereeARIvsTime("HAC")
-RefereeARIvsTime("AP")
+# RefereeARIvsTime("HAC")
+# RefereeARIvsTime("AP")
 
 # ScatterReferee()
 
@@ -405,7 +440,7 @@ RefereeARIvsTime("AP")
 # NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-# ModuleWiseTimeDist("AP")
-# ModuleWiseTimeDist("DBSCAN")
-# ModuleWiseTimeDist("HAC")
+ModuleWiseTimeDist("AP")
+ModuleWiseTimeDist("DBSCAN")
+ModuleWiseTimeDist("HAC")
 # ModuleWiseTimeDist("SC")
