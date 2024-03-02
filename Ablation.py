@@ -170,14 +170,14 @@ def TestMode(algo, X, y, filename):
     modes = ["A", "B"]
     for mode in modes:
         print(mode)
-        clustering = PAU_Clustering(algoName=algo)
+        clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=int(X.shape[0]/250))
         clustering.X = X
         clustering.y = y
         clustering.rerun_mode = mode
         
         aris=[]
         times=[]
-        for i in range(5):
+        for i in range(1):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
