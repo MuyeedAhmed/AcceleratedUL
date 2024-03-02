@@ -7,9 +7,11 @@ import time
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
-from scipy.stats import gmean
+from scipy.stats import gmean, f_oneway
 from scipy import stats
 import matplotlib.pyplot as plt
+
+
 
 def ModuleWiseTimeDist(algo):
     if algo == "DBSCAN" or algo =="HAC":
@@ -72,10 +74,6 @@ def ModuleWiseTimeDist(algo):
     
 #     return fig, ax
 
-
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 def timeDist(results, category_names):
     labels = list(results.keys())
@@ -248,23 +246,43 @@ def NoRefTest(algo):
 def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
     
-    df = df[df["Referee"] != "INERTIA"]
-    # if "INERTIA" in df.columns:
-    #     df.drop(columns=['INERTIA'], inplace=True)
-
+    
+    # df = df[df["Referee"] != "INERTIA"]
+    
     # sns.boxplot(x='Referee', y='Time', data=df)
     # # sns.violinplot(x='Referee', y='Time', data=df)
     # plt.title(algo + ' - Time')
     # plt.xlabel('Referee')
     # plt.ylabel('Time')
     # plt.show()
+    
+    gr1 = df[df["Referee"] == "K-Means"]["ARI"].to_numpy()
+    gr2 = df[df["Referee"] == "DBSCAN"]["ARI"].to_numpy()
+    
+    if algo == "AP":
+        gr3 = df[df["Referee"] == "HAC"]["ARI"].to_numpy()
+    if algo == "HAC":
+        gr3 = df[df["Referee"] == "AP"]["ARI"].to_numpy()
+        
+    
+    t_statistic, p_value = stats.ttest_ind(gr1, gr2, equal_var=False)
+    print(p_value)
+    t_statistic, p_value = stats.ttest_ind(gr1, gr3, equal_var=False)
+    print(p_value)
+    t_statistic, p_value = stats.ttest_ind(gr3, gr2, equal_var=False)
+    print(p_value)
+    
+    f_statistic, p_value = f_oneway(gr1, gr2, gr3)
+
+    print("F-statistic:", f_statistic)
+    print("p-value:", p_value)
 
     sns.boxplot(x='Referee', y='ARI', data=df)
     # sns.violinplot(x='Referee', y='ARI', data=df)
     # plt.title(algo + ' - ARI')
     plt.xlabel('Validator')
     plt.ylabel('ARI')
-    plt.savefig('Figures/Ablation_Ref_'+algo+'_ARI.pdf', bbox_inches='tight')
+    # plt.savefig('Figures/Ablation_Ref_'+algo+'_ARI.pdf', bbox_inches='tight')
     plt.show()
 
     
@@ -429,18 +447,16 @@ def BatchTest():
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# Batch("SC")
-# RefereeARIvsTime("HAC")
-# RefereeARIvsTime("AP")
 
-# ScatterReferee()
+RefereeARIvsTime("HAC")
+RefereeARIvsTime("AP")
 
 # NoRefTest("AP")
 # NoRefTest("HAC")
 # NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-ModuleWiseTimeDist("AP")
-ModuleWiseTimeDist("DBSCAN")
-ModuleWiseTimeDist("HAC")
-# ModuleWiseTimeDist("SC")
+# ModuleWiseTimeDist("AP")
+# ModuleWiseTimeDist("DBSCAN")
+# ModuleWiseTimeDist("HAC")
+ModuleWiseTimeDist("SC")

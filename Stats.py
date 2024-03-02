@@ -178,8 +178,17 @@ def boxPlot_algo(algo):
     colors = ['darkblue', 'darkorange']
     for patch, color in zip(box_plot['boxes'], colors):
         patch.set_facecolor(color)
+    
+    if algo == "AP":
+        rs = r"$R_{AP}$"
+    if algo == "SC":
+        rs = r"$R_{SpecC}$"
+    if algo == "HAC":
+        rs = r"$R_{HAC}$"
+    if algo == "DBSCAN":
+        rs = r"$R_{DBSCAN}$"
 
-    ax.set_xticklabels(['Default\n(R: '+str(default_count)+' Datasets)', 'ACE\n(All: 164 Datasets)'], fontsize=14)
+    ax.set_xticklabels([f'Default\n({rs}: {str(default_count)} Datasets)', 'ACE\n(All: 164 Datasets)'], fontsize=14)
     ax.set_ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
