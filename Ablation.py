@@ -167,10 +167,12 @@ def TestNoRef(algo, X, y, filename):
 
 def TestMode(algo, X, y, filename):
     print(filename, end=" ")
+    if X.shape[0] > 200000 or X.shape[1] > 30:
+        return
     modes = ["A", "B"]
     for mode in modes:
         print(mode)
-        clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=int(X.shape[0]/250))
+        clustering = PAU_Clustering_NoRef(algoName=algo, fileName=filename, batch_count=int(X.shape[0]/250))
         clustering.X = X
         clustering.y = y
         clustering.rerun_mode = mode

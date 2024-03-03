@@ -312,7 +312,7 @@ class PAU_Clustering_NoRef:
                 c = AffinityPropagation().fit(X)
                 l = c.labels_
             elif self.algoName == "SC":
-                c = SpectralClustering(eigen_tol=0.1).fit(X)
+                c = SpectralClustering(eigen_tol=0.01, eigen_solver="lobpcg").fit(X)
                 l = c.labels_
             elif self.algoName == "GMM":
                 c = GaussianMixture().fit(X)
@@ -336,7 +336,7 @@ class PAU_Clustering_NoRef:
             if self.algoName == "AP":
                 c = AffinityPropagation().fit(X)
             elif self.algoName == "SC":
-                c = SpectralClustering().fit(X)
+                c = SpectralClustering(eigen_tol=0.01, eigen_solver="lobpcg").fit(X)
             elif self.algoName == "GMM":
                 c = GaussianMixture().fit(X)
             
