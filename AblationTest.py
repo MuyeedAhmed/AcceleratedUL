@@ -12,6 +12,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 
 
+fontS = 15
 
 def ModuleWiseTimeDist(algo):
     if algo == "DBSCAN" or algo =="HAC":
@@ -44,35 +45,12 @@ def ModuleWiseTimeDist(algo):
     for ind in merged_df.index:
         Series[f"{ind}"] = merged_df.loc[ind].to_numpy()
 
-    fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
+    # fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
+    fig, ax = timeDist(Series, ["3.1", "3.2", "3.3", "3.4"])
     # ax.set_xlabel("Time")
     # ax.set_title(algo)
-    fig.savefig("Figures/TimeDist/"+algo+".pdf", bbox_inches='tight')
+    fig.savefig("Figures_EP/TimeDist/"+algo+".pdf", bbox_inches='tight')
 
-
-
-# def timeDist(results, category_names):
-#     labels = list(results.keys())
-#     data = np.array(list(results.values()))
-#     data_cum = data.cumsum(axis=1)
-#     category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
-
-#     fig, ax = plt.subplots(figsize=(5, 10))  # Adjust figsize to fit the rotated plot
-#     ax.xaxis.set_visible(True)
-#     ax.yaxis.set_visible(False)  # Make y-axis visible
-#     ax.set_ylim(0, np.sum(data, axis=1).max())  # Set y-axis limits
-
-#     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
-#         widths = data[:, i]
-#         starts = data_cum[:, i] - widths
-#         rects = ax.bar(labels, widths, bottom=starts, width=0.5, 
-#                        label=colname, color=color, orientation='vertical')  # Rotate bars vertically
-
-#     legend = ax.legend(ncol=2, bbox_to_anchor=(0.5, 1.15),  # Move legend to top and center
-#                        loc='upper center', fontsize=10, title='', frameon=False)
-#     ax.xaxis.set_tick_params(rotation=90)  # Rotate x-axis labels by 90 degrees
-    
-#     return fig, ax
 
 
 def timeDist(results, category_names):
@@ -81,7 +59,7 @@ def timeDist(results, category_names):
     data_cum = data.cumsum(axis=1)  # Change axis from 0 to 1 for vertical plots
     category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(6.4, 4.8))
     ax.invert_yaxis()
     ax.set_ylim(0, np.sum(data, axis=1).max())  # Adjust limit for vertical plot
 
@@ -90,11 +68,12 @@ def timeDist(results, category_names):
         starts = data_cum[:, i] - widths
         ax.bar(labels, widths, bottom=starts, width=0.5, label=colname, color=color)  # Swap labels and widths
 
-    legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1), loc='lower left', fontsize=15, title='')
-    ax.set_xlabel("Partition Size", fontsize=16)  # Adjust labels for vertical plot
-    ax.set_ylabel("Time (s)", fontsize=16)  # Adjust labels for vertical plot
-    ax.tick_params(axis='both', labelsize=14)
+    legend = ax.legend(ncol=4, bbox_to_anchor=(0, 1), loc='lower left', fontsize=fontS, title='')
 
+    ax.set_xlabel("Partition Size", fontsize=fontS)  # Adjust labels for vertical plot
+    ax.set_ylabel("Time (s)", fontsize=fontS)  # Adjust labels for vertical plot
+    ax.tick_params(axis='both', labelsize=fontS)
+    plt.xticks(rotation=90)
     return fig, ax
 
 
@@ -448,15 +427,15 @@ def BatchTest():
 # Batch("DBSCAN")
 
 
-RefereeARIvsTime("HAC")
-RefereeARIvsTime("AP")
+# RefereeARIvsTime("HAC")
+# RefereeARIvsTime("AP")
 
 # NoRefTest("AP")
 # NoRefTest("HAC")
 # NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
-# ModuleWiseTimeDist("AP")
+ModuleWiseTimeDist("AP")
 # ModuleWiseTimeDist("DBSCAN")
-# ModuleWiseTimeDist("HAC")
-ModuleWiseTimeDist("SC")
+ModuleWiseTimeDist("HAC")
+# ModuleWiseTimeDist("SC")
