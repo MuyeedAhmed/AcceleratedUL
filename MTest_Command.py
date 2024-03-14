@@ -54,12 +54,13 @@ def MemTest(algo, mode, system):
                 est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
                 if est > 6000:
                     master_files.remove(filename)
-    
+    hac_files = ["mnist_784_OpenML", "numerai28.6_OpenML", "Diabetes130US_OpenML", "BNG(vote)_OpenML", "BNG(2dplanes)_OpenML","BNG(pwLinear)_OpenML","spoken-arabic-digit_OpenML","BNG(page-blocks)_OpenML"]
     for filename in master_files:
         if filename not in fileList:
             continue
         print(filename)
-    
+        if filename not in hac_files:
+            continue
         """
         Kill previous process
         
