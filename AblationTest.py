@@ -49,6 +49,7 @@ def ModuleWiseTimeDist(algo):
     fig, ax = timeDist(Series, ["3.1", "3.2", "3.3", "3.4"])
     # ax.set_xlabel("Time")
     # ax.set_title(algo)
+    
     fig.savefig("Figures_EP/TimeDist/"+algo+".pdf", bbox_inches='tight')
 
 
@@ -57,7 +58,7 @@ def timeDist(results, category_names):
     labels = list(results.keys())
     data = np.array(list(results.values()))
     data_cum = data.cumsum(axis=1)  # Change axis from 0 to 1 for vertical plots
-    category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+    category_colors = ['mistyrose', 'gold', 'darkseagreen', 'darkblue']
 
     fig, ax = plt.subplots(figsize=(6.4, 4.8))
     ax.invert_yaxis()
@@ -74,6 +75,7 @@ def timeDist(results, category_names):
     ax.set_ylabel("Time (s)", fontsize=fontS)  # Adjust labels for vertical plot
     ax.tick_params(axis='both', labelsize=fontS)
     plt.xticks(rotation=90)
+    plt.grid(False)
     return fig, ax
 
 

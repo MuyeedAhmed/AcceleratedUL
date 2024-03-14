@@ -23,6 +23,7 @@ import matplotlib.ticker as ticker
 fontS = 12
 
 def draw_AP_time(algo, mode, system):
+    line_width = 3
     times_def = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
     times_ss = pd.read_csv("Stats/Time/" + algo + "/M2_SS.csv")    
     # times_001 = pd.read_csv("Stats/Time/" + algo + "/"+ system + "_0.001.csv")    
@@ -50,8 +51,8 @@ def draw_AP_time(algo, mode, system):
         x_ss = [1000,2000,3000,6000,9000,12000,15000,20000]
         
 
-        plt.plot(x_ss, y_ss, label="ACE", color='darkorange')
-        plt.plot(x_def, y_def, label="Default", color='steelblue')
+        plt.plot(x_ss, y_ss, label="ACE", color='salmon', linewidth=line_width)
+        plt.plot(x_def, y_def, label="Default", color='darkblue', linewidth=line_width)
 
         
         # plt.plot(x, y_pred, color='red', label=f"Regression Line")
@@ -68,6 +69,7 @@ def draw_AP_time(algo, mode, system):
         plt.show()
 
 def draw_sc_memory():
+    line_width=3
     rows = [i for i in range(10000,1000001,10000)]       
     rows_observed = [i for i in range(10000,150001,10000)]
     rows_predicted = [i for i in range(150000,1000001,10000)]
@@ -83,12 +85,12 @@ def draw_sc_memory():
     # print(memory_s[-1])
     
     # plt.plot(rows, memory_d, label="Default")
-    plt.plot(rows, memory_s, label="ACE", color='darkorange')
+    plt.plot(rows, memory_s, label="ACE", color='salmon', linewidth=line_width)
     plt.axvline(x = 150001, color = 'black', linestyle = ':')
     plt.text(190001, 4, '#Points Limit on Our Systems', color = 'black', rotation = 90, rotation_mode = 'anchor', fontsize=fontS)
     # plt.text(220001, 7500, '(On our systems)', color = 'black', rotation = 90, rotation_mode = 'anchor')
-    plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
-    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='#949494', linestyle='--')
+    plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='darkblue', linewidth=line_width)
+    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='blue', linestyle='--', linewidth=line_width)
     plt.grid(False)
     plt.xlabel("# Points", fontsize=fontS)
     plt.ylabel("Memory (TB)", fontsize=fontS)
