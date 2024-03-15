@@ -198,10 +198,10 @@ def boxPlot_algo(algo):
     plt.show()
     
     
-boxPlot_algo("AP")
-boxPlot_algo("DBSCAN")
-boxPlot_algo("HAC")
-boxPlot_algo("SC")
+# boxPlot_algo("AP")
+# boxPlot_algo("DBSCAN")
+# boxPlot_algo("HAC")
+# boxPlot_algo("SC")
     
 def boxplot_sac():
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
@@ -391,6 +391,11 @@ def ari_stats(algo):
     default = default.dropna()
     
     merged_df = ss.merge(default, on='Filename')
+    merged_df = merged_df[merged_df["default"]<0.4]
+    t, p = ttest_ind(merged_df['ss'], merged_df['default'], alternative='two-sided')
+    print(algo, p, t)
+    print(merged_df.loc[:, 'ss'].mean())
+    print(merged_df.loc[:, 'default'].mean())
 
     merged_df['Winner'] = 'None'  # Initialize with 'None'
     merged_df.loc[merged_df['ss'] > merged_df['default'], 'Winner'] = 'ss'
@@ -401,4 +406,62 @@ def ari_stats(algo):
     
     print(win_counts)
 
+def ari_stats(algo):
+    df_SS = pd.read_csv("Stats/Merged_SS.csv")
+    df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
+    
+    ss = df_SS[["Filename", "ARI_"+algo]]
+    default = df_Default[["Filename", "ARI_"+algo]]
+    
+    ss.rename(columns={"ARI_"+algo: 'ss'}, inplace=True)
+    default.rename(columns={"ARI_"+algo: 'default'}, inplace=True)
+    
+    ss = ss.dropna()
+    default = default.dropna()
+    
+    merged_df = ss.merge(default, on='Filename')
+    merged_df = merged_df[merged_df["default"]<0.4]
+    t, p = ttest_ind(merged_df['ss'], merged_df['default'], alternative='two-sided')
+    print(algo, p, t)
+    print(merged_df.loc[:, 'ss'].mean())
+    print(merged_df.loc[:, 'default'].mean())
+
+    merged_df['Winner'] = 'None'  # Initialize with 'None'
+    merged_df.loc[merged_df['ss'] > merged_df['default'], 'Winner'] = 'ss'
+    merged_df.loc[merged_df['default'] > merged_df['ss'], 'Winner'] = 'default'
+
+    win_counts = merged_df['Winner'].value_counts()
+
+    
+    print(win_counts)
+    
+    
+def time_stats(algo):
+    df_SS = pd.read_csv("Stats/Merged_SS.csv")
+    df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
+    
+    ss = df_SS[["Filename", "ARI_"+algo]]
+    default = df_Default[["Filename", "ARI_"+algo]]
+    
+    ss.rename(columns={"Time_"+algo: 'ss'}, inplace=True)
+    default.rename(columns={"Time_"+algo: 'default'}, inplace=True)
+    
+    ss = ss.dropna()
+    default = default.dropna()
+    
+    merged_df = ss.merge(default, on='Filename')
+    print(merged_df)
+    merged_df['Winner'] = 'None'  # Initialize with 'None'
+    merged_df.loc[merged_df['ss'] > merged_df['default'], 'Winner'] = 'ss'
+    merged_df.loc[merged_df['default'] > merged_df['ss'], 'Winner'] = 'default'
+
+    win_counts = merged_df['Winner'].value_counts()
+
+    
+    print(win_counts)
+    
+time_stats("DBSCAN")
+# ari_stats("AP")
+# ari_stats("DBSCAN")
+# ari_stats("HAC")
 # ari_stats("SC")

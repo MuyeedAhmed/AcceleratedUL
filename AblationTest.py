@@ -59,15 +59,16 @@ def timeDist(results, category_names):
     data = np.array(list(results.values()))
     data_cum = data.cumsum(axis=1)  # Change axis from 0 to 1 for vertical plots
     category_colors = ['mistyrose', 'gold', 'darkseagreen', 'darkblue']
-
+    hatches = ['-', '/', '\\', 'X']
+    
     fig, ax = plt.subplots(figsize=(6.4, 4.8))
     ax.invert_yaxis()
     ax.set_ylim(0, np.sum(data, axis=1).max())  # Adjust limit for vertical plot
 
-    for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+    for i, (colname, color, hatch) in enumerate(zip(category_names, category_colors, hatches)):
         widths = data[:, i]
         starts = data_cum[:, i] - widths
-        ax.bar(labels, widths, bottom=starts, width=0.5, label=colname, color=color)  # Swap labels and widths
+        ax.bar(labels, widths, bottom=starts, width=0.5, label=colname, color=color, hatch=hatch)  # Swap labels and widths
 
     legend = ax.legend(ncol=4, bbox_to_anchor=(0, 1), loc='lower left', fontsize=fontS, title='')
 
