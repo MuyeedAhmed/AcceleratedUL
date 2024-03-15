@@ -41,7 +41,7 @@ def MemTest(algo, mode, system):
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1]
         master_files[i] = master_files[i][:-4]
-    # master_files = [x for x in master_files if x not in done_files] 
+    master_files = [x for x in master_files if x not in done_files] 
     master_files.sort()
 
     fileList = pd.read_csv("MemoryStats/FileList.csv")
@@ -54,11 +54,8 @@ def MemTest(algo, mode, system):
                 est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
                 if est > 6000:
                     master_files.remove(filename)
-    hac_files = ["spoken-arabic-digit_OpenML","BNG(page-blocks)_OpenML"]
     for filename in master_files:
         if filename not in fileList:
-            continue
-        if filename not in hac_files:
             continue
         print(filename)
 
