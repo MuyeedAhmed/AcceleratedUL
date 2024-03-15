@@ -54,12 +54,11 @@ def MemTest(algo, mode, system):
                 est = algoTime[algoTime["Filename"]==filename]["Estimated_Time"].to_numpy()[0]
                 if est > 6000:
                     master_files.remove(filename)
-    
     for filename in master_files:
         if filename not in fileList:
             continue
         print(filename)
-    
+
         """
         Kill previous process
         
