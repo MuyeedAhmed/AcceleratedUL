@@ -41,7 +41,7 @@ def MemTest(algo, mode, system):
     for i in range(len(master_files)):
         master_files[i] = master_files[i].split("/")[-1]
         master_files[i] = master_files[i][:-4]
-    master_files = [x for x in master_files if x not in done_files] 
+    # master_files = [x for x in master_files if x not in done_files] 
     master_files.sort()
 
     fileList = pd.read_csv("MemoryStats/FileList.csv")
