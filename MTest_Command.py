@@ -58,9 +58,10 @@ def MemTest(algo, mode, system):
     for filename in master_files:
         if filename not in fileList:
             continue
-        print(filename)
         if filename not in hac_files:
             continue
+        print(filename)
+
         """
         Kill previous process
         
