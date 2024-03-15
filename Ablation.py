@@ -34,11 +34,13 @@ def TestBatchSizeModuleTime(algo, X, y, filename):
     c = X.shape[1]
     r_iteration = 3
     
-    if r > 200000:
-        return
-    r_iteration = 1
+    # if r > 200000:
+    #     return
+    r_iteration = 5
     
     for BatchSize in range(100,1501,100):
+        if BatchSize != 100:
+            continue
         BatchCount = int(r/BatchSize)
         # BatchSize = int(r/BatchCount)
         clustering = PAU_Clustering_TimeCalculation(algoName=algo,batch_count=BatchCount, fileName=filename)
@@ -54,10 +56,16 @@ def TestBatchSizeModuleTime(algo, X, y, filename):
         ari = np.mean(aris)
         time_ = np.mean(times)
         
-        f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + ".csv", "a")
+        if os.path.exists("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv") == 0:            
+            f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "w")
+            f.write("Filename,Row,Column,Time,ARI,BatchCount,BatchSize\n")
+            f.close()
+
+        f=open("Stats/Ablation/BatchSizeTestModuleTime_" + algo + "_RestartJ.csv", "a")
         f.write(file+','+str(r)+','+str(c)+','+str(time_)+','+str(ari)+','+str(BatchCount)+','+str(BatchSize)+'\n')
         f.close()
 
+            
 def TestBatchSize(algo, X, y, filename):
     r = X.shape[0]
     c = X.shape[1]
@@ -131,7 +139,8 @@ def TestNoRef(algo, X, y, filename):
         bc = int(X.shape[0]/100)
     else:
         bc = 0
-        
+    if X.shape[0] > 80000:
+        return
     clustering = PAU_Clustering_NoRef(algoName=algo, batch_count=bc, fileName=filename)
     clustering.X = X
     clustering.y = y
@@ -158,17 +167,19 @@ def TestNoRef(algo, X, y, filename):
 
 def TestMode(algo, X, y, filename):
     print(filename, end=" ")
+    if X.shape[0] > 200000 or X.shape[1] > 30:
+        return
     modes = ["A", "B"]
     for mode in modes:
         print(mode)
-        clustering = PAU_Clustering(algoName=algo)
+        clustering = PAU_Clustering_NoRef(algoName=algo, fileName=filename, batch_count=int(X.shape[0]/250))
         clustering.X = X
         clustering.y = y
         clustering.rerun_mode = mode
         
         aris=[]
         times=[]
-        for i in range(5):
+        for i in range(1):
             ari, time_ = clustering.run()
             aris.append(ari)
             times.append(time_)
@@ -255,10 +266,12 @@ if __name__ == '__main__':
         elif test == "Mode":
             TestMode(algo, X, y, file)
         elif test == "BT":
+            if file != "BNG(2dplanes)_OpenML":
+                continue
             TestBatchSizeModuleTime("HAC", X, y, file)
             TestBatchSizeModuleTime("DBSCAN", X, y, file)
             TestBatchSizeModuleTime("AP", X, y, file)            
-            TestBatchSizeModuleTime("SC", X, y, file)
+            # TestBatchSizeModuleTime("SC", X, y, file)
     
 
 

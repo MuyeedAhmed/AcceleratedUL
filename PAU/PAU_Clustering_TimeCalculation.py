@@ -47,7 +47,7 @@ class PAU_Clustering_TimeCalculation:
         self.y_batches = []
         self.bestParams = []
         self.models = []
-        
+        self.batch_size = -1
         self.n_cluster = n_cluster
         self.batch_count = batch_count
         self.determine_param_mode = "ARI"
@@ -136,6 +136,7 @@ class PAU_Clustering_TimeCalculation:
     
     def subSample(self):
         batch_size = int(len(self.X)/self.batch_count)
+        self.batch_size = batch_size
         self.X_batches = [self.X[i:i+batch_size] for i in range(0, len(self.X), batch_size)]
         self.y_batches = [self.y[i:i+batch_size] for i in range(0, len(self.y), batch_size)]
     
@@ -703,14 +704,13 @@ class PAU_Clustering_TimeCalculation:
         ari_ss = self.AUL_ARI()
         time_ss = t1-t0 
         
-        if os.path.exists("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv"):
-            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv", "a")
-            f.write(self.fileName+','+str(self.batch_count)+','+str(time_ss)+','+str(t_part-t0)+','+str(t_havp-t_part)+','+str(t_rerun-t_havp)+','+str(t_merge-t_rerun)+'\n')
+        if os.path.exists("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv") == 0:
+            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv", "w")
+            f.write('Filename,BatchCount,BatchSize,Time,TimePart,TimeHAPV,TimeRerun,TimeMerge\n')
             f.close()
-        else:
-            f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + ".csv", "w")
-            f.write('Filename,BatchCount,Time,TimePart,TimeHAPV,TimeRerun,TimeMerge\n')
-            f.close()
+        f=open("Stats/Ablation/Ablation_TimeDist_" + self.algoName + "_RestartJ.csv", "a")
+        f.write(self.fileName+','+str(self.batch_count)+','+str(self.batch_size)+','+str(time_ss)+','+str(t_part-t0)+','+str(t_havp-t_part)+','+str(t_rerun-t_havp)+','+str(t_merge-t_rerun)+'\n')
+        f.close()
         
         return ari_ss, time_ss
         

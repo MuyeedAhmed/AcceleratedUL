@@ -22,6 +22,7 @@ def datareturn(algo):
     return df
 
 df = datareturn("AP")
+df = datareturn("HAC")
 
 bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 df['Time_Range'] = pd.cut(df['Normalized_Time'], bins=bins)

@@ -16,12 +16,14 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.ticker as ticker
 
+import matplotlib.ticker as ticker    
 
 
 
-
+fontS = 12
 
 def draw_AP_time(algo, mode, system):
+    line_width = 3
     times_def = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
     times_ss = pd.read_csv("Stats/Time/" + algo + "/M2_SS.csv")    
     # times_001 = pd.read_csv("Stats/Time/" + algo + "/"+ system + "_0.001.csv")    
@@ -49,23 +51,25 @@ def draw_AP_time(algo, mode, system):
         x_ss = [1000,2000,3000,6000,9000,12000,15000,20000]
         
 
-        plt.plot(x_ss, y_ss, label="ACE", color='darkorange')
-        plt.plot(x_def, y_def, label="Default", color='steelblue')
+        plt.plot(x_ss, y_ss, label="ACE", color='salmon', linewidth=line_width)
+        plt.plot(x_def, y_def, label="Default", color='darkblue', linewidth=line_width)
 
         
         # plt.plot(x, y_pred, color='red', label=f"Regression Line")
         plt.grid(False)
         plt.gca().xaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.0f}"))
 
-        plt.xlabel("# Points")
-        plt.ylabel("Time (seconds)")
-        plt.title("Affinity Propagation")
-        # plt.title(row["Filename"])
-        plt.legend()
-        plt.savefig('Figures/Time_AP_Intro.pdf', bbox_inches='tight')
+        plt.xlabel("# Points", fontsize=fontS)
+        plt.ylabel("Time (seconds)", fontsize=fontS)
+        plt.xticks([0,5000,10000,15000,20000], fontsize=fontS)
+        plt.yticks(fontsize=fontS)
+        # plt.title("Affinity Propagation")
+        plt.legend(fontsize=fontS)
+        plt.savefig('Figures_EP/Time_AP_Intro.pdf', bbox_inches='tight')
         plt.show()
 
 def draw_sc_memory():
+    line_width=3
     rows = [i for i in range(10000,1000001,10000)]       
     rows_observed = [i for i in range(10000,150001,10000)]
     rows_predicted = [i for i in range(150000,1000001,10000)]
@@ -81,20 +85,21 @@ def draw_sc_memory():
     # print(memory_s[-1])
     
     # plt.plot(rows, memory_d, label="Default")
-    plt.plot(rows, memory_s, label="ACE", color='darkorange')
+    plt.plot(rows, memory_s, label="ACE", color='salmon', linewidth=line_width)
     plt.axvline(x = 150001, color = 'black', linestyle = ':')
-    plt.text(190001, 5, '#Points Limit on Our Systems', color = 'black', rotation = 90, rotation_mode = 'anchor')
+    plt.text(190001, 4, '#Points Limit on Our Systems', color = 'black', rotation = 90, rotation_mode = 'anchor', fontsize=fontS)
     # plt.text(220001, 7500, '(On our systems)', color = 'black', rotation = 90, rotation_mode = 'anchor')
-    plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='steelblue')
-    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='#949494', linestyle='--')
+    plt.plot(rows_observed, memory_obs, label="Default (Observed)", color='darkblue', linewidth=line_width)
+    plt.plot(rows_predicted, memory_pred, label="Default (Predicted)", color='blue', linestyle='--', linewidth=line_width)
     plt.grid(False)
-    plt.xlabel("# Points")
-    plt.ylabel("Memory (TB)")
-    plt.title("Spectral Clustering")
+    plt.xlabel("# Points", fontsize=fontS)
+    plt.ylabel("Memory (TB)", fontsize=fontS)
+    plt.xticks(fontsize=fontS)
+    plt.yticks(fontsize=fontS)
+    # plt.title("Spectral Clustering")
     # plt.title(row["Filename"])
-    plt.legend()
+    plt.legend(fontsize=fontS)
     
-    import matplotlib.ticker as ticker    
     def format_with_commas(x, pos):
         return "{:,}".format(int(x))
     plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(format_with_commas))
@@ -102,7 +107,7 @@ def draw_sc_memory():
 
     # plt.gca().xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
 
-    plt.savefig('Figures/Memory_SC_Intro.pdf', bbox_inches='tight')
+    plt.savefig('Figures_EP/Memory_SC_Intro.pdf', bbox_inches='tight')
     plt.show()
     
 
@@ -192,4 +197,4 @@ def draw_SC(algo, mode, system):
         # times.at[index, "Estimated_Time"] = prediction
 
 draw_sc_memory()
-# draw_AP_time("AP", "Default", "Jimmy_EST")
+draw_AP_time("AP", "Default", "Jimmy_EST")

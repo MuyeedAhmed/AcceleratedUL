@@ -7,27 +7,37 @@ import time
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
-from scipy.stats import gmean
-
+from scipy.stats import gmean, f_oneway
+from scipy import stats
 import matplotlib.pyplot as plt
 
+
+fontS = 15
+
 def ModuleWiseTimeDist(algo):
-    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+".csv")
-    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+".csv")
+    if algo == "DBSCAN" or algo =="HAC":
+        f = "_RestartJ"
+    else:
+        f = ""
+    df = pd.read_csv("Stats/Ablation/Ablation_TimeDist_"+algo+f+".csv")
+    df_bs = pd.read_csv("Stats/Ablation/BatchSizeTestModuleTime_"+algo+f+".csv")
 
     df = pd.merge(df, df_bs, on=["Filename", "BatchCount"], how="inner")
 
 
-    df["TimePart"] = df["TimePart"] / df["Time_x"]
-    df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
-    df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
-    df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
+    # df["TimePart"] = df["TimePart"] / df["Time_x"]
+    # df["TimeHAPV"] = df["TimeHAPV"] / df["Time_x"]
+    # df["TimeRerun"] = df["TimeRerun"] / df["Time_x"]
+    # df["TimeMerge"] = df["TimeMerge"] / df["Time_x"]
     
-    
-    TimePart = df.groupby('BatchSize')["TimePart"].mean()
-    TimeHAPV = df.groupby('BatchSize')["TimeHAPV"].mean()
-    TimeRerun = df.groupby('BatchSize')["TimeRerun"].mean()
-    TimeMerge = df.groupby('BatchSize')["TimeMerge"].mean()
+    if algo == "DBSCAN" or algo =="HAC":
+        x = "BatchSize_y"
+    else:
+        x = "BatchSize"
+    TimePart = df.groupby(x)["TimePart"].mean()
+    TimeHAPV = df.groupby(x)["TimeHAPV"].mean()
+    TimeRerun = df.groupby(x)["TimeRerun"].mean()
+    TimeMerge = df.groupby(x)["TimeMerge"].mean()
     
     merged_df = pd.concat([TimePart, TimeHAPV, TimeRerun, TimeMerge], axis=1)
     
@@ -35,34 +45,39 @@ def ModuleWiseTimeDist(algo):
     for ind in merged_df.index:
         Series[f"{ind}"] = merged_df.loc[ind].to_numpy()
 
-    fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
-    ax.set_title(algo)
-    fig.savefig("Figures/TimeDist/"+algo+".pdf")
+    # fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
+    fig, ax = timeDist(Series, ["3.1", "3.2", "3.3", "3.4"])
+    # ax.set_xlabel("Time")
+    # ax.set_title(algo)
+    
+    fig.savefig("Figures_EP/TimeDist/"+algo+".pdf", bbox_inches='tight')
 
 
 
 def timeDist(results, category_names):
     labels = list(results.keys())
     data = np.array(list(results.values()))
-    data_cum = data.cumsum(axis=1)
-    category_colors = ['gold', 'tomato', 'limegreen', 'dodgerblue']
+    data_cum = data.cumsum(axis=1)  # Change axis from 0 to 1 for vertical plots
+    category_colors = ['mistyrose', 'gold', 'darkseagreen', 'darkblue']
 
-    fig, ax = plt.subplots(figsize=(5, 10))  # Adjust figsize to fit the rotated plot
-    ax.xaxis.set_visible(True)
-    ax.yaxis.set_visible(False)  # Make y-axis visible
-    ax.set_ylim(0, np.sum(data, axis=1).max())  # Set y-axis limits
+    fig, ax = plt.subplots(figsize=(6.4, 4.8))
+    ax.invert_yaxis()
+    ax.set_ylim(0, np.sum(data, axis=1).max())  # Adjust limit for vertical plot
 
     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
         widths = data[:, i]
         starts = data_cum[:, i] - widths
-        rects = ax.bar(labels, widths, bottom=starts, width=0.5, 
-                       label=colname, color=color, orientation='vertical')  # Rotate bars vertically
+        ax.bar(labels, widths, bottom=starts, width=0.5, label=colname, color=color)  # Swap labels and widths
 
-    legend = ax.legend(ncol=2, bbox_to_anchor=(0.5, 1.15),  # Move legend to top and center
-                       loc='upper center', fontsize=10, title='', frameon=False)
-    ax.xaxis.set_tick_params(rotation=90)  # Rotate x-axis labels by 90 degrees
-    
+    legend = ax.legend(ncol=4, bbox_to_anchor=(0, 1), loc='lower left', fontsize=fontS, title='')
+
+    ax.set_xlabel("Partition Size", fontsize=fontS)  # Adjust labels for vertical plot
+    ax.set_ylabel("Time (s)", fontsize=fontS)  # Adjust labels for vertical plot
+    ax.tick_params(axis='both', labelsize=fontS)
+    plt.xticks(rotation=90)
+    plt.grid(False)
     return fig, ax
+
 
 
 # def timeDist(results, category_names):
@@ -74,13 +89,13 @@ def timeDist(results, category_names):
 
 #     fig, ax = plt.subplots(figsize=(10, 5))
 #     ax.invert_yaxis()
-#     ax.xaxis.set_visible(False)
+#     # ax.xaxis.set_visible(False)
 #     ax.set_xlim(0, np.sum(data, axis=1).max())
 
 #     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
 #         widths = data[:, i]
 #         starts = data_cum[:, i] - widths
-#         rects = ax.barh(labels, widths, left=starts, height=0.5,
+#         rects = ax.barh(labels, widths,left=starts, height=0.5,
 #                         label=colname, color=color)
 #         # r, g, b, _ = color
 #         # text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
@@ -88,9 +103,13 @@ def timeDist(results, category_names):
 #     # ax.legend(ncols=len(category_names), bbox_to_anchor=(0, 1),
 #     #           loc='lower left', fontsize='small')
 #     legend = ax.legend(ncol=2, bbox_to_anchor=(0, 1),
-#                        loc='lower left', fontsize=10, title='')
+#                         loc='lower left', fontsize=15, title='')
 #     # legend.get_title().set_alignment('left')  # Set legend title alignment to left
-
+#     ax.set_xlabel("Time", fontsize=16)
+#     ax.set_ylabel("Partition Size", fontsize=16)
+#     # ax.set_xticks([])  
+#     # ax.set_yticks(fontsize=15)
+#     ax.tick_params(axis='both', labelsize=14)
 
 #     return fig, ax
 
@@ -188,10 +207,15 @@ def NoRefTest(algo):
 
     df_selected = df[['ARI', 'ARI_'+algo]]
     df_selected = df_selected.rename(columns={'ARI': 'Default', 'ARI_'+algo: 'With Validator'})
-
+    
+    gr1 = df_selected['Default'].to_numpy()
+    gr2 = df_selected['With Validator'].to_numpy()
+    
+    t_statistic, p_value = stats.ttest_ind(gr1, gr2, equal_var=False)
+    print(algo, t_statistic, p_value)
     df_melted = df_selected.melt(var_name='Column', value_name='Value')
     
-    sns.violinplot(x='Column', y='Value', data=df_melted)
+    sns.boxplot(x='Column', y='Value', data=df_melted)
     plt.xlabel('')
     plt.ylabel('ARI')
     plt.title(algo)
@@ -202,47 +226,63 @@ def NoRefTest(algo):
 
 def RefereeARIvsTime(algo):
     df = pd.read_csv("Stats/Ablation/Ablation_RefereeClAlgo_"+algo+".csv")
+    
+    
+    # df = df[df["Referee"] != "INERTIA"]
+    
     # sns.boxplot(x='Referee', y='Time', data=df)
+    # # sns.violinplot(x='Referee', y='Time', data=df)
     # plt.title(algo + ' - Time')
     # plt.xlabel('Referee')
     # plt.ylabel('Time')
     # plt.show()
     
-    # sns.violinplot(x='Referee', y='Time', data=df)
-    # plt.title(algo + ' - Time')
-    # plt.xlabel('Referee')
-    # plt.ylabel('Time')
-    # plt.show()
+    gr1 = df[df["Referee"] == "K-Means"]["ARI"].to_numpy()
+    gr2 = df[df["Referee"] == "DBSCAN"]["ARI"].to_numpy()
+    
+    if algo == "AP":
+        gr3 = df[df["Referee"] == "HAC"]["ARI"].to_numpy()
+    if algo == "HAC":
+        gr3 = df[df["Referee"] == "AP"]["ARI"].to_numpy()
+        
+    
+    t_statistic, p_value = stats.ttest_ind(gr1, gr2, equal_var=False)
+    print(p_value)
+    t_statistic, p_value = stats.ttest_ind(gr1, gr3, equal_var=False)
+    print(p_value)
+    t_statistic, p_value = stats.ttest_ind(gr3, gr2, equal_var=False)
+    print(p_value)
+    
+    f_statistic, p_value = f_oneway(gr1, gr2, gr3)
 
-    # sns.boxplot(x='Referee', y='ARI', data=df)
-    # plt.title(algo + ' - ARI')
-    # plt.xlabel('Referee')
-    # plt.ylabel('ARI')
-    # plt.show()
-    
+    print("F-statistic:", f_statistic)
+    print("p-value:", p_value)
+
+    sns.boxplot(x='Referee', y='ARI', data=df)
     # sns.violinplot(x='Referee', y='ARI', data=df)
     # plt.title(algo + ' - ARI')
-    # plt.xlabel('Referee')
-    # plt.ylabel('ARI')
-    # plt.show()
-    # Initialize lists to store normalized values
-    
-    scaler = MinMaxScaler(feature_range=(0, 1)) 
-    df["ARI"] = scaler.fit_transform(df[["ARI"]])
-
-    
-    df["ARI"] = -np.log(df[["ARI"]])
-    grouped = df.groupby('Referee')
-
-    df['Normalized_Time'] = df.groupby('Referee')['Time'].transform(lambda x: (x/x.max()))
-    df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
-
-    sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
-    plt.title(algo)
     plt.xlabel('Validator')
-    plt.ylabel('$C_{AxT}$', fontsize=14)
-    plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
+    plt.ylabel('ARI')
+    # plt.savefig('Figures/Ablation_Ref_'+algo+'_ARI.pdf', bbox_inches='tight')
     plt.show()
+
+    
+    # scaler = MinMaxScaler(feature_range=(0, 1)) 
+    # df["ARI"] = scaler.fit_transform(df[["ARI"]])
+
+    
+    # df["ARI"] = -np.log(df[["ARI"]])
+    # grouped = df.groupby('Referee')
+
+    # df['Normalized_Time'] = df.groupby('Referee')['Time'].transform(lambda x: (x/x.max()))
+    # df['ARI_Normalized_Time'] = df['ARI'] * df['Normalized_Time']
+
+    # sns.violinplot(x='Referee', y='ARI_Normalized_Time', data=df)
+    # plt.title(algo)
+    # plt.xlabel('Validator')
+    # plt.ylabel('$C_{AxT}$', fontsize=14)
+    # plt.savefig('Figures/Ablation_Ref_'+algo+'.pdf', bbox_inches='tight')
+    # plt.show()
 
 def ScatterReferee():
     df = pd.read_csv("Utility&Test/Stats/DBSCAN_Ablation_NoAnomaly.csv")
@@ -388,18 +428,16 @@ def BatchTest():
 # BoxPlotMode()
 # Batch("DBSCAN")
 
-# # Batch("SC")
+
 # RefereeARIvsTime("HAC")
 # RefereeARIvsTime("AP")
 
-# ScatterReferee()
-
-NoRefTest("AP")
-NoRefTest("HAC")
-NoRefTest("DBSCAN")
+# NoRefTest("AP")
+# NoRefTest("HAC")
+# NoRefTest("DBSCAN")
 # NoRefTest("SC")
 
 ModuleWiseTimeDist("AP")
-ModuleWiseTimeDist("DBSCAN")
+# ModuleWiseTimeDist("DBSCAN")
 ModuleWiseTimeDist("HAC")
-ModuleWiseTimeDist("SC")
+# ModuleWiseTimeDist("SC")
