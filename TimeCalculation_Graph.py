@@ -17,6 +17,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.ticker as ticker
 
 import matplotlib.ticker as ticker    
+from sklearn.pipeline import make_pipeline
 
 
 
@@ -68,6 +69,70 @@ def draw_AP_time(algo, mode, system):
         plt.savefig('Figures_EP/Time_AP_Intro.pdf', bbox_inches='tight')
         plt.show()
 
+def draw_AP_time_regression(algo, system):
+    line_width = 3
+    times_def = pd.read_csv("Stats/Time/" + algo + "/"+ system + ".csv")    
+    times_ss = pd.read_csv("Stats/Time/" + algo + "/M2_SS.csv")
+                
+    for index, row in times_def.iterrows():
+        filename = row["Filename"]
+        if filename != "numerai28.6_OpenML":
+            continue
+        
+        data_def = row[4:30].dropna()
+
+        x = data_def.index.values.reshape(-1, 1) 
+        x_def = np.array([list(map(float, item)) for item in x])
+        y_def = data_def.values.reshape(-1, 1) 
+        
+        
+        model = make_pipeline(PolynomialFeatures(2), LinearRegression())
+        model.fit(x_def, y_def)
+        
+        rows_observed = np.array([i for i in range(10000,170001,10000)]).reshape(-1, 1)
+        rows_predicted = np.array([i for i in range(170000,1000001,10000)]).reshape(-1, 1)
+        
+        predictions_obs = model.predict(rows_observed)
+        predictions_pred = model.predict(rows_predicted)
+        
+
+        
+        
+        data_ss = times_ss.loc[times_ss['Filename'] == filename]
+        data_ss = data_ss.to_numpy()[0]
+        y_ss = data_ss[4:12]
+        # x_ss = [1000,2000,3000,6000,9000,12000,15000,20000,50000,65000]
+        x_ss = np.array([1000,2000,3000,6000,9000,12000,15000,20000]).reshape(-1, 1) 
+        
+        model.fit(x_ss, y_ss)
+        rows_ss = np.array([i for i in range(10000,1000001,10000)]).reshape(-1, 1) 
+        predictions_ss = model.predict(rows_ss)
+
+        plt.plot(rows_ss, predictions_ss, label="ACE", color='salmon', linewidth=line_width)
+        plt.plot(rows_observed, predictions_obs, label="Default (Observed)", color='darkblue', linewidth=line_width)
+        plt.plot(rows_predicted, predictions_pred, label="Default (Predicted)", color='blue', linestyle='--', linewidth=line_width)
+        plt.axvline(x = 170001, color = 'black', linestyle = ':')
+        plt.text(210001, 150000, '#Points Limit on Our Systems', color = 'black', rotation = 90, rotation_mode = 'anchor', fontsize=fontS)
+
+        # plt.plot(x_ss, y_ss, label="ACE", color='salmon', linewidth=line_width)
+        # plt.plot(x_def, y_def, label="Default", color='darkblue', linewidth=line_width)
+
+        
+        # plt.plot(x, y_pred, color='red', label=f"Regression Line")
+        plt.grid(False)
+        plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: '{:.0f}'.format(x / (24 * 60 * 60))))
+        plt.gca().xaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.0f}"))
+
+        plt.xlabel("# Points", fontsize=fontS)
+        plt.ylabel("Time (days)", fontsize=fontS)
+        plt.xticks(fontsize=fontS)
+        plt.yticks(fontsize=fontS)
+        # plt.title("Affinity Propagation")
+        plt.legend(fontsize=fontS)
+        plt.savefig('Figures_EP/Time_AP_Intro.pdf', bbox_inches='tight')
+        plt.show()
+        
+        
 def draw_sc_memory():
     line_width=3
     rows = [i for i in range(10000,1000001,10000)]       

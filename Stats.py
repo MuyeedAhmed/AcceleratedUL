@@ -137,7 +137,7 @@ def boxPlot_algo(algo):
     
     ss_filtered += [np.nan] * num_missing
     
-    if algo == "SC":
+    if algo == "SCS":
         df_001 = pd.read_csv("Stats/Time/SC/Jimmy_0.001_ARI.csv")
         def_001 = df_001["ARI"].to_numpy()
         print("001 tol: ", np.mean(def_001))
@@ -156,53 +156,56 @@ def boxPlot_algo(algo):
     
     df = pd.DataFrame(my_dict)
     
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(3, 6))
     
-    sns.boxplot(data=df,flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
+    # sns.boxplot(data=df,flierprops={'marker': 'o','markerfacecolor': 'none', 'markeredgecolor': 'black', 'markersize': 6})
+    sns.boxplot(data=df,showfliers=False)
     plt.ylabel('ARI', fontsize=14)
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
+    plt.title(algo, fontsize=16)
     # plt.yscale('log')
-    fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
+    # fig.savefig('Figures/ARI_'+algo+'.pdf', bbox_inches='tight')
+    fig.savefig('Figures_Prnt/ARI_'+algo+'.pdf', bbox_inches='tight')
 
     '''Boxplot with width'''    
-    df_width = pd.DataFrame(my_dict_width)
-    fig, ax = plt.subplots(figsize=(8, 6))
-    if algo =="DBSCAN":
-        box_widths = [default_count/200, 164/200]
-    else:
-        box_widths = [default_count/100, 164/100]
+    # df_width = pd.DataFrame(my_dict_width)
+    # fig, ax = plt.subplots(figsize=(8, 6))
+    # if algo =="DBSCAN":
+    #     box_widths = [default_count/200, 164/200]
+    # else:
+    #     box_widths = [default_count/100, 164/100]
     
-    medianprops = dict(linestyle='-', linewidth=2, color='black')
-    box_plot = ax.boxplot([original_default, ss], widths=box_widths, patch_artist=True,medianprops=medianprops)
-    colors = ['darkblue', 'darkorange']
-    for patch, color in zip(box_plot['boxes'], colors):
-        patch.set_facecolor(color)
+    # medianprops = dict(linestyle='-', linewidth=2, color='black')
+    # box_plot = ax.boxplot([original_default, ss], widths=box_widths, patch_artist=True,medianprops=medianprops)
+    # colors = ['darkblue', 'darkorange']
+    # for patch, color in zip(box_plot['boxes'], colors):
+    #     patch.set_facecolor(color)
     
-    if algo == "AP":
-        rs = r"$R_{AP}$"
-    if algo == "SC":
-        rs = r"$R_{SpecC}$"
-    if algo == "HAC":
-        rs = r"$R_{HAC}$"
-    if algo == "DBSCAN":
-        rs = r"$R_{DBSCAN}$"
+    # if algo == "AP":
+    #     rs = r"$R_{AP}$"
+    # if algo == "SC":
+    #     rs = r"$R_{SpecC}$"
+    # if algo == "HAC":
+    #     rs = r"$R_{HAC}$"
+    # if algo == "DBSCAN":
+    #     rs = r"$R_{DBSCAN}$"
 
-    ax.set_xticklabels([f'Default\n({rs}: {str(default_count)} Datasets)', 'ACE\n(All: 164 Datasets)'], fontsize=14)
-    ax.set_ylabel('ARI', fontsize=14)
-    plt.yticks(fontsize=14)
-    plt.xticks(fontsize=14)
+    # ax.set_xticklabels([f'Default\n({rs}: {str(default_count)} Datasets)', 'ACE\n(All: 164 Datasets)'], fontsize=14)
+    # ax.set_ylabel('ARI', fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.xticks(fontsize=14)
 
 
     fig.savefig('Figures/ARI_'+algo+'_sac_all.pdf', bbox_inches='tight')
     plt.show()
     
     
-# boxPlot_algo("AP")
-# boxPlot_algo("DBSCAN")
-# boxPlot_algo("HAC")
-# boxPlot_algo("SC")
-    
+boxPlot_algo("AP")
+boxPlot_algo("DBSCAN")
+boxPlot_algo("HAC")
+boxPlot_algo("SC")
+
 def boxplot_sac():
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
     ss_ap = df_SS["ARI_AP"].to_numpy()
@@ -302,9 +305,6 @@ def MemoryConsumptionCalculation(algo, mode, system):
     memory = pd.read_csv("MemoryStats/Memory_" + algo + "_" + mode + "_" + system + ".csv")
     time = pd.read_csv("MemoryStats/Time_" + algo + "_" + mode + "_" + system + ".csv") 
     
-    
-    
-    
     time = time[time["Completed"] == 1]
     
     time["TotalTime"] = time["EndTime"] - time["StartTime"]
@@ -323,30 +323,40 @@ def MemoryConsumptionCalculation(algo, mode, system):
         mv_max = np.max(memory_virtual)
         
         time.loc[index, "Memory_Max"] = int(mv_max)
+    
     # print(time)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    plt.plot(time["Row"], time["Memory_Max"], 'o')
+    plt.xlabel("Points", fontsize=14)
+    plt.ylabel("Memory (MB)", fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+
+    plt.show()
     
-    """"""
-    lrd = pd.read_csv("Stats/DBSCAN/M2_lrd.csv")
-    label_stats = pd.read_csv("Stats/DBSCAN/M2_Uniq&Outlier.csv") 
-    """"""
-    
-    
-    dbscan = time.join(label_stats.set_index('Filename'), lsuffix='_caller', rsuffix='_other', on='Filename')
-    
-    print(lrd)
-    print(dbscan)
-    
-    dbscan = dbscan.set_index('Filename').join(lrd.set_index('Filename'), lsuffix='_caller', rsuffix='_other')
-    
-    # dbscan = pd.concat([time, label_stats], axis=1, join="inner", ignore_index=True)
+    # """"""
+    # lrd = pd.read_csv("Stats/DBSCAN/M2_lrd.csv")
+    # label_stats = pd.read_csv("Stats/DBSCAN/M2_Uniq&Outlier.csv") 
+    # """"""
     
     
-    dbscan.to_csv("Stats/DBSCAN/With Memory.csv")
+    # dbscan = time.join(label_stats.set_index('Filename'), lsuffix='_caller', rsuffix='_other', on='Filename')
+    
+    # print(lrd)
+    # print(dbscan)
+    
+    # dbscan = dbscan.set_index('Filename').join(lrd.set_index('Filename'), lsuffix='_caller', rsuffix='_other')
+    
+    # # dbscan = pd.concat([time, label_stats], axis=1, join="inner", ignore_index=True)
+    
+    
+    # dbscan.to_csv("Stats/DBSCAN/With Memory.csv")
     
     # table = time.pivot(index='Row', columns='Columm', values='Memory_Max')
     # table.to_csv("Max_Memory_Usage_" + algo + "_" + mode + "_" + system + ".csv")
 
 # MemoryConsumptionCalculation("DBSCAN", "Default", "M2")
+# MemoryConsumptionCalculation("AP", "SS", "M2")
 
 def EstimatedTimeFilter():
     df_est = pd.read_csv("Stats/Time/AP/M2.csv")
@@ -440,8 +450,8 @@ def time_stats(algo):
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
     df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
     
-    ss = df_SS[["Filename", "ARI_"+algo]]
-    default = df_Default[["Filename", "ARI_"+algo]]
+    ss = df_SS[["Filename", "Row", "Time_"+algo]]
+    default = df_Default[["Filename", "Time_"+algo]]
     
     ss.rename(columns={"Time_"+algo: 'ss'}, inplace=True)
     default.rename(columns={"Time_"+algo: 'default'}, inplace=True)
@@ -457,10 +467,22 @@ def time_stats(algo):
 
     win_counts = merged_df['Winner'].value_counts()
 
+
+    Win_SS = merged_df[merged_df["Winner"]=="ss"]
+    Win_SS["Times"] = Win_SS["ss"]/Win_SS["default"]
+    
+    print(Win_SS.loc[:, "default"].min(), Win_SS.loc[:, "default"].median(), Win_SS.loc[:, "default"].max())
+    print(Win_SS.loc[:, "ss"].min(), Win_SS.loc[:, "ss"].median(), Win_SS.loc[:, "ss"].max())
+    
+    print(Win_SS.loc[:, "Times"].min(), Win_SS.loc[:, "Times"].median(), Win_SS.loc[:, "Times"].max())
+    
+    print(Win_SS["Times"])
     
     print(win_counts)
     
-time_stats("DBSCAN")
+# time_stats("DBSCAN")
+
+
 # ari_stats("AP")
 # ari_stats("DBSCAN")
 # ari_stats("HAC")
