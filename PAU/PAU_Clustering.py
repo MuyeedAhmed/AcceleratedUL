@@ -6,6 +6,7 @@ import numpy as np
 import random
 # from sklearn import metrics
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics import silhouette_score
 import time
 from sklearn.utils import shuffle
 import threading
@@ -231,7 +232,8 @@ class PAU_Clustering:
             l = c.labels_
         t1 = time.time()
         cost = t1-t0
-        ari_comp = self.getARI_Comp(X, l)
+        sil_score = silhouette_score(X, l)
+        ari_comp = self.getARI_Comp(X, l) + sil_score
         saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
