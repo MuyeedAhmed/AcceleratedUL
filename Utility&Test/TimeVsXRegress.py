@@ -177,7 +177,7 @@ def plotRegress(x, y, algo="", xlabel="", ylabel=""):
     else:
         plt.yticks(fontsize=fontS)
         
-    plt.xticks([0, 50000000, 100000000], fontsize=fontS)
+    # plt.xticks([0, 50000000, 100000000], fontsize=fontS)
     
     plt.gca().xaxis.set_major_formatter(FuncFormatter(format_ticks))
     # plt.gca().xaxis.set_major_formatter(ticker.StrMethodFormatter("{x:.0f}"))

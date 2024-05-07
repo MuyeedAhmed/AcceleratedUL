@@ -44,7 +44,11 @@ def ModuleWiseTimeDist(algo):
     Series = {}
     for ind in merged_df.index:
         Series[f"{ind}"] = merged_df.loc[ind].to_numpy()
-
+    
+    cost_1000 = np.array(Series["1000"])
+    percentages = (cost_1000/ cost_1000.sum()) * 100
+    print(algo, percentages)
+    
     # fig, ax = timeDist(Series, ["3.1 Data Partitioning", "3.2 Tuning Parameters for HAPV", "3.3 Generating Labels", "3.4 Merging Labels"])
     fig, ax = timeDist(Series, ["3.1", "3.2", "3.3", "3.4"])
     # ax.set_xlabel("Time")
