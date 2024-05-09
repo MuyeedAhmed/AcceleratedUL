@@ -143,7 +143,7 @@ class PAU_Clustering:
     def set_DBSCAN_param(self):
         #min_samples
         batch_size = int(len(self.X)/self.batch_count)
-        min_samples = np.linspace(2, int(np.sqrt(batch_size)), 10)
+        min_samples = np.linspace(2, int(np.sqrt(batch_size)), 5)
         #eps
         distance_values = []
         for _ in range(3):
@@ -164,7 +164,7 @@ class PAU_Clustering:
                 print("45th Percentile of distance is: ", p5)
                 raise Exception('Stopped: Percentile Issue')
         p50 = np.percentile(distance_values, 50)
-        eps = np.linspace(p5, p50, 10)
+        eps = np.linspace(p5, p50, 5)
         self.parameters[0][2] = list(itertools.product(eps, min_samples))
     
     def determineParam(self):
@@ -197,9 +197,11 @@ class PAU_Clustering:
             
             # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
             params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
-            # if df["Time"].iloc[h_r] > 10:
-            #     print("Subsampling timeout")
-            #     raise Exception('')
+            if df["Time"].iloc[h_r] > 10:
+                self.batch_count = self.batch_count*2
+                self.subSample()
+                # print("Subsampling timeout")
+                # raise Exception('')
         self.bestParams = [p[1] for p in self.parameters]
 
     def worker_determineParam(self, parameter, X, y, batch_index, parameter_index):        
@@ -232,7 +234,10 @@ class PAU_Clustering:
             l = c.labels_
         t1 = time.time()
         cost = t1-t0
-        sil_score = silhouette_score(X, l)
+        try:
+            sil_score = silhouette_score(X, l)
+        except:
+            sil_score = -1
         ari_comp = self.getARI_Comp(X, l) + sil_score
         saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
@@ -543,17 +548,6 @@ class PAU_Clustering:
         
         df.to_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv", index=False)
         
-        # X_ = df.drop(["y", "l"], axis=1).to_numpy()
-        # labels = df["l"].to_numpy()
-        # unique_labels = set(df["l"])
-        # print(unique_labels)
-        
-        # yy = df["y"].tolist()
-        # ll = df["l"].tolist()
-        # ari = adjusted_rand_score(yy, ll)
-       
-        # print("rerun ari: ", ari)
-        
         
     def mergeClusteringOutputs_DistRatio(self):
         # Read batch outputs and merge
@@ -656,7 +650,7 @@ class PAU_Clustering:
     
     def AUL_ARI(self, deleteAnomalies=False):
         df = pd.read_csv("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
-        os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
+        # os.remove("ClusteringOutput/"+self.fileName+"_"+self.algoName+".csv")
         yy = df["y"].tolist()
         ll = df["l"].tolist()
         old_ari = adjusted_rand_score(yy, ll)
