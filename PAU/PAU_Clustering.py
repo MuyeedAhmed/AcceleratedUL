@@ -210,7 +210,7 @@ class PAU_Clustering:
             c = AffinityPropagation(damping=parameter[0], max_iter=parameter[1], convergence_iter=parameter[2]).fit(X)
             l = c.labels_
         elif self.algoName == "SC":
-            c = SpectralClustering(n_clusters=self.n_cluster, eigen_solver=parameter[0], n_components=parameter[1], 
+            c = SpectralClustering(n_clusters=self.n_cluster, eigen_tol=0.01, eigen_solver=parameter[0], n_components=parameter[1], 
                                    n_init=parameter[2], gamma=parameter[3], affinity=parameter[4], 
                                    n_neighbors=parameter[5], assign_labels=parameter[6], 
                                    degree=parameter[7], n_jobs=parameter[8]).fit(X)
