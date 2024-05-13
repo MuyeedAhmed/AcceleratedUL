@@ -172,7 +172,7 @@ class PAU_Clustering:
         for params in self.parameters:
             threads = []
             f = open("Output/Rank.csv", 'w')
-            f.write("Batch,ParameterIndex,Compare,Time\n")
+            f.write("Batch,ParameterIndex,Compare,Silhouette,Time\n")
             f.close()
             start_index = batch_index
             for p_v_i in range(len(params[2])):
@@ -192,11 +192,19 @@ class PAU_Clustering:
             if self.determine_param_mode == "ARI_T":
                 df["W"] = df.Compare/df.Time
             elif self.determine_param_mode == "ARI":
-                df["W"] = df.Compare
-            h_r = df["W"].idxmax()
+                # df["W"] = df.Compare
+                df["W"] = df.Silhouette
+            
+            sorted_df = df.sort_values('W', ascending=False)
+            h_r = -1
+            for index, row in sorted_df.iterrows():
+                if row['Compare'] >= 0:
+                    h_r = index
+                    break
+            if h_r != -1:
+                params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
             
             # params[1] = params[2][df["Batch"].iloc[h_r]-start_index]
-            params[1] = params[2][df["ParameterIndex"].iloc[h_r]]
             if df["Time"].iloc[h_r] > 10:
                 self.batch_count = self.batch_count*2
                 self.subSample()
@@ -238,8 +246,8 @@ class PAU_Clustering:
             sil_score = silhouette_score(X, l)
         except:
             sil_score = -1
-        ari_comp = self.getARI_Comp(X, l) + sil_score
-        saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(cost)+"\n"    
+        ari_comp = self.getARI_Comp(X, l)
+        saveStr = str(batch_index)+","+str(parameter_index)+","+str(ari_comp)+","+str(sil_score)+","+str(cost)+"\n"    
         f = open("Output/Rank.csv", 'a')
         f.write(saveStr)
         f.close()
