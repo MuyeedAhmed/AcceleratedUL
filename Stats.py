@@ -201,10 +201,10 @@ def boxPlot_algo(algo):
     plt.show()
     
     
-boxPlot_algo("AP")
-boxPlot_algo("DBSCAN")
-boxPlot_algo("HAC")
-boxPlot_algo("SC")
+# boxPlot_algo("AP")
+# boxPlot_algo("DBSCAN")
+# boxPlot_algo("HAC")
+# boxPlot_algo("SC")
 
 def boxplot_sac():
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
@@ -229,7 +229,36 @@ def boxplot_sac():
     
 
 
+def diff_plot():
+    algos = ["AP", "DBSCAN", "HAC", "SC"]
+    plt.figure(figsize=(10, 6))
+    for algo in algos:
+        df_SS = pd.read_csv("Stats/Merged_SS.csv")
+        df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
+        df_Default = df_Default.dropna(subset=["ARI_"+algo])
 
+
+        df_SS_filtered = df_SS.copy()
+        for index, row in df_SS_filtered.iterrows():
+            if row['Filename'] not in df_Default['Filename'].values:
+                df_SS_filtered.drop(index, inplace=True)
+
+        merged_df = pd.merge(df_SS, df_Default, on='Filename', suffixes=('_SS', '_DF'))
+        merged_df['ARI_diff'] = merged_df['ARI_'+algo+'_SS'] - merged_df['ARI_'+algo+'_DF']
+
+
+        difference = merged_df['ARI_diff'].to_numpy()
+        sorted_difference = np.sort(difference)
+        
+        plt.plot(sorted_difference, 'o-', label=algo)
+
+    plt.ylabel('ARI')
+    plt.grid(True)
+    plt.legend()    
+    # fig.savefig('Figures/ARI_Difference.pdf', bbox_inches='tight')
+    plt.show()
+
+diff_plot()
 
 def CalculateAvg(Algo):
     df_SS = pd.read_csv("Stats/Merged_SS.csv")
