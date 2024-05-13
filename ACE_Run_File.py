@@ -79,7 +79,8 @@ def writeTimeFile(filename, r, c, t0, t1, status):
     f.write(filename+','+str(r)+','+str(c)+','+str(t0)+','+str(t1)+','+str(status)+'\n')
     f.close()
 
-if __name__ == '__main__':
-    _run_ACE(algo, system, filename)
+if __name__ == '__main__':    
+    # _run_ACE(algo, system, filename)
+    print("",end='')
     
     

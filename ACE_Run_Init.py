@@ -43,6 +43,18 @@ if __name__ == '__main__':
     
     master_files = [value for value in master_files if value in fileList]
     
-    with open('ace_master_files.txt', 'w') as f:
-        for item in master_files:
-            f.write(f"{item}\n")
+
+    """Only run R_algo"""
+    df_Default = pd.read_csv("Stats/Merged_Default_Filtered.csv")
+    D_file_list = []
+
+    for index, row in df_Default.iterrows():
+        if pd.notna(row["ARI_"+algo]):
+            D_file_list.append(row['Filename'])
+    master_files = [value for value in master_files if value in D_file_list]
+
+    print(master_files)
+
+    # with open('ace_master_files.txt', 'w') as f:
+    #     for item in master_files:
+    #         f.write(f"{item}\n")
