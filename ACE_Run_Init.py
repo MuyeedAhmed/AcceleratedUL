@@ -53,8 +53,8 @@ if __name__ == '__main__':
             D_file_list.append(row['Filename'])
     master_files = [value for value in master_files if value in D_file_list]
 
-    print(master_files)
+    # print(master_files)
 
-    # with open('ace_master_files.txt', 'w') as f:
-    #     for item in master_files:
-    #         f.write(f"{item}\n")
+    with open('ace_master_files.txt', 'w') as f:
+        for item in master_files:
+            f.write(f"{item}\n")

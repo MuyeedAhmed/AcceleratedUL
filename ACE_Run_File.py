@@ -80,7 +80,7 @@ def writeTimeFile(filename, r, c, t0, t1, status):
     f.close()
 
 if __name__ == '__main__':    
-    # _run_ACE(algo, system, filename)
-    print("",end='')
+    _run_ACE(algo, system, filename)
+    
     
     
